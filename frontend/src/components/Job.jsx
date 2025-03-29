@@ -5,6 +5,7 @@ import { Button } from './ui/button';
 import { Avatar, AvatarImage, AvatarFallback } from './ui/avatar';
 import { Badge } from './ui/badge';
 import { Card, CardHeader, CardContent, CardFooter } from './ui/card';
+import { toast } from 'sonner';
 
 const Job = ({ job }) => {
     const navigate = useNavigate();
@@ -30,6 +31,67 @@ const Job = ({ job }) => {
         return description.length > maxLength 
             ? `${description.substring(0, maxLength)}...` 
             : description;
+    };
+
+    const handleSaveForLater = () => {
+        // Get existing saved jobs from localStorage or initialize empty array
+        const savedJobs = JSON.parse(localStorage.getItem('savedJobs')) || [];
+        
+        // Check if job is already saved
+        const isAlreadySaved = savedJobs.some(savedJob => savedJob._id === job._id);
+        
+        if (!isAlreadySaved) {
+            // Create job object to save
+            const jobToSave = {
+                _id: job._id,
+                title: job.title,
+                company: {
+                    name: job.company?.name,
+                    logo: job.company?.logo
+                },
+                jobType: job.jobType,
+                salary: job.salary,
+                position: job.position,
+                createdAt: job.createdAt
+            };
+
+            // Add new job to array and save to localStorage
+            const updatedSavedJobs = [...savedJobs, jobToSave];
+            localStorage.setItem('savedJobs', JSON.stringify(updatedSavedJobs));
+
+            // Show success toast
+            toast.success(
+                <div className="flex items-center gap-2">
+                    <Bookmark className="h-4 w-4 text-green-600" />
+                    <div>
+                        <span className="font-semibold">Job Saved!</span>
+                        <p className="text-sm">You can view "{job.title}" in your saved jobs later.</p>
+                    </div>
+                </div>,
+                {
+                    duration: 3000,
+                    style: {
+                        background: '#f0fdf4',
+                        border: '1px solid #bbf7d0',
+                    }
+                }
+            );
+        } else {
+            // Show info toast if job is already saved
+            toast.info(
+                <div className="flex items-center gap-2">
+                    <Bookmark className="h-4 w-4 text-blue-600" />
+                    <span>This job is already saved in your list.</span>
+                </div>,
+                {
+                    duration: 2000,
+                    style: {
+                        background: '#eff6ff',
+                        border: '1px solid #bfdbfe',
+                    }
+                }
+            );
+        }
     };
 
     return (
@@ -108,7 +170,11 @@ const Job = ({ job }) => {
                     View Details
                 </Button>
                 
-                <Button variant="outline" className="border-gray-200 text-gray-700">
+                <Button 
+                    variant="outline" 
+                    className="border-gray-200 text-gray-700 hover:bg-gray-50"
+                    onClick={handleSaveForLater}
+                >
                     <Bookmark className="h-4 w-4 mr-1.5" />
                     Save For Later
                 </Button>
