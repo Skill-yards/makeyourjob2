@@ -3,36 +3,59 @@ import { Job } from "../models/job.model.js";
 // admin post krega job
 export const postJob = async (req, res) => {
     try {
-        const { title, description, requirements, salary, location, jobType, experience, position, companyId } = req.body;
+        const { 
+            title, 
+            description, 
+            requirements, 
+            salary, 
+            location, 
+            jobType, 
+            experienceLevel,    // ✅ Added experienceLevel
+            position, 
+            companyId 
+        } = req.body;
+
         const userId = req.id;
 
-        if (!title || !description || !requirements || !salary || !location || !jobType || !experience || !position || !companyId) {
+        if (!title || !description || !salary || !location || !jobType || !experienceLevel || !position || !companyId || !requirements) {
             return res.status(400).json({
-                message: "Somethin is missing.",
+                message: "Missing required fields.",
                 success: false
-            })
-        };
+            });
+        }
+
+        const parsedRequirements = Array.isArray(requirements) 
+            ? requirements 
+            : requirements.split(',').map(req => req.trim()).filter(Boolean);
+
         const job = await Job.create({
             title,
             description,
-            requirements: requirements.split(","),
-            salary: Number(salary),
+            requirements: parsedRequirements,
+            salary,
             location,
             jobType,
-            experienceLevel: experience,
+            experienceLevel,     // ✅ Added experienceLevel to the model
             position,
             company: companyId,
             created_by: userId
         });
+
         return res.status(201).json({
             message: "New job created successfully.",
             job,
             success: true
         });
+
     } catch (error) {
-        console.log(error);
+        console.error("Error posting job:", error);
+        return res.status(500).json({
+            message: "Internal server error.",
+            success: false
+        });
     }
-}
+};
+
 // student k liye
 export const getAllJobs = async (req, res) => {
     try {
