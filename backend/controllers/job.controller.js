@@ -100,3 +100,72 @@ export const getAdminJobs = async (req, res) => {
         console.log(error);
     }
 }
+
+
+export const updateJob = async (req, res) => {
+    try {
+        const jobId = req.params.id;
+
+        console.log("Request body:", req.body);
+
+        // Filter out empty or undefined fields
+        const fieldsToUpdate = {};
+        Object.keys(req.body).forEach((key) => {
+            if (req.body[key] !== "" && req.body[key] !== undefined) {
+                // Handle salary validation
+                if (key === "salary") {
+                    const salaryValue = Number(req.body.salary);
+                    if (!isNaN(salaryValue) && salaryValue >= 0) {
+                        fieldsToUpdate[key] = salaryValue;
+                    } else {
+                        return res.status(400).json({
+                            message: "Invalid salary value. It must be a valid number.",
+                            success: false
+                        });
+                    }
+                } else if (key === "requirements" && typeof req.body.requirements === "string") {
+                    // Split requirements string into array
+                    fieldsToUpdate[key] = req.body.requirements
+                        .split(",")
+                        .map(req => req.trim())
+                        .filter(Boolean);
+                } else {
+                    fieldsToUpdate[key] = req.body[key];
+                }
+            }
+        });
+
+        if (Object.keys(fieldsToUpdate).length === 0) {
+            return res.status(400).json({
+                message: "No fields provided for update.",
+                success: false
+            });
+        }
+
+        const updatedJob = await Job.findByIdAndUpdate(
+            jobId,
+            { $set: fieldsToUpdate },
+            { new: true, runValidators: true }
+        );
+
+        if (!updatedJob) {
+            return res.status(404).json({
+                message: "Job not found.",
+                success: false
+            });
+        }
+
+        return res.status(200).json({
+            message: "Job updated successfully.",
+            job: updatedJob,
+            success: true
+        });
+
+    } catch (error) {
+        console.error("Error in updateJob:", error);
+        return res.status(500).json({
+            message: "Server error.",
+            success: false
+        });
+    }
+};
