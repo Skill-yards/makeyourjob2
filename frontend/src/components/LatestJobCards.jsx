@@ -26,7 +26,7 @@ const LatestJobCards = ({ job }) => {
   return (
     <Card 
       className="group h-full transition-all duration-300 hover:shadow-xl border border-gray-100 dark:border-gray-800 hover:border-purple-200 dark:hover:border-purple-900 relative overflow-hidden bg-white dark:bg-gray-800"
-      onClick={() => navigate(`/description/${job._id}`)}
+      onClick={() => navigate(`/jobs/${job._id}`)}
     >
       {/* Background pattern for visual interest */}
       <div className="absolute top-0 right-0 w-24 h-24 bg-gradient-to-bl from-purple-100 dark:from-purple-900/30 to-transparent rounded-bl-full opacity-50"></div>

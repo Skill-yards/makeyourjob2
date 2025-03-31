@@ -85,13 +85,15 @@ const CompaniesTable = () => {
                                         </PopoverTrigger>
                                         <PopoverContent className="w-32">
                                             <div
-                                                onClick={() => navigate(`/admin/companies/${company._id}`)}
+                                                onClick={() => navigate(`/admin/companies/${company._id}/update`)}
                                                 className="flex items-center gap-2 w-fit cursor-pointer"
                                             >
                                                 <Edit2 className="w-4" />
                                                 <span>Edit</span>
                                             </div>
-                                            <div className="flex items-center gap-2 w-fit cursor-pointer mt-2">
+                                            <div
+                                                onClick={() => navigate(`/admin/companies/${company._id}`)}
+                                                className="flex items-center gap-2 w-fit cursor-pointer mt-2">
                                                 <FileText className="w-4" />
                                                 <span>Details</span>
                                             </div>
