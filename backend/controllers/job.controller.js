@@ -192,3 +192,42 @@ export const updateJob = async (req, res) => {
         });
     }
 };
+
+
+export const adminGetJob = async (req, res) => {
+    try {
+        const jobId = req.params.id;
+
+        // Find the job by ID and populate the applications and the applicants for each application
+        const job = await Job.findById(jobId)
+            .populate({
+                path: 'applications',
+                populate: {
+                    path: 'applicant',  // Populate the applicant details
+                    select: 'fullname email phoneNumber role profile' // Select only necessary fields
+                }
+            })
+            .populate('company') // Optionally populate company details if needed
+            .populate('created_by'); // Optionally populate the job creator's details
+
+        // If no job is found, return a 404 error
+        if (!job) {
+            return res.status(404).json({
+                message: "Job not found.",
+                success: false
+            });
+        }
+
+        return res.status(200).json({
+            job,
+            success: true
+        });
+
+    } catch (error) {
+        console.error("Error retrieving job with applications:", error);
+        return res.status(500).json({
+            message: "Internal server error.",
+            success: false
+        });
+    }
+};

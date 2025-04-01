@@ -164,7 +164,7 @@ const Job = ({ job }) => {
                 <Button 
                     variant="default" 
                     className="bg-purple-600 hover:bg-purple-700 flex items-center gap-1.5"
-                    onClick={() => navigate(`/description/${job?._id}`)}
+                    onClick={() => navigate(`/jobs/${job?._id}`)}
                 >
                     <ExternalLink className="h-4 w-4" />
                     View Details

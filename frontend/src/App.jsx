@@ -17,6 +17,7 @@ import ProtectedRoute from './components/admin/ProtectedRoute'
 import JobSetup from './components/admin/JobSetup'
 import CompanyJobDescription from './components/admin/CompanyJobDescription'
 import CompanyJobApplicants from './components/admin/CompanyJobApplicants'
+import AdminSingleWithApply from './components/admin/AdminSingleJobWithApply'
 
 
 const appRouter = createBrowserRouter([
@@ -71,7 +72,7 @@ const appRouter = createBrowserRouter([
   },
   {
     path:"/admin/jobs/:id",
-    element:<ProtectedRoute><CompanyJobApplicants/></ProtectedRoute> 
+    element:<ProtectedRoute><AdminSingleWithApply /></ProtectedRoute> 
   },
   {
     path:"/admin/jobs/:id/update",

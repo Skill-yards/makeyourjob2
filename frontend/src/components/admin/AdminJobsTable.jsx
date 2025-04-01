@@ -4,11 +4,10 @@ import { Avatar, AvatarImage } from '../ui/avatar';
 import { Popover, PopoverContent, PopoverTrigger } from '../ui/popover';
 import { Edit2, Eye, MoreHorizontal } from 'lucide-react';
 import { useSelector } from 'react-redux';
-import { useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 
 const AdminJobsTable = () => {
     const { allAdminJobs, searchJobByText } = useSelector((store) => store.job);
-
     const [filterJobs, setFilterJobs] = useState(allAdminJobs);
     const navigate = useNavigate();
 
@@ -56,57 +55,62 @@ const AdminJobsTable = () => {
                     </TableRow>
                 </TableHeader>
                 <TableBody>
-                    {filterJobs?.map((job) => (
-                        <TableRow key={job?._id}>
-                            {/* Company Details */}
-                            <TableCell>
-                                <div className="flex items-center gap-2">
-                                    {job?.company?.logo && (
-                                        <Avatar>
-                                            <AvatarImage src={job?.company?.logo} alt={job?.company?.name} />
-                                        </Avatar>
-                                    )}
-                                    <span>{job?.company?.name || 'N/A'}</span>
-                                </div>
-                            </TableCell>
-
-                            {/* Job Details */}
-                            <TableCell>{job?.title}</TableCell>
-                            <TableCell>{job?.salary ? `$${job.salary}k` : 'N/A'}</TableCell>
-                            <TableCell>{job?.experienceLevel ? `${job.experienceLevel} years` : 'N/A'}</TableCell>
-                            <TableCell>{job?.location || 'N/A'}</TableCell>
-                            <TableCell>{job?.jobType || 'N/A'}</TableCell>
-                            <TableCell>{job?.position || 'N/A'}</TableCell>
-                            <TableCell>{job?.applications?.length || 0}</TableCell>
-                            <TableCell>{formatDate(job?.createdAt)}</TableCell>
-                            <TableCell>{formatDate(job?.updatedAt)}</TableCell>
-
-                            {/* Action Buttons */}
-                            <TableCell className="text-right cursor-pointer">
-                                <Popover>
-                                    <PopoverTrigger>
-                                        <MoreHorizontal />
-                                    </PopoverTrigger>
-                                    <PopoverContent className="w-32">
-                                        <div
-                                            onClick={() => navigate(`/admin/jobs/${job._id}`)}
-                                            className="flex items-center gap-2 w-fit cursor-pointer"
-                                        >
-                                            <Edit2 className="w-4" />
-                                            <span>Edit</span>
-                                        </div>
-                                        <div
-                                            onClick={() => navigate(`/admin/jobs/${job._id}/applicants`)}
-                                            className="flex items-center w-fit gap-2 cursor-pointer mt-2"
-                                        >
-                                            <Eye className="w-4" />
-                                            <span>Applicants</span>
-                                        </div>
-                                    </PopoverContent>
-                                </Popover>
-                            </TableCell>
-                        </TableRow>
-                    ))}
+                    {filterJobs?.map((job) => {
+                        const { _id, company, title, salary, experienceLevel, location, jobType, position, applications, createdAt, updatedAt } = job;
+                        return (
+                            <TableRow key={_id}>
+                                {/* Company Details */}
+                                <TableCell>
+                                    <div className="flex items-center gap-2">
+                                        {company?.logo && (
+                                            <Avatar>
+                                                <AvatarImage src={company?.logo} alt={company?.name} />
+                                            </Avatar>
+                                        )}
+                                        <span>{company?.name || 'N/A'}</span>
+                                    </div>
+                                </TableCell>
+                                {/* Job Details */}
+                                <TableCell>
+                                    <Link to={`/admin/jobs/${_id}`} className="text-blue-600 hover:underline">
+                                        {title}
+                                    </Link>
+                                </TableCell>
+                                <TableCell>{salary ? `$${salary}k` : 'N/A'}</TableCell>
+                                <TableCell>{experienceLevel ? `${experienceLevel} years` : 'N/A'}</TableCell>
+                                <TableCell>{location || 'N/A'}</TableCell>
+                                <TableCell>{jobType || 'N/A'}</TableCell>
+                                <TableCell>{position || 'N/A'}</TableCell>
+                                <TableCell>{applications?.length || 0}</TableCell>
+                                <TableCell>{formatDate(createdAt)}</TableCell>
+                                <TableCell>{formatDate(updatedAt)}</TableCell>
+                                {/* Action Buttons */}
+                                <TableCell className="text-right cursor-pointer">
+                                    <Popover>
+                                        <PopoverTrigger>
+                                            <MoreHorizontal />
+                                        </PopoverTrigger>
+                                        <PopoverContent className="w-32">
+                                            <div
+                                                onClick={() => navigate(`/admin/jobs/${_id}/update`)}
+                                                className="flex items-center gap-2 w-fit cursor-pointer"
+                                            >
+                                                <Edit2 className="w-4" />
+                                                <span>Edit</span>
+                                            </div>
+                                            <div
+                                                onClick={() => navigate(`/admin/jobs/${_id}/applicants`)}
+                                                className="flex items-center w-fit gap-2 cursor-pointer mt-2"
+                                            >
+                                                <Eye className="w-4" />
+                                                <span>Applicants</span>
+                                            </div>
+                                        </PopoverContent>
+                                    </Popover>
+                                </TableCell>
+                            </TableRow>
+                        );
+                    })}
                 </TableBody>
             </Table>
         </div>
