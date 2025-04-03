@@ -41,15 +41,15 @@ const Footer = () => {
             <div className="space-y-3">
               <div className="flex items-center text-sm text-slate-300">
                 <Phone className="h-4 w-4 mr-3 text-indigo-400" /> 
-                <span>+1 (555) 123-4567</span>
+                <span> +91 7060100562</span>
               </div>
               <div className="flex items-center text-sm text-slate-300">
                 <Mail className="h-4 w-4 mr-3 text-indigo-400" /> 
-                <span>hello@jobhunt.com</span>
+                <span>info@makeyourjobs.com</span>
               </div>
               <div className="flex items-center text-sm text-slate-300">
-                <MapPin className="h-4 w-4 mr-3 text-indigo-400" /> 
-                <span>123 Job Street, Career City</span>
+                <MapPin className="h-4 w-7 mr-3 text-indigo-400" /> 
+                <span> D-24, Gailana Rd, behind St. Conrad's School, Nirbhay Nagar, Agra, Uttar Pradesh 282007 </span>
               </div>
             </div>
           </div>
@@ -97,7 +97,7 @@ const Footer = () => {
         <div className="container mx-auto px-4 py-6">
           <div className="flex flex-col md:flex-row justify-between items-center">
             <p className="text-sm text-slate-400 mb-4 md:mb-0">
-              © {currentYear} Job Hunt. All rights reserved.
+              © {currentYear} MakeYourJob.  All rights reserved.
             </p>
             
             <div className="flex space-x-5">
@@ -107,10 +107,10 @@ const Footer = () => {
               <a href="#" className="text-slate-400 hover:text-indigo-400 transition-colors" aria-label="Twitter">
                 <Twitter className="w-5 h-5" />
               </a>
-              <a href="#" className="text-slate-400 hover:text-indigo-400 transition-colors" aria-label="LinkedIn">
+              <a href="https://www.linkedin.com/company/skillyards/posts/?feedView=all" className="text-slate-400 hover:text-indigo-400 transition-colors" aria-label="LinkedIn">
                 <Linkedin className="w-5 h-5" />
               </a>
-              <a href="#" className="text-slate-400 hover:text-indigo-400 transition-colors" aria-label="Instagram">
+              <a href="https://www.instagram.com/skillyardss/?hl=en" className="text-slate-400 hover:text-indigo-400 transition-colors" aria-label="Instagram">
                 <Instagram className="w-5 h-5" />
               </a>
             </div>

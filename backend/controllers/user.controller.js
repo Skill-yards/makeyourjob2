@@ -5,60 +5,20 @@ import jwt from "jsonwebtoken";
 import { PutObjectCommand } from '@aws-sdk/client-s3';
 import {s3Client} from "../utils/file.upload.service.js";
 import dotenv from 'dotenv';
+import { sendEmail } from "../utils/send.email.service.js";
+
+
+
 dotenv.config();
 
+const generateOTP = () => {
+    return Math.floor(100000 + Math.random() * 900000).toString(); // 6-digit OTP
+};
 
-
-
-
-
-// export const register = async (req, res) => {
-//     try {
-//         const { fullname, email, phoneNumber, password, role } = req.body;
-         
-//         if (!fullname || !email || !phoneNumber || !password || !role) {
-//             return res.status(400).json({
-//                 message: "Something is missing",
-//                 success: false
-//             });
-//         };
-//         const file = req.file;
-//         const fileUri = getDataUri(file);
-//         const cloudResponse = await cloudinary.uploader.upload(fileUri.content);
-
-//         const user = await User.findOne({ email });
-//         if (user) {
-//             return res.status(400).json({
-//                 message: 'User already exist with this email.',
-//                 success: false,
-//             })
-//         }
-//         const hashedPassword = await bcrypt.hash(password, 10);
-
-//         await User.create({
-//             fullname,
-//             email,
-//             phoneNumber,
-//             password: hashedPassword,
-//             role,
-//             profile:{
-//                 profilePhoto:cloudResponse.secure_url,
-//             }
-//         });
-
-//         return res.status(201).json({
-//             message: "Account created successfully.",
-//             success: true
-//         });
-//     } catch (error) {
-//         console.log(error);
-//     }
-// }
 
 export const register = async (req, res) => {
     try {
         const { fullname, email, phoneNumber, password, role } = req.body;
-
         if (!fullname || !email || !phoneNumber || !password || !role) {
             return res.status(400).json({
                 message: "Something is missing",
@@ -92,21 +52,25 @@ export const register = async (req, res) => {
         }
 
         const hashedPassword = await bcrypt.hash(password, 10);
-
+        const otp = generateOTP();
+        // const otpExpiration = new Date(Date.now() + 5 * 60 * 1000); // 5mint
+        const otpExpiration = new Date(Date.now() + 60 * 60 * 1000)  /// 1hours
         await User.create({
             fullname,
             email,
             phoneNumber,
             password: hashedPassword,
             role,
+            otp,
+            otpExpiration,
             profile: {
                 profilePhoto: profilePhotoUrl,
             }
         });
-
+        await sendEmail(email,"Email Verification", otp);
         return res.status(201).json({
-            message: "Account created successfully.",
-            success: true
+            message: "Account created successfully. Please verify your email with the OTP sent.",
+            success: true,
         });
     } catch (error) {
         console.error("Error in register function:", error);
@@ -183,74 +147,9 @@ export const logout = async (req, res) => {
 
 
 
-
-// export const updateProfile = async (req, res) => {
-//     try {
-//         const { fullname, email, phoneNumber, bio, skills } = req.body;
-        
-//         const file = req.file;
-//         // cloudinary ayega idhar
-//         const fileUri = getDataUri(file);
-//         const cloudResponse = await cloudinary.uploader.upload(fileUri.content);
-
-
-
-//         let skillsArray;
-//         if(skills){
-//             skillsArray = skills.split(",");
-//         }
-//         const userId = req.id; // middleware authentication
-//         let user = await User.findById(userId);
-
-//         if (!user) {
-//             return res.status(400).json({
-//                 message: "User not found.",
-//                 success: false
-//             })
-//         }
-//         // updating data
-//         if(fullname) user.fullname = fullname
-//         if(email) user.email = email
-//         if(phoneNumber)  user.phoneNumber = phoneNumber
-//         if(bio) user.profile.bio = bio
-//         if(skills) user.profile.skills = skillsArray
-      
-//         // resume comes later here...
-//         if(cloudResponse){
-//             user.profile.resume = cloudResponse.secure_url // save the cloudinary url
-//             user.profile.resumeOriginalName = file.originalname // Save the original file name
-//         }
-
-
-//         await user.save();
-
-//         user = {
-//             _id: user._id,
-//             fullname: user.fullname,
-//             email: user.email,
-//             phoneNumber: user.phoneNumber,
-//             role: user.role,
-//             profile: user.profile
-//         }
-
-//         return res.status(200).json({
-//             message:"Profile updated successfully.",
-//             user,
-//             success:true
-//         })
-//     } catch (error) {
-//         console.log(error);
-//     }
-// }
-
-
-
-
-
 export const updateProfile = async (req, res) => {
     try {
         const { fullname, email, phoneNumber, bio, skills } = req.body;
-        console.log(req.body,req.file,"sjdhhhawdhqw");
         const file = req.file;
         let resumeUrl = null;
         let resumeOriginalName = null;
@@ -316,3 +215,50 @@ export const updateProfile = async (req, res) => {
         });
     }
 };
+
+
+
+
+export const verifyEmail = async (req, res) => {
+    try {
+        const { email, otp } = req.body;
+        if (!email || !otp) {
+            return res.status(400).json({
+                message: "Email and OTP are required",
+                success: false
+            });
+        }
+        const user = await User.findOne({ email });
+        if (!user) {
+            return res.status(404).json({
+                message: "User not found",
+                success: false
+            });
+        }
+        if (user.isVerified) {
+            return res.status(400).json({
+                message: "Email already verified",
+                success: false
+            });
+        }
+        if (user.otp !== otp || new Date() > user.otpExpiration) {
+            return res.status(400).json({
+                message: "Invalid or expired OTP",
+                success: false
+            });
+        }
+        user.isVerified = true;
+        user.otp = null;
+        user.otpExpiration = null;
+        await user.save();
+        return res.status(200).json({
+            message: "Email verified successfully",
+            success: true
+        });
+    } catch (error) {
+        console.error("Error in verifyEmail:", error);
+        return res.status(500).json({ message: "Server Error", success: false });
+    }
+};
+
+
