@@ -16,12 +16,12 @@ const app = express();
 app.use(express.json());
 app.use(express.urlencoded({extended:true}));
 app.use(cookieParser());
-const corsOptions = {
-    origin:['http://localhost:5173','https://h11d8v8s-5173.inc1.devtunnels.ms/'],
-    credentials:true
-}
+    const corsOptions = {
+        origin:['http://localhost:5173',"https://gvjgskdc-5173.inc1.devtunnels.ms"],
+        credentials:true
+    }
 
-app.use(cors(corsOptions));
+    app.use(cors(corsOptions));
 
 const PORT = process.env.PORT || 3000;
 

@@ -2,9 +2,11 @@ import React from 'react';
 import { Mail, Phone, MapPin,  Linkedin, Twitter, Instagram, Gitlab } from 'lucide-react';
 import { Button } from '../ui/button';
 import { Input } from '../ui/input';
+import { useNavigate } from 'react-router-dom';
 
 const Footer = () => {
   const currentYear = new Date().getFullYear();
+  const navigate=useNavigate()
   
   return (
     <footer className="bg-gradient-to-r from-slate-900 to-slate-800 text-white">
@@ -35,7 +37,7 @@ const Footer = () => {
           {/* Company Info */}
           <div>
             <div className="mb-6">
-              <h2 className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-indigo-400 to-purple-400">Job Hunt</h2>
+              <h2 className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-indigo-400 to-purple-400">MakeYourJobs</h2>
               <p className="mt-2 text-sm text-slate-300">Find your dream job with our curated listings and powerful search tools.</p>
             </div>
             <div className="space-y-3">
@@ -47,8 +49,9 @@ const Footer = () => {
                 <Mail className="h-4 w-4 mr-3 text-indigo-400" /> 
                 <span>info@makeyourjobs.com</span>
               </div>
+              
               <div className="flex items-center text-sm text-slate-300">
-                <MapPin className="h-4 w-7 mr-3 text-indigo-400" /> 
+                <MapPin className="h-4 w-7  mb-10 mr-3 text-indigo-400" /> 
                 <span> D-24, Gailana Rd, behind St. Conrad's School, Nirbhay Nagar, Agra, Uttar Pradesh 282007 </span>
               </div>
             </div>
@@ -62,7 +65,6 @@ const Footer = () => {
               <li><a href="#" className="text-sm text-slate-300 hover:text-white transition-colors">Create Resume</a></li>
               <li><a href="#" className="text-sm text-slate-300 hover:text-white transition-colors">Job Alerts</a></li>
               <li><a href="#" className="text-sm text-slate-300 hover:text-white transition-colors">Career Advice</a></li>
-              <li><a href="#" className="text-sm text-slate-300 hover:text-white transition-colors">Salary Tools</a></li>
             </ul>
           </div>
 
@@ -70,10 +72,8 @@ const Footer = () => {
           <div>
             <h3 className="text-lg font-semibold mb-4 pb-2 border-b border-slate-700/50">For Employers</h3>
             <ul className="space-y-2">
-              <li><a href="#" className="text-sm text-slate-300 hover:text-white transition-colors">Post a Job</a></li>
+              <li><a href="/browse" className="text-sm text-slate-300 hover:text-white transition-colors">Post a Job</a></li>
               <li><a href="#" className="text-sm text-slate-300 hover:text-white transition-colors">Browse Candidates</a></li>
-              <li><a href="#" className="text-sm text-slate-300 hover:text-white transition-colors">Pricing Plans</a></li>
-              <li><a href="#" className="text-sm text-slate-300 hover:text-white transition-colors">Recruitment Tools</a></li>
               <li><a href="#" className="text-sm text-slate-300 hover:text-white transition-colors">Company Profile</a></li>
             </ul>
           </div>
@@ -83,10 +83,9 @@ const Footer = () => {
             <h3 className="text-lg font-semibold mb-4 pb-2 border-b border-slate-700/50">Resources</h3>
             <ul className="space-y-2">
               <li><a href="#" className="text-sm text-slate-300 hover:text-white transition-colors">Help Center</a></li>
-              <li><a href="#" className="text-sm text-slate-300 hover:text-white transition-colors">Privacy Policy</a></li>
-              <li><a href="#" className="text-sm text-slate-300 hover:text-white transition-colors">Terms of Service</a></li>
-              <li><a href="#" className="text-sm text-slate-300 hover:text-white transition-colors">Blog</a></li>
-              <li><a href="#" className="text-sm text-slate-300 hover:text-white transition-colors">Contact Us</a></li>
+              <li><a href="/privacy" className="text-sm text-slate-300 hover:text-white transition-colors">Privacy Policy</a></li>
+              <li><a href="/terms" className="text-sm text-slate-300 hover:text-white transition-colors">Terms of Service</a></li>
+              <li><a href="/contact" className="text-sm text-slate-300 hover:text-white transition-colors">Contact Us</a></li>
             </ul>
           </div>
         </div>

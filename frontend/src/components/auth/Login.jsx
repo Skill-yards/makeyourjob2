@@ -22,7 +22,7 @@ const Login = () => {
     const [input, setInput] = useState({
         email: "",
         password: "",
-        role: "student", // Default role
+        role: "Employees", // Default role
     });
     
     const { loading, user } = useSelector(store => store.auth);
@@ -61,6 +61,10 @@ const Login = () => {
             navigate("/");
         }
     }, [user, navigate]);
+
+    // useEffect(() => {
+    //     dispatch(setLoading(false)); // Reset loading when Login mounts
+    //   }, [dispatch])
 
     return (
         <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex flex-col">
@@ -128,10 +132,10 @@ const Login = () => {
                                     onValueChange={(value) => setInput({...input, role: value})}
                                 >
                                     <div className="flex items-center space-x-2 rounded-md border p-2 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">
-                                        <RadioGroupItem value="student" id="student" name="role" />
+                                        <RadioGroupItem value="Employees" id="Employees" name="role" />
                                         <Label htmlFor="student" className="flex items-center gap-2 cursor-pointer">
                                             <User className="h-4 w-4" />
-                                            Student
+                                            Employees
                                         </Label>
                                     </div>
                                     <div className="flex items-center space-x-2 rounded-md border p-2 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">

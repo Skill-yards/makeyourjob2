@@ -38,12 +38,8 @@ const Navbar = () => {
         }
     }
 
-    // Check if a link is active
-    const isActive = (path) => {
-        return location.pathname === path ? true : false;
-    };
+    const isActive = (path) => location.pathname === path;
 
-    // Navigation links based on user role
     const getNavLinks = () => {
         if (user && user.role === 'recruiter') {
             return [
@@ -58,7 +54,6 @@ const Navbar = () => {
         ];
     };
 
-    // Get user initials for avatar fallback
     const getUserInitials = () => {
         if (!user || !user.fullname) return "U";
         return user.fullname.split(' ').map(n => n[0]).join('').toUpperCase();
@@ -68,13 +63,13 @@ const Navbar = () => {
         <header className="sticky top-0 z-50 w-full bg-white/95 backdrop-blur supports-[backdrop-filter]:bg-white/60 border-b border-gray-100 dark:bg-gray-950/95 dark:border-gray-800">
             <div className="container mx-auto px-4 sm:px-6">
                 <div className="flex h-16 items-center justify-between">
+                    
                     {/* Logo */}
                     <div className="flex items-center">
                         <Link to="/" className="flex items-center space-x-2">
-                            <Briefcase className="h-6 w-6 text-purple-600" />
-                            <span className="text-xl font-bold tracking-tight">
-                                Make<span className="text-orange-600">YourJob</span>
-                            </span>
+                            <div className='w-30 h-10 mt-2 bg-transparent'>
+                                <img src="../../../public/logo-removebg-preview.png" alt="Logo" className="w-full h-full bg-transparent object-contain" />
+                            </div>
                         </Link>
                     </div>
 
@@ -132,11 +127,9 @@ const Navbar = () => {
                                         </Avatar>
                                         <div className="space-y-1">
                                             <h4 className="font-semibold">{user?.fullname}</h4>
-                                            <div className="flex items-center">
-                                                <Badge variant="outline" className="text-xs px-2 capitalize bg-purple-50 text-purple-700 border-purple-200">
-                                                    {user?.role}
-                                                </Badge>
-                                            </div>
+                                            <Badge variant="outline" className="text-xs px-2 capitalize bg-purple-50 text-purple-700 border-purple-200">
+                                                {user?.role}
+                                            </Badge>
                                             {user?.profile?.bio && (
                                                 <p className="text-xs text-muted-foreground line-clamp-2">{user?.profile?.bio}</p>
                                             )}
@@ -146,13 +139,12 @@ const Navbar = () => {
                                     <Separator className="my-3" />
                                     
                                     <nav className="space-y-1">
-                                        {user && user.role === 'student' && (
+                                        {user && (user.role === 'recruiter' || user.role === 'Employees') && (
                                             <Link to="/profile" className="flex items-center h-9 px-2 rounded-md text-sm hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">
                                                 <User2 className="mr-2 h-4 w-4 text-gray-500" />
                                                 <span>View Profile</span>
                                             </Link>
                                         )}
-                                        
                                         <button 
                                             onClick={logoutHandler} 
                                             className="flex w-full items-center h-9 px-2 rounded-md text-sm text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
@@ -186,17 +178,16 @@ const Navbar = () => {
                                             <X className="h-5 w-5" />
                                         </Button>
                                     </div>
-                                    
-                                    {/* Mobile Menu Links */}
+
                                     <nav className="flex flex-col space-y-1">
                                         {getNavLinks().map((link, index) => (
-                                            <Link 
-                                                key={index} 
-                                                to={link.path} 
+                                            <Link
+                                                key={index}
+                                                to={link.path}
                                                 onClick={() => setIsOpen(false)}
                                                 className={`flex items-center py-3 px-3 rounded-md ${
-                                                    isActive(link.path) 
-                                                        ? "bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-300" 
+                                                    isActive(link.path)
+                                                        ? "bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-300"
                                                         : "hover:bg-gray-100 dark:hover:bg-gray-800"
                                                 }`}
                                             >
@@ -205,10 +196,9 @@ const Navbar = () => {
                                             </Link>
                                         ))}
                                     </nav>
-                                    
+
                                     <Separator className="my-4" />
-                                    
-                                    {/* Mobile Login/Signup or User Info */}
+
                                     {!user ? (
                                         <div className="flex flex-col space-y-2 mt-auto">
                                             <Link to="/login" onClick={() => setIsOpen(false)}>
@@ -238,28 +228,23 @@ const Navbar = () => {
                                                     </Badge>
                                                 </div>
                                             </div>
-                                            
-                                            {user && user.role === 'student' && (
-                                                <Link 
-                                                    to="/profile" 
-                                                    onClick={() => setIsOpen(false)}
-                                                    className="flex items-center py-3 px-3 rounded-md hover:bg-gray-100 dark:hover:bg-gray-800"
-                                                >
-                                                    <User2 className="h-4 w-4 text-gray-500" />
-                                                    <span className="ml-2">View Profile</span>
+                                            {(user.role === 'recruiter' || user.role === 'Employees') && (
+                                                <Link to="/profile" onClick={() => setIsOpen(false)}>
+                                                    <Button variant="ghost" className="w-full mb-2">
+                                                        View Profile
+                                                    </Button>
                                                 </Link>
                                             )}
-                                            
-                                            <button 
+                                            <Button
                                                 onClick={() => {
                                                     logoutHandler();
                                                     setIsOpen(false);
-                                                }} 
-                                                className="flex w-full items-center py-3 px-3 rounded-md text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20"
+                                                }}
+                                                variant="destructive"
+                                                className="w-full"
                                             >
-                                                <LogOut className="h-4 w-4" />
-                                                <span className="ml-2">Logout</span>
-                                            </button>
+                                                Logout
+                                            </Button>
                                         </div>
                                     )}
                                 </div>

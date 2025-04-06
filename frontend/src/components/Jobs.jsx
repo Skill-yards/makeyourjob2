@@ -4,6 +4,7 @@ import Navbar from './shared/Navbar';
 import FilterCard from './FilterCard';
 import Job from './Job';
 import { motion } from 'framer-motion';
+import Footer from "./shared/Footer";
 import { 
   Briefcase, 
   Search, 
@@ -23,6 +24,7 @@ import {
 const Jobs = () => {
   const { allJobs, searchedQuery } = useSelector(store => store.job);
   const [filterJobs, setFilterJobs] = useState(allJobs);
+  console.log(filterJobs,"jsdhdi")
   
   useEffect(() => {
     if (searchedQuery) {
@@ -61,6 +63,7 @@ const Jobs = () => {
   };
 
   return (
+    <>
     <div className="container mx-auto px-4 py-8">
       <Navbar />
       
@@ -146,6 +149,8 @@ const Jobs = () => {
         </div>
       </div>
     </div>
+    <Footer />
+    </>
   );
 };
 
