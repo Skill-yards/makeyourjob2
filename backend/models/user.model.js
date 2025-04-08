@@ -1,9 +1,13 @@
 import mongoose from "mongoose";
 
 const userSchema = new mongoose.Schema({
-    fullname: {
+    firstname: {
         type: String,
         required: true
+    },
+    lastname: {
+        type: String,
+        required: false
     },
     email: {
         type: String,
@@ -22,6 +26,14 @@ const userSchema = new mongoose.Schema({
         type:String,
         enum:['student','recruiter'],
         required:true
+    },
+    gender:{
+        type:String,
+        required:true,
+    },
+    isVerified:{
+        type:Boolean,
+        default:false
     },
     profile:{
         bio:{type:String},
