@@ -199,6 +199,7 @@ const Signup = () => {
     }
   };
 
+
   const handleOtpChange = (index, value) => {
     const newOtp = [...otp];
     newOtp[index] = value.slice(-1);
@@ -243,6 +244,8 @@ const Signup = () => {
     } finally {
       dispatch(setLoading(false));
     }
+
+    
   };
 
   return (
