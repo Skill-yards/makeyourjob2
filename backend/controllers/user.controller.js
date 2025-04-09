@@ -6,6 +6,11 @@ import { PutObjectCommand } from "@aws-sdk/client-s3";
 import { s3Client } from "../utils/file.upload.service.js";
 import dotenv from "dotenv";
 import { sendEmail } from "../utils/send.email.service.js";
+import path from "path";
+import { fileURLToPath } from "url";
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 dotenv.config();
 
@@ -18,8 +23,6 @@ const generateOTP = () => {
 export const register = async (req, res) => {
   try {
     const { fullname, email, phoneNumber, password, role, isOtpVerified } = req.body;
-
-    // Scenario 1: OTP flow (only email, fullname, and role provided)
     if (email && fullname && role && !phoneNumber && !password && !isOtpVerified) {
       console.log(req.body, "shariq khan...");
       const user = await User.findOne({ email });
@@ -42,8 +45,14 @@ export const register = async (req, res) => {
         otpExpiration,
         isVerified: false,
       });
+      let templatePath = "";
+      if (role === "candidate") {
+        templatePath = path.resolve(__dirname, "../static/candidate.html");
+      } else if (role === "recruiter") {
+        templatePath = path.resolve(__dirname, "../static/recruiter.html");
+      }
 
-      await sendEmail(email, "Verification OTP", otp);
+      await sendEmail(email, "Verification OTP", otp, templatePath);
 
       return res.status(200).json({
         message: "OTP sent to your email for verification.",
@@ -149,7 +158,6 @@ export const login = async (req, res) => {
         success: false,
       });
     }
-    console.log(user.role,"jhjhcasid")
 
     const tokenData = {
       userId: user._id,
@@ -336,7 +344,7 @@ export const resendOTP = async (req, res) => {
     }
 
     const otp = generateOTP();
-    const otpExpiration = new Date(Date.now() + 60 * 60 * 1000); // ✅ 1 hour expiry
+    const otpExpiration = new Date(Date.now() + 60 * 60 * 1000);
 
     console.log("Generated OTP Expiration:", otpExpiration); 
 

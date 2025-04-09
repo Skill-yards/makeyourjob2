@@ -24,7 +24,7 @@ import {
 const Jobs = () => {
   const { allJobs, searchedQuery } = useSelector(store => store.job);
   const [filterJobs, setFilterJobs] = useState(allJobs);
-  console.log(filterJobs,"jsdhdi")
+  
   
   useEffect(() => {
     if (searchedQuery) {

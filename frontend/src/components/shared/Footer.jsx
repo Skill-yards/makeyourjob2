@@ -51,7 +51,7 @@ const Footer = () => {
               </div>
               
               <div className="flex items-center text-sm text-slate-300">
-                <MapPin className="h-4 w-7  mb-10 mr-3 text-indigo-400" /> 
+                <MapPin className="h-4 w-7 mb-5  mb-10 mr-3 text-indigo-400" /> 
                 <span> D-24, Gailana Rd, behind St. Conrad's School, Nirbhay Nagar, Agra, Uttar Pradesh 282007 </span>
               </div>
             </div>

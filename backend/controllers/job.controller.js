@@ -128,10 +128,6 @@ export const getAdminJobs = async (req, res) => {
 export const updateJob = async (req, res) => {
     try {
         const jobId = req.params.id;
-
-        console.log("Request body:", req.body);
-
-        // Filter out empty or undefined fields
         const fieldsToUpdate = {};
         Object.keys(req.body).forEach((key) => {
             if (req.body[key] !== "" && req.body[key] !== undefined) {
@@ -197,60 +193,60 @@ export const updateJob = async (req, res) => {
 
 
 
-export const searchJobs = async (req, res) => {
-  try {
-    const {
-      title,
-      location,
-      position,
-      jobType,
-      experienceLevel,
-      minSalary,
-      maxSalary,
-      page = 1,
-      limit = 10,
-    } = req.query;
+// export const searchJobs = async (req, res) => {
+//   try {
+//     const {
+//       title,
+//       location,
+//       position,
+//       jobType,
+//       experienceLevel,
+//       minSalary,
+//       maxSalary,
+//       page = 1,
+//       limit = 10,
+//     } = req.query;
 
-    const query = {};
+//     const query = {};
 
-    // Text-based search using regex
-    if (title) query.title = { $regex: title, $options: "i" };
-    if (location) query.location = { $regex: location, $options: "i" };
-    if (position) query.position = { $regex: position, $options: "i" };
-    if (jobType) query.jobType = jobType;
-    if (experienceLevel) query.experienceLevel = experienceLevel;
+//     // Text-based search using regex
+//     if (title) query.title = { $regex: title, $options: "i" };
+//     if (location) query.location = { $regex: location, $options: "i" };
+//     if (position) query.position = { $regex: position, $options: "i" };
+//     if (jobType) query.jobType = jobType;
+//     if (experienceLevel) query.experienceLevel = experienceLevel;
 
-    // Salary range filter (if salary is stored as Number in DB)
-    if (minSalary || maxSalary) {
-      query.salary = {};
-      if (minSalary) query.salary.$gte = Number(minSalary);
-      if (maxSalary) query.salary.$lte = Number(maxSalary);
-    }
+//     // Salary range filter (if salary is stored as Number in DB)
+//     if (minSalary || maxSalary) {
+//       query.salary = {};
+//       if (minSalary) query.salary.$gte = Number(minSalary);
+//       if (maxSalary) query.salary.$lte = Number(maxSalary);
+//     }
 
-    // Pagination
-    const skip = (parseInt(page) - 1) * parseInt(limit);
+//     // Pagination
+//     const skip = (parseInt(page) - 1) * parseInt(limit);
 
-    const jobs = await Job.find(query)
-      .skip(skip)
-      .limit(parseInt(limit))
-      .populate("company created_by applications");
+//     const jobs = await Job.find(query)
+//       .skip(skip)
+//       .limit(parseInt(limit))
+//       .populate("company created_by applications");
 
-    const total = await Job.countDocuments(query);
-    res.status(200).json({
-      success: true,
-      total,
-      count: jobs.length,
-      page: parseInt(page),
-      totalPages: Math.ceil(total / limit),
-      jobs,
-    });
+//     const total = await Job.countDocuments(query);
+//     res.status(200).json({
+//       success: true,
+//       total,
+//       count: jobs.length,
+//       page: parseInt(page),
+//       totalPages: Math.ceil(total / limit),
+//       jobs,
+//     });
 
-  } catch (error) {
-    console.error("Error in searchJobs:", error);
-    res.status(500).json({
-      success: false,
-      message: "Server Error. Please try again later.",
-    });
-  }
-};
+//   } catch (error) {
+//     console.error("Error in searchJobs:", error);
+//     res.status(500).json({
+//       success: false,
+//       message: "Server Error. Please try again later.",
+//     });
+//   }
+// };
 

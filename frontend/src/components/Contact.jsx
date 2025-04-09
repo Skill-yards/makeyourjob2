@@ -1,60 +1,92 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import Navbar from "./shared/Navbar";
 import Footer from "./shared/Footer";
+import { toast } from "sonner";
+import { CONSULTATION_API_END_POINT } from "@/utils/constant";
+import axios from "axios";
+import contactImages from "../../public/contactUsImage.jpg";
 
 const faqs = [
-  "Are you facing any technical problems?",
-  "Do you wish to partner with us?",
-  "Do you wish to build a brand property around competitions or do an employee engagement program?",
-  "Do you have any suggestions/feedback for us?",
-  "Do you wish to organize an online quiz, an on-campus/live quiz, or a simulation game with us?",
-  "Need help in Organizing Competitions?",
-];
-
-const statistics = [
   {
-    value: "22M+",
-    label: "Students",
-    color: "bg-pink-200",
-    image: "/students.png",
+    question: "Are you experiencing any technology issues?",
+    answer:
+      "We are here to help! Please describe the problem you are facing, and a member of our support team will get back to you as soon as possible with a solution.",
   },
   {
-    value: "78+",
-    label: "Countries",
-    color: "bg-blue-200",
-    image: "/world-map.png",
+    question: "Would you like to collaborate with us?",
+    answer:
+      "We would be delighted to discuss potential joint ventures. After you share your objectives or ideas, we will reach out to discuss how we can work together toward our mutual success.",
   },
   {
-    value: "800+",
-    label: "Brands trust us",
-    color: "bg-orange-200",
-    image: "/brands.png",
+    question:
+      "Do you want to implement an employee engagement program or create a brand initiative centered around competitions?",
+    answer:
+      "Absolutely! Creating memorable and impactful experiences is our specialty. Share your goals with us, and we'll work together to develop a campaign that is unique and aligned with your brand's values.",
   },
   {
-    value: "42K+",
-    label: "Colleges",
-    color: "bg-purple-200",
-    image: "/colleges.png",
+    question: "Do you have any comments or suggestions for us?",
+    answer:
+      "We highly value your feedback. Please feel free to share any ideas, criticisms, or suggestions for improvements; we are continually striving to enhance our service for you.",
   },
   {
-    value: "130K+",
-    label: "Opportunities",
-    color: "bg-yellow-200",
-    image: "/opportunities.png",
+    question:
+      "Would you like to collaborate with us on a simulation game, an on-campus/live quiz, or an online quiz?",
+    answer:
+      "Certainly! We offer a variety of formats to meet your needs, including hybrid, in-person, and virtual options. Let us know your preferred method, and we will handle the rest.",
   },
   {
-    value: "22.3M+",
-    label: "Assessments",
-    color: "bg-green-200",
-    image: "/assessments.png",
+    question: "Do you need assistance organizing competitions?",
+    answer:
+      "That's our specialty! We will support you at every stage, from conception to execution, to ensure a smooth and successful competition experience.",
   },
 ];
 
 const ContactUs = () => {
   const [openIndex, setOpenIndex] = useState(null);
+  const [formData, setFormData] = useState({
+    name: "",
+    email: "",
+    mobile: "",
+    organisation: "",
+    message: "",
+  });
 
   const toggleFAQ = (index) => {
     setOpenIndex(openIndex === index ? null : index);
+  };
+  const handleChange = (e) => {
+    setFormData({ ...formData, [e.target.name]: e.target.value });
+  };
+
+  const formSubmit = async (e) => {
+    e.preventDefault();
+    try {
+      if (
+        !formData.email ||
+        !formData.name ||
+        !formData.mobile ||
+        !formData.organisation ||
+        !formData.message
+      ) {
+        return toast.error("All fields are required");
+      }
+      const res = await axios.post(
+        `${CONSULTATION_API_END_POINT}/consultation`,
+        formData
+      );
+      console.log(res.data);
+      toast.success("Form submitted successfully!");
+      setFormData({
+        name: "",
+        email: "",
+        mobile: "",
+        organization: "",
+        message: "",
+      });
+    } catch (err) {
+      console.error(err);
+      toast.error(err?.response?.data?.message || "Something went wrong!");
+    }
   };
 
   return (
@@ -64,11 +96,11 @@ const ContactUs = () => {
       {/* Main Section */}
       <section className="bg-white py-12 px-4 md:px-16 flex flex-col md:flex-row items-center justify-between">
         {/* Left Section - Image */}
-        <div className="md:w-1/2 flex justify-center mb-6 md:mb-0">
+        <div className="md:w-1/2 flex justify-center mb-10 md:mb-0">
           <img
-            src="/customer-support.jpg"
+            src={contactImages}
             alt="Customer Support"
-            className="w-[80%] md:w-[60%] max-w-xs md:max-w-sm"
+            className="w-[80%] md:w-[60%] max-w-xs md:max-w-sm rounded-2xl"
           />
         </div>
 
@@ -88,30 +120,6 @@ const ContactUs = () => {
           </button>
         </div>
       </section>
-
-      {/* Our Numbers Section */}
-      <section className="py-12 px-4 md:px-16 bg-gray-100 text-center">
-        <h2 className="text-2xl md:text-4xl font-bold text-gray-900 mb-8">
-          Our Numbers
-        </h2>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 max-w-5xl mx-auto">
-          {statistics.map((stat, index) => (
-            <div
-              key={index}
-              className={`p-6 rounded-lg shadow-md ${stat.color} flex flex-col items-center`}
-            >
-              <h3 className="text-lg md:text-xl font-bold">{stat.value}</h3>
-              <p className="text-gray-700 text-sm md:text-base">{stat.label}</p>
-              <img
-                src={stat.image}
-                alt={stat.label}
-                className="mt-2 w-10 h-10 md:w-12 md:h-12"
-              />
-            </div>
-          ))}
-        </div>
-      </section>
-
       {/* FAQ Section */}
       <section className="bg-white py-12 px-4 md:px-16">
         <div className="max-w-3xl mx-auto text-center">
@@ -123,19 +131,21 @@ const ContactUs = () => {
             possible way.
           </p>
         </div>
-        <div className="mt-8 max-w-3xl mx-auto">
-          {faqs.map((question, index) => (
+        <div className="mt-8 max-w-5xl mx-auto">
+          {faqs.map((faq, index) => (
             <div key={index} className="border-b border-gray-300 py-3">
               <button
                 className="flex justify-between items-center w-full text-left text-sm md:text-lg font-medium text-gray-900"
                 onClick={() => toggleFAQ(index)}
               >
-                {question}
-                <span>{openIndex === index ? "−" : "+"}</span>
+                <span>
+                  {index + 1}. {faq.question}
+                </span>
+                <span className="ml-2">{openIndex === index ? "−" : "+"}</span>
               </button>
               {openIndex === index && (
                 <p className="text-gray-600 mt-2 text-xs md:text-sm">
-                  Lorem ipsum dolor sit amet, consectetur adipiscing elit.
+                  {faq.answer}
                 </p>
               )}
             </div>
@@ -148,11 +158,14 @@ const ContactUs = () => {
           <h2 className="text-2xl font-bold text-gray-900 mb-4">
             Schedule a 1:1 Consultation
           </h2>
-          <form>
+          <form className="space-y-4" onSubmit={formSubmit}>
             <div className="mb-4">
               <label className="block text-gray-700 font-semibold">Name*</label>
               <input
                 type="text"
+                name="name"
+                value={formData.name}
+                onChange={handleChange}
                 className="w-full p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                 placeholder="Enter your name"
               />
@@ -163,6 +176,9 @@ const ContactUs = () => {
               </label>
               <input
                 type="email"
+                name="email"
+                value={formData.email}
+                onChange={handleChange}
                 className="w-full p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                 placeholder="Enter your email"
               />
@@ -173,6 +189,9 @@ const ContactUs = () => {
               </label>
               <input
                 type="tel"
+                name="mobile"
+                value={formData.mobile}
+                onChange={handleChange}
                 className="w-full p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                 placeholder="Enter your mobile number"
               />
@@ -183,19 +202,25 @@ const ContactUs = () => {
               </label>
               <input
                 type="text"
+                name="organisation"
+                value={formData.organisation}
+                onChange={handleChange}
                 className="w-full p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                 placeholder="Enter your organization"
               />
             </div>
             <div className="mb-4">
               <label className="block text-gray-700 font-semibold">
-                What's on Your Mind?*
+               {` What's on Your Mind?*`}
               </label>
               <textarea
+                name="message"
+                value={formData.message}
+                onChange={handleChange}
                 className="w-full p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                 placeholder="Type your message here"
                 rows="4"
-              ></textarea>
+              />
             </div>
             <button
               type="submit"
@@ -245,7 +270,6 @@ const ContactUs = () => {
           </div>
         </div>
       </section>
-
       <Footer />
     </>
   );

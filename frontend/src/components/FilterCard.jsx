@@ -34,6 +34,7 @@ const FilterCard = () => {
   const dispatch = useDispatch();
 
   const handleChange = (filterType, value) => {
+    
     setSelectedValues(prev => {
       const newValues = { ...prev, [filterType]: value };
       return newValues;

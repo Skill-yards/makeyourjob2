@@ -150,7 +150,8 @@ const Job = ({ job }) => {
                     </Badge>
                     
                     <Badge variant="outline" className="bg-green-50 border-green-100 text-green-700 flex items-center">
-                        <DollarSign className="h-3 w-3 mr-1" />
+                        {/* <DollarSign className="h-3 w-3 mr-1" /> */}
+                        <span className="text-sm font-medium mr-1">₹</span>
                         {job?.salary || "0"}LPA
                     </Badge>
                     

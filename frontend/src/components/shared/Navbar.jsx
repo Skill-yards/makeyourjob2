@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import  { useState } from 'react'
 import { Link, useNavigate, useLocation } from 'react-router-dom'
 import { useDispatch, useSelector } from 'react-redux'
 import axios from 'axios'
@@ -139,7 +139,7 @@ const Navbar = () => {
                                     <Separator className="my-3" />
                                     
                                     <nav className="space-y-1">
-                                        {user && (user.role === 'recruiter' || user.role === 'Employees') && (
+                                        {user && (user.role === 'recruiter' || user.role === 'candidate') && (
                                             <Link to="/profile" className="flex items-center h-9 px-2 rounded-md text-sm hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">
                                                 <User2 className="mr-2 h-4 w-4 text-gray-500" />
                                                 <span>View Profile</span>
@@ -228,7 +228,7 @@ const Navbar = () => {
                                                     </Badge>
                                                 </div>
                                             </div>
-                                            {(user.role === 'recruiter' || user.role === 'Employees') && (
+                                            {(user.role === 'recruiter' || user.role === 'candidate') && (
                                                 <Link to="/profile" onClick={() => setIsOpen(false)}>
                                                     <Button variant="ghost" className="w-full mb-2">
                                                         View Profile

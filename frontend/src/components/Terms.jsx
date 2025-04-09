@@ -1,6 +1,7 @@
-import React from "react";
+
 import Navbar from "./shared/Navbar";
 import Footer from "./shared/Footer";
+import TermsImage from "../../public/Accept terms-rafiki.png"; // corrected import
 
 const TermsAndConditions = () => {
   return (
@@ -8,9 +9,8 @@ const TermsAndConditions = () => {
       <Navbar />
       <div className="container mx-auto px-4 py-12 text-gray-800">
         <div className="flex flex-col md:flex-row gap-10">
-          {/* Left Section */}
+          {/* Left Section - Text */}
           <div className="md:w-3/5">
-            {/* Header */}
             <div className="mb-8">
               <h1 className="text-4xl font-bold text-gray-900">Terms & Conditions</h1>
               <p className="text-base md:text-lg text-gray-600 mt-3 leading-relaxed">
@@ -20,9 +20,7 @@ const TermsAndConditions = () => {
               </p>
             </div>
 
-            {/* Content */}
             <div className="space-y-8">
-              {/* Section Block */}
               <div>
                 <h2 className="text-2xl font-semibold mb-2">1. Acceptance of Terms</h2>
                 <p className="text-gray-700 leading-relaxed">
@@ -41,7 +39,6 @@ const TermsAndConditions = () => {
                 </p>
               </div>
 
-              {/* Repeated Section Template */}
               <div>
                 <h2 className="text-2xl font-semibold mb-2">2. Using Our Services</h2>
                 <p className="text-gray-700 leading-relaxed">
@@ -66,9 +63,7 @@ const TermsAndConditions = () => {
                 </p>
               </div>
 
-              {/* Repeat this format for the remaining sections (4–10) */}
-              {/* ... */}
-
+              {/* Example final section */}
               <div>
                 <h2 className="text-2xl font-semibold mb-2">10. Reporting Abuse</h2>
                 <p className="text-gray-700 leading-relaxed">
@@ -91,13 +86,13 @@ const TermsAndConditions = () => {
             </div>
           </div>
 
-          {/* Right Section */}
+          {/* Right Section - Image */}
           <div className="hidden md:block md:w-2/5">
-            <div className="sticky top-20">
+            <div className="flex justify-center">
               <img
-                src="/terms-image.png"
+                src={TermsImage}
                 alt="Terms Illustration"
-                className="w-full max-w-xs mx-auto rounded-xl shadow-md"
+                className="w-80 rounded-xl "
               />
             </div>
           </div>
