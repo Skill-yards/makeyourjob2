@@ -23,11 +23,13 @@ import RecruitorImage from "../../../public/recruitorImages.jpg";
 
 const Signup = () => {
   const [input, setInput] = useState({
-    fullname: "",
+    firstname: "",
+    lastname: "",
     email: "",
     phoneNumber: "",
     password: "",
     role: "candidate",
+    gender: "",
     file: "",
   });
 
@@ -83,7 +85,6 @@ const Signup = () => {
     const [localPart, domain] = trimmedEmail.split("@");
     if (!localPart || !domain) return false;
 
-    // Public domains to disallow for recruiters
     const publicDomains = [
       "gmail.com",
       "yahoo.com",
@@ -96,13 +97,9 @@ const Signup = () => {
     ];
 
     if (input.role === "candidate") {
-      // For candidates, allow gmail.com, outlook.com, and any .com domains
       return domain === "gmail.com" || domain === "outlook.com" || domain.endsWith(".com");
     } else if (input.role === "recruiter") {
-      // For recruiters, disallow public domains and enforce company-specific domains
       if (publicDomains.includes(domain)) return false;
-
-      // Enforce company-like domain endings
       const validDomainEndings = [
         ".com",
         ".co",
@@ -116,9 +113,7 @@ const Signup = () => {
         ".info",
         ".edu",
       ];
-      const hasValidDomainEnding = validDomainEndings.some((ending) => domain.endsWith(ending));
-      
-      return hasValidDomainEnding;
+      return validDomainEndings.some((ending) => domain.endsWith(ending));
     }
     
     return false;
@@ -126,21 +121,23 @@ const Signup = () => {
 
   const sendOtpHandler = async () => {
     try {
-      if (!input.email || !input.fullname) {
-        return toast.error("Please enter email and full name to receive OTP");
+      if (!input.email || !input.firstname || !input.role) {
+        return toast.error("Please enter email, first name, and role to receive OTP");
       }
       if (!isValidRecruiterEmail(input.email)) {
         return toast.error(
           input.role === "candidate"
             ? "Please use a gmail.com, outlook.com, or any .com email address"
-            : "Recruiter email must be a company-specific domain (e.g., username@company.com) and cannot be a public email like gmail.com, yahoo.com, etc."
+            : "Recruiter email must be a company-specific domain (e.g., username@company.com)"
         );
       }
       dispatch(setLoading(true));
       const res = await axios.post(`${USER_API_END_POINT}/register`, {
+        firstname: input.firstname,
+        lastname: input.lastname,
         email: input.email,
-        fullname: input.fullname,
         role: input.role,
+        gender: input.gender || undefined, // Optional field
       });
       if (res.data.success) {
         setIsOtpSent(true);
@@ -154,7 +151,6 @@ const Signup = () => {
       dispatch(setLoading(false));
     }
   };
- 
 
   const resendOtpHandler = async () => {
     try {
@@ -198,7 +194,6 @@ const Signup = () => {
       dispatch(setLoading(false));
     }
   };
-
 
   const handleOtpChange = (index, value) => {
     const newOtp = [...otp];
@@ -244,8 +239,6 @@ const Signup = () => {
     } finally {
       dispatch(setLoading(false));
     }
-
-    
   };
 
   return (
@@ -320,14 +313,26 @@ const Signup = () => {
               <TabsContent value="candidate">
                 <form onSubmit={submitHandler} className="space-y-4">
                   <div>
-                    <Label htmlFor="fullname">Full Name *</Label>
+                    <Label htmlFor="firstname">First Name *</Label>
                     <Input
-                      id="fullname"
+                      id="firstname"
                       type="text"
-                      name="fullname"
-                      value={input.fullname}
+                      name="firstname"
+                      value={input.firstname}
                       onChange={changeEventHandler}
-                      placeholder="John Doe"
+                      placeholder="John"
+                      className="mt-1 border-gray-300 focus:ring-2 focus:ring-blue-500"
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="lastname">Last Name</Label>
+                    <Input
+                      id="lastname"
+                      type="text"
+                      name="lastname"
+                      value={input.lastname}
+                      onChange={changeEventHandler}
+                      placeholder="Doe"
                       className="mt-1 border-gray-300 focus:ring-2 focus:ring-blue-500"
                     />
                   </div>
@@ -347,6 +352,21 @@ const Signup = () => {
                         * Please use gmail.com, outlook.com, or any .com email
                       </p>
                     )}
+                  </div>
+                  <div>
+                    <Label htmlFor="gender">Gender</Label>
+                    <select
+                      id="gender"
+                      name="gender"
+                      value={input.gender}
+                      onChange={changeEventHandler}
+                      className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-2 focus:ring-blue-500"
+                    >
+                      <option value="">Select Gender</option>
+                      <option value="male">Male</option>
+                      <option value="female">Female</option>
+                      <option value="other">Other</option>
+                    </select>
                   </div>
                   {!isOtpVerified && (
                     <>
@@ -437,14 +457,26 @@ const Signup = () => {
               <TabsContent value="recruiter">
                 <form onSubmit={submitHandler} className="space-y-4">
                   <div>
-                    <Label htmlFor="fullname">Recruiter Name *</Label>
+                    <Label htmlFor="firstname">First Name *</Label>
                     <Input
-                      id="fullname"
+                      id="firstname"
                       type="text"
-                      name="fullname"
-                      value={input.fullname}
+                      name="firstname"
+                      value={input.firstname}
                       onChange={changeEventHandler}
-                      placeholder="Tech Corp Inc."
+                      placeholder="Jane"
+                      className="mt-1 border-gray-300 focus:ring-2 focus:ring-blue-500"
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="lastname">Last Name</Label>
+                    <Input
+                      id="lastname"
+                      type="text"
+                      name="lastname"
+                      value={input.lastname}
+                      onChange={changeEventHandler}
+                      placeholder="Smith"
                       className="mt-1 border-gray-300 focus:ring-2 focus:ring-blue-500"
                     />
                   </div>
@@ -461,9 +493,24 @@ const Signup = () => {
                     />
                     {input.email && !isValidRecruiterEmail(input.email) && (
                       <p className="text-sm text-yellow-600 mt-1">
-                        * Recruiter email must be a company-specific domain (e.g., username@company.com) and cannot be a public email like gmail.com, yahoo.com, etc.
+                        * Recruiter email must be a company-specific domain (e.g., username@company.com)
                       </p>
                     )}
+                  </div>
+                  <div>
+                    <Label htmlFor="gender">Gender</Label>
+                    <select
+                      id="gender"
+                      name="gender"
+                      value={input.gender}
+                      onChange={changeEventHandler}
+                      className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-2 focus:ring-blue-500"
+                    >
+                      <option value="">Select Gender</option>
+                      <option value="male">Male</option>
+                      <option value="female">Female</option>
+                      <option value="other">Other</option>
+                    </select>
                   </div>
                   {!isOtpVerified && (
                     <>

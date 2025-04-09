@@ -1,10 +1,13 @@
 import mongoose from "mongoose";
 
-const userSchema = new mongoose.Schema(
-  {
-    fullname: {
-      type: String,
-      required: true,
+const userSchema = new mongoose.Schema({
+    firstname: {
+        type: String,
+        required: true
+    },
+    lastname: {
+        type: String,
+        required: false
     },
     email: {
       type: String,
@@ -25,19 +28,26 @@ const userSchema = new mongoose.Schema(
       enum: ["candidate", "recruiter"],
       required: true,
     },
-    isVerified: { type: Boolean, default: false },
+    gender:{
+        type:String,
+        required:true,
+    },
+    isVerified:{
+        type:Boolean,
+        default:false
+    },
     otp: { type: String, default: null },
     otpExpiration: { type: Date, default: null },
-    profile: {
-      bio: { type: String },
-      skills: [{ type: String }],
-      resume: { type: String }, // URL to resume file
-      resumeOriginalName: { type: String },
-      company: { type: mongoose.Schema.Types.ObjectId, ref: "Company" },
-      profilePhoto: {
-        type: String,
-        default: "",
-      },
+    profile:{
+        bio:{type:String},
+        skills:[{type:String}],
+        resume:{type:String}, // URL to resume file
+        resumeOriginalName:{type:String},
+        company:{type:mongoose.Schema.Types.ObjectId, ref:'Company'}, 
+        profilePhoto:{
+            type:String,
+            default:""
+        }
     },
   },
   { timestamps: true }

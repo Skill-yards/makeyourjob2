@@ -51,8 +51,3 @@ export const sendEmail = async (to, subject, otp, templateFile = null) => {
     throw new Error("Failed to send email");
   }
 };
-
-
-
-
-

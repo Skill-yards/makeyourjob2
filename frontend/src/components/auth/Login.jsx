@@ -44,10 +44,9 @@ const Login = () => {
         toast.success(res.data.message);
       }
     } catch (error) {
-      console.log(error);
       toast.error(error.response?.data?.message || "Login failed");
     } finally {
-      dispatch(setLoading(false));
+      dispatch(setLoading(true));
     }
   };
 
@@ -56,6 +55,10 @@ const Login = () => {
       navigate("/");
     }
   }, [user, navigate]);
+
+
+ 
+
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
