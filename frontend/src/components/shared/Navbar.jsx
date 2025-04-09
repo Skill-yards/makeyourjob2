@@ -60,8 +60,8 @@ const Navbar = () => {
 
     // Get user initials for avatar fallback
     const getUserInitials = () => {
-        if (!user || !user.fullname) return "U";
-        return user.fullname.split(' ').map(n => n[0]).join('').toUpperCase();
+        if (!user || !user.firstname) return "U";
+        return user.firstname.split(' ').map(n => n[0]).join('').toUpperCase();
     };
 
     return (
@@ -113,25 +113,25 @@ const Navbar = () => {
                                 <PopoverTrigger asChild>
                                     <Button variant="ghost" size="sm" className="h-9 px-2 flex items-center space-x-2">
                                         <Avatar className="h-8 w-8 border border-gray-200">
-                                            <AvatarImage src={user?.profile?.profilePhoto} alt={user?.fullname || "User"} />
+                                            <AvatarImage src={user?.profile?.profilePhoto} alt={user?.firstname || "User"} />
                                             <AvatarFallback className="bg-purple-100 text-purple-700 dark:bg-purple-900 dark:text-purple-200">
                                                 {getUserInitials()}
                                             </AvatarFallback>
                                         </Avatar>
-                                        <span className="hidden md:inline text-sm font-medium">{user?.fullname?.split(' ')[0]}</span>
+                                        <span className="hidden md:inline text-sm font-medium">{user?.firstname?.split(' ')[0]}</span>
                                         <ChevronDown className="h-4 w-4 opacity-50" />
                                     </Button>
                                 </PopoverTrigger>
                                 <PopoverContent align="end" className="w-80 p-4">
                                     <div className="flex gap-3 items-start mb-4">
                                         <Avatar className="h-10 w-10 border border-gray-200">
-                                            <AvatarImage src={user?.profile?.profilePhoto} alt={user?.fullname || "User"} />
+                                            <AvatarImage src={user?.profile?.profilePhoto} alt={user?.firstname || "User"} />
                                             <AvatarFallback className="bg-purple-100 text-purple-700">
                                                 {getUserInitials()}
                                             </AvatarFallback>
                                         </Avatar>
                                         <div className="space-y-1">
-                                            <h4 className="font-semibold">{user?.fullname}</h4>
+                                            <h4 className="font-semibold">{user?.firstname}</h4>
                                             <div className="flex items-center">
                                                 <Badge variant="outline" className="text-xs px-2 capitalize bg-purple-50 text-purple-700 border-purple-200">
                                                     {user?.role}
@@ -146,7 +146,7 @@ const Navbar = () => {
                                     <Separator className="my-3" />
                                     
                                     <nav className="space-y-1">
-                                        {user && user.role === 'student' && (
+                                        {user && user.role === 'candidate' && (
                                             <Link to="/profile" className="flex items-center h-9 px-2 rounded-md text-sm hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">
                                                 <User2 className="mr-2 h-4 w-4 text-gray-500" />
                                                 <span>View Profile</span>
@@ -226,20 +226,20 @@ const Navbar = () => {
                                         <div className="mt-auto">
                                             <div className="flex items-start gap-3 p-3 mb-3 rounded-lg bg-gray-50 dark:bg-gray-800">
                                                 <Avatar className="h-10 w-10 border border-gray-200">
-                                                    <AvatarImage src={user?.profile?.profilePhoto} alt={user?.fullname || "User"} />
+                                                    <AvatarImage src={user?.profile?.profilePhoto} alt={user?.firstname || "User"} />
                                                     <AvatarFallback className="bg-purple-100 text-purple-700">
                                                         {getUserInitials()}
                                                     </AvatarFallback>
                                                 </Avatar>
                                                 <div>
-                                                    <p className="font-medium">{user?.fullname}</p>
+                                                    <p className="font-medium">{user?.firstname}</p>
                                                     <Badge variant="outline" className="mt-1 text-xs capitalize">
                                                         {user?.role}
                                                     </Badge>
                                                 </div>
                                             </div>
                                             
-                                            {user && user.role === 'student' && (
+                                            {user && user.role === 'candidate' && (
                                                 <Link 
                                                     to="/profile" 
                                                     onClick={() => setIsOpen(false)}

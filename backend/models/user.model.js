@@ -12,19 +12,28 @@ const userSchema = new mongoose.Schema({
     email: {
         type: String,
         required: true,
-        unique: true
+        unique: true,
+        index: true,
+        lowercase: true,
+        trim: true,
+        validate: {
+            validator: function (v) {
+                return /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/.test(v);
+            },
+            message: props => `${props.value} is not a valid email!`
+        }
     },
     phoneNumber: {
         type: Number,
-        required: true
+        required: false
     },
     password:{
         type:String,
-        required:true,
+        required:false,
     },
     role:{
         type:String,
-        enum:['student','recruiter'],
+        enum:['candidate','recruiter'],
         required:true
     },
     gender:{
@@ -35,6 +44,11 @@ const userSchema = new mongoose.Schema({
         type:Boolean,
         default:false
     },
+    otp:{
+        type:String,
+        required:false
+    },
+
     profile:{
         bio:{type:String},
         skills:[{type:String}],

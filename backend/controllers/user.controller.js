@@ -8,7 +8,6 @@ import dotenv from "dotenv";
 import { sendEmail } from "../utils/send.email.service.js";
 import path from "path";
 import { fileURLToPath } from "url";
-
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
@@ -18,23 +17,30 @@ const generateOTP = () => {
     return Math.floor(100000 + Math.random() * 900000).toString(); // 6-digit OTP
 };
 
-
-
 export const register = async (req, res) => {
     try {
-        const { firstname,lastname, email, phoneNumber, password, role,gender, isOtpVerified } = req.body;
+        const { firstname, lastname, email, phoneNumber, password, role, gender, isOtpVerified } = req.body;
+        
+        // Log incoming request body and file
+        console.log("Request body:", req.body);
+        console.log("Uploaded file:", req.file);
 
-        // Validate required fields based on registration phase
-        if (!email || !firstname || !role) {
+        // Validate required fields
+        if (!email || !firstname || !role || !gender) {
             return res.status(400).json({
-                message: "Email, fullname, and role are required",
+                message: "Email, firstname, role, and gender are required",
                 success: false,
             });
         }
 
+        // Convert isOtpVerified to boolean
+        const isVerifiedOtp = isOtpVerified === "true" || isOtpVerified === true;
+
+        // Check if user already exists
+        const existingUser = await User.findOne({ email });
+        
         // Phase 1: Initial registration with OTP
-        if (!phoneNumber && !password && !isOtpVerified) {
-            const existingUser = await User.findOne({ email }).lean();
+        if (!isVerifiedOtp) {
             if (existingUser) {
                 return res.status(400).json({
                     message: "User already exists with this email",
@@ -47,7 +53,7 @@ export const register = async (req, res) => {
 
             const newUser = await User.create({
                 firstname,
-                lastname,
+                lastname: lastname || "",
                 email,
                 role,
                 gender,
@@ -56,16 +62,8 @@ export const register = async (req, res) => {
                 isVerified: false,
             });
 
-            const templatePath = path.resolve(
-                __dirname,
-                "../static",
-                `${role.toLowerCase()}.html`
-            );
-
-            // Send email asynchronously without awaiting
-            sendEmail(email, "Verification OTP", otp, templatePath).catch((error) => {
-                console.error("Email sending failed:", error);
-            });
+            const templatePath = path.resolve(__dirname, "../static", `${role.toLowerCase()}.html`);
+            await sendEmail(email, "Verification OTP", otp, templatePath);
 
             return res.status(200).json({
                 message: "OTP sent to your email for verification",
@@ -74,17 +72,34 @@ export const register = async (req, res) => {
             });
         }
 
-        // Phase 2: Complete registration after OTP verification
-        if (isOtpVerified && phoneNumber && password) {
-            const user = await User.findOne({ email });
-            if (!user) {
-                return res.status(404).json({
-                    message: "User not found",
+        // Phase 2: Complete registration
+        if (isVerifiedOtp) {
+            console.log("isVerifiedOtp:", isVerifiedOtp);
+            if (!phoneNumber || !password) {
+                return res.status(400).json({
+                    message: "Phone number and password are required to complete registration",
                     success: false,
                 });
             }
 
-            if (!user.isVerified) {
+            let user = existingUser;
+            let isNewUser = false;
+
+            if (!user) {
+                // Create new user if it doesn't exist
+                user = new User({
+                    firstname,
+                    lastname: lastname || "",
+                    email,
+                    role,
+                    gender,
+                    isVerified: true // Assuming this is a pre-verified registration
+                });
+                isNewUser = true;
+            }
+
+            // Check verification status
+            if (!user.isVerified && !isNewUser) {
                 return res.status(400).json({
                     message: "Please verify your email first",
                     success: false,
@@ -92,9 +107,10 @@ export const register = async (req, res) => {
             }
 
             // Process file upload if present
-            let profilePhotoUrl = null;
+            let profilePhotoUrl = "";
             if (req.file) {
-                const fileKey = `uploads/${Date.now()}_${req.file.originalname}`;
+                const fileExtension = path.extname(req.file.originalname);
+                const fileKey = `uploads/${Date.now()}_profile${fileExtension}`;
                 const uploadParams = {
                     Bucket: process.env.AWS_S3_BUCKET_NAME,
                     Key: fileKey,
@@ -106,30 +122,61 @@ export const register = async (req, res) => {
                 profilePhotoUrl = `https://${process.env.AWS_S3_BUCKET_NAME}.s3.${process.env.AWS_REGION}.amazonaws.com/${fileKey}`;
             }
 
-            // Update user with optimized update operation
+            // Hash the password
             const hashedPassword = await bcrypt.hash(password, 10);
-            await User.updateOne(
-                { email },
-                {
-                    phoneNumber,
-                    password: hashedPassword,
-                    profile: { profilePhoto: profilePhotoUrl || "" },
-                }
-            );
 
-            const updatedUser = await User.findOne({ email }).lean();
+            // Convert phoneNumber to Number
+            const phoneNumberAsNumber = Number(phoneNumber);
+            if (isNaN(phoneNumberAsNumber)) {
+                return res.status(400).json({
+                    message: "Invalid phone number format",
+                    success: false,
+                });
+            }
 
-            return res.status(200).json({
-                message: "Account updated successfully",
-                success: true,
-                user: updatedUser,
+            // Update user object
+            user.phoneNumber = phoneNumberAsNumber;
+            user.password = hashedPassword;
+            user.profile = {
+                ...user.profile,
+                profilePhoto: profilePhotoUrl || user.profile?.profilePhoto || ""
+            };
+
+            // Save the user
+            const savedUser = await user.save();
+
+            const tokenData = {
+                userId: savedUser._id,
+                role: savedUser.role,
+            };
+            const token = await jwt.sign(tokenData, process.env.SCREAKET_KEY, {
+                expiresIn: "1d",
             });
-        }
 
-        return res.status(400).json({
-            message: "Invalid request parameters",
-            success: false,
-        });
+            const userResponse = {
+                _id: savedUser._id,
+                firstname: savedUser.firstname,
+                lastname: savedUser.lastname,
+                email: savedUser.email,
+                phoneNumber: savedUser.phoneNumber,
+                role: savedUser.role,
+                profile: savedUser.profile,
+            };
+
+            // Set cookie and return response
+            return res
+                .status(200)
+                .cookie("token", token, {
+                    maxAge: 1 * 24 * 60 * 60 * 1000, // 1 day
+                    httpOnly: true,
+                    sameSite: "strict",
+                })
+                .json({
+                    message: "Account registered successfully",
+                    success: true,
+                    user: userResponse,
+                });
+        }
     } catch (error) {
         console.error("Registration error:", error);
         return res.status(500).json({
@@ -140,23 +187,32 @@ export const register = async (req, res) => {
     }
 };
 
-
 export const login = async (req, res) => {
     try {
         const { email, password, role } = req.body;
         if (!email || !password || !role) {
             return res.status(400).json({
-                message: "Something is missing",
+                message: "Email, password, and role are required",
                 success: false,
             });
         }
-        let user = await User.findOne({ email });
+
+        const user = await User.findOne({ email });
         if (!user) {
             return res.status(400).json({
                 message: "Incorrect email or password.",
                 success: false,
             });
         }
+
+        // Check if the user has completed registration (has a password)
+        if (!user.password) {
+            return res.status(400).json({
+                message: "Please complete your registration by setting a password.",
+                success: false,
+            });
+        }
+
         const isPasswordMatch = await bcrypt.compare(password, user.password);
         if (!isPasswordMatch) {
             return res.status(400).json({
@@ -164,7 +220,8 @@ export const login = async (req, res) => {
                 success: false,
             });
         }
-        // check role is correct or not
+
+        // Check role is correct
         if (role !== user.role) {
             return res.status(400).json({
                 message: "Account doesn't exist with current role.",
@@ -180,9 +237,10 @@ export const login = async (req, res) => {
             expiresIn: "1d",
         });
 
-        user = {
+        const userResponse = {
             _id: user._id,
-            fullname: user.fullname,
+            firstname: user.firstname,
+            lastname: user.lastname,
             email: user.email,
             phoneNumber: user.phoneNumber,
             role: user.role,
@@ -193,19 +251,23 @@ export const login = async (req, res) => {
             .status(200)
             .cookie("token", token, {
                 maxAge: 1 * 24 * 60 * 60 * 1000,
-                httpsOnly: true,
+                httpOnly: true, // Fixed typo from "httpsOnly"
                 sameSite: "strict",
             })
             .json({
-                message: `Welcome back ${user.fullname}`,
-                user,
+                message: `Welcome back ${user.firstname}`,
+                user: userResponse,
                 success: true,
             });
     } catch (error) {
-        console.log(error);
+        console.error("Login error:", error);
+        return res.status(500).json({
+            message: "Server Error",
+            success: false,
+            error: error.message,
+        });
     }
 };
-
 export const logout = async (req, res) => {
     try {
         return res.status(200).cookie("token", "", { maxAge: 0 }).json({
@@ -219,7 +281,7 @@ export const logout = async (req, res) => {
 
 export const updateProfile = async (req, res) => {
     try {
-        const { fullname, email, phoneNumber, bio, skills } = req.body;
+        const { firstname, lastname, email, phoneNumber, bio, skills } = req.body;
         const file = req.file;
         let resumeUrl = null;
         let resumeOriginalName = null;
@@ -252,7 +314,8 @@ export const updateProfile = async (req, res) => {
         }
 
         // Updating user fields
-        if (fullname) user.fullname = fullname;
+        if (firstname) user.firstname = firstname;
+        if (lastname) user.lastname = lastname;
         if (email) user.email = email;
         if (phoneNumber) user.phoneNumber = phoneNumber;
         if (bio) user.profile.bio = bio;
@@ -268,7 +331,8 @@ export const updateProfile = async (req, res) => {
             message: "Profile updated successfully.",
             user: {
                 _id: user._id,
-                fullname: user.fullname,
+                firstname: user.firstname,
+                lastname: user.lastname,
                 email: user.email,
                 phoneNumber: user.phoneNumber,
                 role: user.role,
@@ -320,6 +384,12 @@ export const verifyEmail = async (req, res) => {
         return res.status(200).json({
             message: "Email verified successfully",
             success: true,
+            user: {
+                role: user.role,
+                _id: user._id,
+                email: user.email,
+
+            }
         });
     } catch (error) {
         console.error("Error in verifyEmail:", error);

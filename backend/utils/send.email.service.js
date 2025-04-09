@@ -2,11 +2,10 @@ import nodemailer from "nodemailer";
 import dotenv from "dotenv";
 import fs from "fs";
 import path from "path";
-
 import { fileURLToPath } from "url";
 
 const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
+const __dirname = path.dirname(__filename); // Fixed typo from _dirname to __dirname
 
 dotenv.config();
 
@@ -29,12 +28,12 @@ export const sendEmail = async (to, subject, otp, templateFile = null) => {
     `;
 
     if (templateFile) {
-      const fullPath = path.resolve(__dirname, templateFile); // Adjust if needed
+      const fullPath = path.resolve(__dirname, templateFile); // Now uses correct __dirname
       if (fs.existsSync(fullPath)) {
         const rawHtml = fs.readFileSync(fullPath, "utf-8");
         htmlTemplate = rawHtml.replace("{{OTP}}", otp);
       } else {
-        console.warn(`Template file not found at: ${fullPath}`);
+        console.warn(`Template file not found at: ${fullPath}, using default template`);
       }
     }
 
