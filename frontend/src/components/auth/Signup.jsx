@@ -154,6 +154,7 @@ const Signup = () => {
       dispatch(setLoading(false));
     }
   };
+ 
 
   const resendOtpHandler = async () => {
     try {

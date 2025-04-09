@@ -3,6 +3,7 @@ import getDataUri from "../utils/datauri.js";
 // import cloudinary from "../utils/cloudinary.js";
 import { PutObjectCommand } from '@aws-sdk/client-s3';
 import {s3Client} from "../utils/file.upload.service.js";
+import { Job } from "../models/job.model.js";
 
 export const registerCompany = async (req, res) => {
     try {
@@ -55,24 +56,36 @@ export const getCompany = async (req, res) => {
     }
 }
 // get company by id
+
 export const getCompanyById = async (req, res) => {
     try {
         const companyId = req.params.id;
+
+        // Fetch company with populated jobs and applicants
         const company = await Company.findById(companyId);
         if (!company) {
             return res.status(404).json({
                 message: "Company not found.",
                 success: false
-            })
+            });
         }
+
+        // Fetch all jobs for this company with populated applicants
+        const jobs = await Job.find({ company: companyId })
+
         return res.status(200).json({
-            company,
+            company: company.toObject(),
+            jobs,
             success: true
-        })
+        });
     } catch (error) {
         console.log(error);
+        return res.status(500).json({
+            message: "Server error",
+            successful: false
+        });
     }
-}
+};
 
 
 

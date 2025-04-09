@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
-import { Badge } from './ui/badge';
-import { Button } from './ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
+import { Badge } from './../ui/badge';
+import { Button } from './../ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from './../ui/card';
 import { useNavigate, useParams } from 'react-router-dom';
 import axios from 'axios';
 import { APPLICATION_API_END_POINT, JOB_API_END_POINT } from '@/utils/constant';
@@ -16,18 +16,20 @@ import {
   Users, 
   Calendar,
   AlertCircle,
-  CheckCircle2
+  CheckCircle2,
+  Globe,
+  User
 } from 'lucide-react';
-import { Skeleton } from './ui/skeleton';
+import { Skeleton } from './../ui/skeleton';
+import { Avatar, AvatarFallback, AvatarImage } from './../ui/avatar';
 import {
   Dialog,
   DialogContent,
   DialogDescription,
-  DialogHeader,
-  DialogTitle,
-} from "./ui/dialog";
+  DialogHeader } from "./../ui/dialog"
+import {DialogTitle } from './../ui/dialog';
 
-const JobDescription = () => {
+const AdminSingleWithApply = () => {
   const { singleJob } = useSelector(store => store.job);
   const { user } = useSelector(store => store.auth);
   const [isApplied, setIsApplied] = useState(false);
@@ -38,41 +40,41 @@ const JobDescription = () => {
   const params = useParams();
   const jobId = params.id;
   const dispatch = useDispatch();
-  const navigate = useNavigate();
+  // const navigate = useNavigate();
 
-  const applyJobHandler = async () => {
-    if (!user) {
-      toast.error("Please login to apply for this job");
-      navigate("/login");
-      return;
-    }
-    try {
-      setIsLoading(true);
-      const res = await axios.get(`${APPLICATION_API_END_POINT}/apply/${jobId}`, { withCredentials: true });
+  // const applyJobHandler = async () => {
+  //   if (!user) {
+  //     toast.error("Please login to apply for this job");
+  //     navigate("/login");
+  //     return;
+  //   }
+  //   try {
+  //     setIsLoading(true);
+  //     const res = await axios.get(`${APPLICATION_API_END_POINT}/apply/${jobId}`, { withCredentials: true });
       
-      if (res.data.success) {
-        setIsApplied(true);
-        const updatedSingleJob = {
-          ...singleJob,
-          applications: [...singleJob.applications, { applicant: user?._id }]
-        };
-        dispatch(setSingleJob(updatedSingleJob));
-        setShowSuccessDialog(true);
-        toast.success(res.data.message);
-      }
-    } catch (error) {
-      toast.error(error.response?.data?.message || 'Application failed');
-    } finally {
-      setIsLoading(false);
-    }
-  };
+  //     if (res.data.success) {
+  //       setIsApplied(true);
+  //       const updatedSingleJob = {
+  //         ...singleJob,
+  //         applications: [...singleJob.applications, { applicant: user?._id }]
+  //       };
+  //       dispatch(setSingleJob(updatedSingleJob));
+  //       setShowSuccessDialog(true);
+  //       toast.success(res.data.message);
+  //     }
+  //   } catch (error) {
+  //     toast.error(error.response?.data?.message || 'Application failed');
+  //   } finally {
+  //     setIsLoading(false);
+  //   }
+  // };
 
   useEffect(() => {
     const fetchSingleJob = async () => {
       try {
         setIsLoading(true);
         setError(null);
-        const res = await axios.get(`${JOB_API_END_POINT}/get/${jobId}`, { withCredentials: true });
+        const res = await axios.get(`${JOB_API_END_POINT}/admin-get/${jobId}`, { withCredentials: true });
         
         if (res.data.success) {
           dispatch(setSingleJob(res.data.job));
@@ -87,7 +89,6 @@ const JobDescription = () => {
     fetchSingleJob();
   }, [jobId, dispatch, user?._id]);
 
-  // Success Dialog
   const SuccessDialog = () => (
     <Dialog open={showSuccessDialog} onOpenChange={setShowSuccessDialog}>
       <DialogContent className="sm:max-w-md">
@@ -99,8 +100,7 @@ const JobDescription = () => {
             Application Submitted!
           </DialogTitle>
           <DialogDescription className="text-center mt-2">
-            Thank you for your interest! Your application has been successfully submitted. 
-            The hiring team will review your profile and get back to you soon.
+            Thank you for your interest! Your application has been successfully submitted.
           </DialogDescription>
         </DialogHeader>
         <div className="flex justify-center mt-4">
@@ -145,7 +145,6 @@ const JobDescription = () => {
   return (
     <div className="max-w-7xl mx-auto my-10 px-4 sm:px-6 lg:px-8">
       <Card className="shadow-xl border-none overflow-hidden bg-gradient-to-b from-white to-slate-50">
-        {/* Header Section */}
         <CardHeader className="pb-4 border-b">
           <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
             <div className="space-y-2">
@@ -167,36 +166,24 @@ const JobDescription = () => {
                 </Badge>
               </div>
             </div>
-            <Button
-              onClick={isApplied ? null : applyJobHandler}
-              disabled={isApplied || isLoading}
-              className={`w-full sm:w-auto transition-all duration-300 rounded-full px-6 py-2 text-sm font-medium shadow-md ${
-                isApplied 
-                  ? 'bg-slate-200 text-slate-500 cursor-not-allowed border border-slate-300' 
-                  : 'bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-700 hover:to-indigo-700 hover:shadow-lg transform hover:-translate-y-0.5'
-              }`}
-            >
-              {isLoading ? (
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              ) : isApplied ? (
-                <>
-                  <CheckCircle2 className="mr-2 h-4 w-4" />
-                  Already Applied
-                </>
-              ) : (
-                'Apply Now'
+            <div className="flex flex-col gap-2">
+              {singleJob?.company?.logo && (
+                <img 
+                  src={singleJob.company.logo} 
+                  alt={`${singleJob.company.name} logo`}
+                  className="h-12 w-12 object-contain rounded-full self-end"
+                />
               )}
-            </Button>
+            </div>
           </div>
         </CardHeader>
 
-        {/* Content Section */}
         <CardContent className="pt-6">
+          {/* Job Details */}
           <h2 className="text-xl font-semibold pb-2 mb-6 text-gray-800 border-b border-gray-200">
             Job Details
           </h2>
-          
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
             <div className="space-y-5">
               <div className="flex items-center gap-3 group">
                 <div className="p-3 bg-violet-100 rounded-full group-hover:bg-violet-200 transition-colors">
@@ -207,7 +194,6 @@ const JobDescription = () => {
                   <p className="text-gray-600 mt-1">{singleJob?.title}</p>
                 </div>
               </div>
-
               <div className="flex items-center gap-3 group">
                 <div className="p-3 bg-blue-100 rounded-full group-hover:bg-blue-200 transition-colors">
                   <MapPin className="h-5 w-5 text-blue-600" />
@@ -217,7 +203,6 @@ const JobDescription = () => {
                   <p className="text-gray-600 mt-1">{singleJob?.location}</p>
                 </div>
               </div>
-
               <div className="flex items-center gap-3 group">
                 <div className="p-3 bg-emerald-100 rounded-full group-hover:bg-emerald-200 transition-colors">
                   <DollarSign className="h-5 w-5 text-emerald-600" />
@@ -228,7 +213,6 @@ const JobDescription = () => {
                 </div>
               </div>
             </div>
-
             <div className="space-y-5">
               <div className="flex items-center gap-3 group">
                 <div className="p-3 bg-amber-100 rounded-full group-hover:bg-amber-200 transition-colors">
@@ -236,47 +220,149 @@ const JobDescription = () => {
                 </div>
                 <div>
                   <h3 className="font-semibold text-gray-700">Total Applicants</h3>
-                  <p className="text-gray-600 mt-1">{singleJob?.applications?.length}</p>
+                  <p className="text-gray-600 mt-1">{singleJob?.applications?.length || 0}</p>
                 </div>
               </div>
-
               <div className="flex items-center gap-3 group">
                 <div className="p-3 bg-indigo-100 rounded-full group-hover:bg-indigo-200 transition-colors">
                   <Calendar className="h-5 w-5 text-indigo-600" />
                 </div>
                 <div>
                   <h3 className="font-semibold text-gray-700">Posted Date</h3>
-                  <p className="text-gray-600 mt-1">{new Date(singleJob?.createdAt).toLocaleDateString('en-US', {
-                    year: 'numeric',
-                    month: 'long',
-                    day: 'numeric'
-                  })}</p>
+                  <p className="text-gray-600 mt-1">
+                    {new Date(singleJob?.createdAt).toLocaleDateString('en-US', {
+                      year: 'numeric',
+                      month: 'long',
+                      day: 'numeric'
+                    })}
+                  </p>
                 </div>
               </div>
-
               <div className="flex items-center gap-3 group">
                 <div className="p-3 bg-rose-100 rounded-full group-hover:bg-rose-200 transition-colors">
                   <Briefcase className="h-5 w-5 text-rose-600" />
                 </div>
                 <div>
-                  <h3 className="font-semibold text-gray-700">Experience</h3>
-                  <p className="text-gray-600 mt-1">{singleJob?.experience} years</p>
+                  <h3 className="font-semibold text-gray-700">Experience Level</h3>
+                  <p className="text-gray-600 mt-1">{singleJob?.experienceLevel}</p>
                 </div>
               </div>
             </div>
           </div>
 
-          <div className="mt-8 p-6 bg-slate-50 rounded-lg border border-slate-200">
+          {/* Company Details */}
+          <h2 className="text-xl font-semibold pb-2 mb-6 text-gray-800 border-b border-gray-200">
+            Company Details
+          </h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
+            <div className="space-y-5">
+              <div className="flex items-center gap-3 group">
+                <div className="p-3 bg-violet-100 rounded-full group-hover:bg-violet-200 transition-colors">
+                  <Briefcase className="h-5 w-5 text-violet-600" />
+                </div>
+                <div>
+                  <h3 className="font-semibold text-gray-700">Company Name</h3>
+                  <p className="text-gray-600 mt-1">{singleJob?.company?.name}</p>
+                </div>
+              </div>
+              <div className="flex items-center gap-3 group">
+                <div className="p-3 bg-blue-100 rounded-full group-hover:bg-blue-200 transition-colors">
+                  <MapPin className="h-5 w-5 text-blue-600" />
+                </div>
+                <div>
+                  <h3 className="font-semibold text-gray-700">Location</h3>
+                  <p className="text-gray-600 mt-1">{singleJob?.company?.location}</p>
+                </div>
+              </div>
+            </div>
+            <div className="space-y-5">
+              <div className="flex items-center gap-3 group">
+                <div className="p-3 bg-emerald-100 rounded-full group-hover:bg-emerald-200 transition-colors">
+                  <Globe className="h-5 w-5 text-emerald-600" />
+                </div>
+                <div>
+                  <h3 className="font-semibold text-gray-700">Website</h3>
+                  <a href={singleJob?.company?.website} target="_blank" rel="noopener noreferrer" className="text-gray-600 mt-1 hover:underline">
+                    {singleJob?.company?.website}
+                  </a>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Creator Details */}
+          <h2 className="text-xl font-semibold pb-2 mb-6 text-gray-800 border-b border-gray-200">
+            Posted By
+          </h2>
+          <div className="flex items-center gap-4 p-4 bg-slate-50 rounded-lg border border-slate-200 mb-8">
+            <Avatar>
+              <AvatarImage src={singleJob?.created_by?.profile?.avatar} alt={singleJob?.created_by?.fullname} />
+              <AvatarFallback>{singleJob?.created_by?.fullname?.charAt(0)}</AvatarFallback>
+            </Avatar>
+            <div>
+              <p className="font-semibold text-gray-800">{singleJob?.created_by?.fullname}</p>
+              <p className="text-sm text-gray-600">{singleJob?.created_by?.email}</p>
+              <p className="text-sm text-gray-600">{singleJob?.created_by?.role}</p>
+            </div>
+          </div>
+
+          {/* Job Description */}
+          <div className="p-6 bg-slate-50 rounded-lg border border-slate-200 mb-8">
             <h3 className="font-semibold text-lg mb-4 text-gray-800">Job Description</h3>
             <p className="text-gray-700 leading-relaxed">{singleJob?.description}</p>
           </div>
+
+          {/* Requirements */}
+          {singleJob?.requirements?.length > 0 && (
+            <div className="p-6 bg-slate-50 rounded-lg border border-slate-200 mb-8">
+              <h3 className="font-semibold text-lg mb-4 text-gray-800">Requirements</h3>
+              <ul className="list-disc list-inside space-y-2 text-gray-700">
+                {singleJob.requirements.map((req, index) => (
+                  <li key={index}>{req}</li>
+                ))}
+              </ul>
+            </div>
+          )}
+
+          {/* Applicants */}
+          <h2 className="text-xl font-semibold pb-2 mb-6 text-gray-800 border-b border-gray-200">
+            Applicants ({singleJob?.applications?.length || 0})
+          </h2>
+          {singleJob?.applications?.length > 0 ? (
+            <div className="space-y-4">
+              {singleJob.applications.map((application) => (
+                <div key={application._id} className="p-4 bg-slate-50 rounded-lg border border-slate-200">
+                  <div className="flex items-center gap-3">
+                    <Avatar>
+                      <AvatarImage src={application.applicant?.profile?.avatar} alt={application.applicant?.fullname} />
+                      <AvatarFallback>{application.applicant?.fullname?.charAt(0)}</AvatarFallback>
+                    </Avatar>
+                    <div>
+                      <p className="font-medium text-gray-800">{application.applicant?.fullname}</p>
+                      <p className="text-sm text-gray-600">{application.applicant?.email}</p>
+                      <p className="text-sm text-gray-600">{application.applicant?.phoneNumber}</p>
+                      {application.applicant?.profile?.skills && (
+                        <div className="flex flex-wrap gap-1 mt-1">
+                          {application.applicant.profile.skills.slice(0, 3).map((skill, index) => (
+                            <Badge key={index} variant="outline" className="text-xs">
+                              {skill}
+                            </Badge>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <p className="text-gray-600">No applicants yet for this job.</p>
+          )}
         </CardContent>
       </Card>
-      
-      {/* Success Dialog */}
       <SuccessDialog />
     </div>
   );
 };
 
-export default JobDescription;
+export default AdminSingleWithApply;

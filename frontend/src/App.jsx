@@ -16,6 +16,12 @@ const JobDescription = lazy(() => import('./components/JobDescription'));
 const ContactUs = lazy(() => import('./components/Contact'));
 const TermsAndConditions = lazy(() => import('./components/Terms'));
 const PrivacyPolicy = lazy(() => import('./components/PrivacyPolicy'));
+const AdminSingleWithApply = lazy(() => import('./components/admin/AdminSingleJobWithApply'));
+const CompanyJobApplicants = lazy(() => import('./components/admin/CompanyJobApplicants'));
+// const CompanyJobList = lazy(() => import('./components/admin/CompanyJobList'));
+const JobSetup = lazy(() => import('./components/admin/JobSetup'));
+
+
 
 
 
@@ -28,25 +34,86 @@ const PostJob = lazy(() => import('./components/admin/PostJob'));
 const Applicants = lazy(() => import('./components/admin/Applicants'));
 
 const appRouter = createBrowserRouter([
-  { path: '/', element: <Home /> },
-  { path: '/login', element: <Login /> },
-  { path: '/signup', element: <Signup /> },
-  { path: '/jobs', element: <Jobs /> },
-  { path: '/description/:id', element: <JobDescription /> },
-  { path: '/browse', element: <Browse /> },
-  { path: '/profile', element: <Profile /> },
-  { path: '/contact', element: <ContactUs /> },
-  { path: '/terms', element: <TermsAndConditions /> },
-  { path: '/privacy', element: <PrivacyPolicy  /> },
+  {
+    path: '/',
+    element: <Home />
+  },
+  {
+    path: '/login',
+    element: <Login />
+  },
+  {
+    path: '/signup',
+    element: <Signup />
+  },
+  {
+    path: "/jobs",
+    element: <Jobs />
+  },
+  {
+    path: "/jobs/:id",
+    element: <JobDescription />
+  },
+  { 
+    path: "/browse",
+    element: <Browse />
+  },
+  {
+    path: "/contact",
+    element: <ContactUs />
+  },
 
-  // Admin Routes
-  { path: '/admin/companies', element: <ProtectedRoute><Companies /></ProtectedRoute> },
-  { path: '/admin/companies/create', element: <ProtectedRoute><CompanyCreate /></ProtectedRoute> },
-  { path: '/admin/companies/:id', element: <ProtectedRoute><CompanySetup /></ProtectedRoute> },
-  { path: '/admin/jobs', element: <ProtectedRoute><AdminJobs /></ProtectedRoute> },
-  { path: '/admin/jobs/create', element: <ProtectedRoute><PostJob /></ProtectedRoute> },
-  { path: '/admin/jobs/:id/applicants', element: <ProtectedRoute><Applicants /></ProtectedRoute> },
-]);
+  {
+    path: "/privacy",
+    element: <PrivacyPolicy/>
+  },
+  {
+    path: "/terms",
+    element: <TermsAndConditions/>
+  },
+  
+  {
+    path: "/profile",
+    element: <Profile />
+  },
+  // admin ke liye yha se start hoga
+  {
+    path:"/admin/companies",
+    element: <ProtectedRoute><Companies/></ProtectedRoute>
+  },
+  {
+    path:"/admin/companies/create",
+    element: <ProtectedRoute><CompanyCreate/></ProtectedRoute> 
+  },
+  {
+    path:"/admin/companies/:id",
+    element: <ProtectedRoute><CompanyJobApplicants/></ProtectedRoute> 
+  },
+  {
+    path:"/admin/companies/:id/update",
+    element:<ProtectedRoute><CompanySetup/></ProtectedRoute> 
+  },
+  {
+    path:"/admin/jobs",
+    element:<ProtectedRoute><AdminJobs/></ProtectedRoute> 
+  },
+  {
+    path:"/admin/jobs/:id",
+    element:<ProtectedRoute><AdminSingleWithApply /></ProtectedRoute> 
+  },
+  {
+    path:"/admin/jobs/:id/update",
+    element:<ProtectedRoute><JobSetup/></ProtectedRoute> 
+  },
+  {
+    path:"/admin/jobs/create",
+    element:<ProtectedRoute><PostJob/></ProtectedRoute> 
+  },
+  {
+    path:"/admin/jobs/:id/applicants",
+    element:<ProtectedRoute><Applicants/></ProtectedRoute> 
+  },
+])
 
 function App() {
   return (

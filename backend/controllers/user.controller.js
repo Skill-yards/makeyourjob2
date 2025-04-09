@@ -24,7 +24,6 @@ export const register = async (req, res) => {
   try {
     const { fullname, email, phoneNumber, password, role, isOtpVerified } = req.body;
     if (email && fullname && role && !phoneNumber && !password && !isOtpVerified) {
-      console.log(req.body, "shariq khan...");
       const user = await User.findOne({ email });
       if (user) {
         return res.status(400).json({
