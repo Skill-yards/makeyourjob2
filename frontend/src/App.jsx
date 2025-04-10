@@ -18,6 +18,7 @@ import JobSetup from './components/admin/JobSetup'
 import CompanyJobDescription from './components/admin/CompanyJobDescription'
 import CompanyJobApplicants from './components/admin/CompanyJobApplicants'
 import AdminSingleWithApply from './components/admin/AdminSingleJobWithApply'
+import AdminProfile from './components/admin/AdminProfile'
 
 
 const appRouter = createBrowserRouter([
@@ -53,6 +54,10 @@ const appRouter = createBrowserRouter([
   {
     path:"/admin/companies",
     element: <ProtectedRoute><Companies/></ProtectedRoute>
+  },
+  {
+    path:"/admin/profile",
+    element: <ProtectedRoute><AdminProfile/></ProtectedRoute>
   },
   {
     path:"/admin/companies/create",

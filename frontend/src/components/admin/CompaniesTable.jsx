@@ -1,118 +1,106 @@
 import React, { useEffect, useState } from 'react';
-import { Table, TableBody, TableCaption, TableCell, TableHead, TableHeader, TableRow } from '../ui/table';
+import { Card, CardContent } from '../ui/card';
 import { Avatar, AvatarImage } from '../ui/avatar';
-import { Popover, PopoverContent, PopoverTrigger } from '../ui/popover';
-import { Edit2, MoreHorizontal, Globe, MapPin, FileText } from 'lucide-react';
+import { Button } from '../ui/button';
+import { Globe, MapPin, FileText, Edit2, PlusCircle } from 'lucide-react';
 import { useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 
 const CompaniesTable = () => {
-    const { companies, searchCompanyByText } = useSelector((store) => store.company);
-    const [filterCompany, setFilterCompany] = useState(companies);
-    const navigate = useNavigate();
+  const { companies, searchCompanyByText } = useSelector((store) => store.company);
+  const [filteredCompany, setFilteredCompany] = useState(null);
+  const navigate = useNavigate();
 
-    useEffect(() => {
-        const filteredCompany = companies?.filter((company) => {
-            if (!searchCompanyByText) return true;
-            return company?.name?.toLowerCase().includes(searchCompanyByText.toLowerCase());
-        });
-        setFilterCompany(filteredCompany);
-    }, [companies, searchCompanyByText]);
+  useEffect(() => {
+    const filtered = companies?.filter((company) => {
+      if (!searchCompanyByText) return true;
+      return company?.name?.toLowerCase().includes(searchCompanyByText.toLowerCase());
+    });
+    setFilteredCompany(filtered?.[0] || null); // Show the first matching company
+  }, [companies, searchCompanyByText]);
 
-    const formatDate = (dateString) => {
-        const date = new Date(dateString);
-        return date.toLocaleDateString('en-GB', {
-            day: '2-digit',
-            month: '2-digit',
-            year: 'numeric'
-        });
-    };
+  const formatDate = (dateString) => {
+    const date = new Date(dateString);
+    return date.toLocaleDateString('en-GB', {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric',
+    });
+  };
 
-    return (
-        <div className="p-4">
-            <Table>
-                <TableCaption>A list of your recent registered companies</TableCaption>
-                <TableHeader>
-                    <TableRow>
-                        <TableHead>Logo</TableHead>
-                        <TableHead>Name</TableHead>
-                        <TableHead>Description</TableHead>
-                        <TableHead>Location</TableHead>
-                        <TableHead>Website</TableHead>
-                        <TableHead>Created At</TableHead>
-                        <TableHead>Updated At</TableHead>
-                        <TableHead className="text-right">Action</TableHead>
-                    </TableRow>
-                </TableHeader>
-                <TableBody>
-                    {filterCompany?.length > 0 ? (
-                        filterCompany.map((company) => (
-                            <TableRow key={company._id}>
-                                <TableCell>
-                                    <Avatar>
-                                        <AvatarImage src={company.logo} alt={company.name} />
-                                    </Avatar>
-                                </TableCell>
-                                <TableCell className="font-medium">{company.name}</TableCell>
-                                <TableCell className="max-w-xs truncate">{company.description || "N/A"}</TableCell>
-                                <TableCell>
-                                    <div className="flex items-center gap-2">
-                                        <MapPin className="w-4 h-4" />
-                                        {company.location || "N/A"}
-                                    </div>
-                                </TableCell>
-                                <TableCell>
-                                    {company.website ? (
-                                        <a
-                                            href={company.website}
-                                            target="_blank"
-                                            rel="noopener noreferrer"
-                                            className="text-blue-500 underline flex items-center gap-1"
-                                        >
-                                            <Globe className="w-4 h-4" />
-                                            {company.website}
-                                        </a>
-                                    ) : (
-                                        "N/A"
-                                    )}
-                                </TableCell>
-                                <TableCell>{formatDate(company.createdAt)}</TableCell>
-                                <TableCell>{formatDate(company.updatedAt)}</TableCell>
-                                <TableCell className="text-right cursor-pointer">
-                                    <Popover>
-                                        <PopoverTrigger>
-                                            <MoreHorizontal />
-                                        </PopoverTrigger>
-                                        <PopoverContent className="w-32">
-                                            <div
-                                                onClick={() => navigate(`/admin/companies/${company._id}/update`)}
-                                                className="flex items-center gap-2 w-fit cursor-pointer"
-                                            >
-                                                <Edit2 className="w-4" />
-                                                <span>Edit</span>
-                                            </div>
-                                            <div
-                                                onClick={() => navigate(`/admin/companies/${company._id}`)}
-                                                className="flex items-center gap-2 w-fit cursor-pointer mt-2">
-                                                <FileText className="w-4" />
-                                                <span>Details</span>
-                                            </div>
-                                        </PopoverContent>
-                                    </Popover>
-                                </TableCell>
-                            </TableRow>
-                        ))
-                    ) : (
-                        <TableRow>
-                            <TableCell colSpan="8" className="text-center py-4">
-                                No companies found.
-                            </TableCell>
-                        </TableRow>
-                    )}
-                </TableBody>
-            </Table>
+  return (
+    <div className="mt-6">
+      {filteredCompany ? (
+        <Card className="bg-white shadow-lg rounded-xl overflow-hidden border border-gray-200 hover:shadow-xl transition-shadow duration-300">
+          <CardContent className="p-6">
+            <div className="flex items-center gap-4">
+              <Avatar className="h-16 w-16 border-2 border-indigo-200">
+                <AvatarImage src={filteredCompany.logo} alt={filteredCompany.name} />
+              </Avatar>
+              <div className="flex-1">
+                <h3 className="text-xl font-semibold text-gray-800">{filteredCompany.name}</h3>
+                <p className="text-gray-600 text-sm mt-1 truncate max-w-md">{filteredCompany.description || 'N/A'}</p>
+              </div>
+            </div>
+            <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="flex items-center gap-2 text-gray-700">
+                <MapPin className="h-5 w-5 text-indigo-500" />
+                <span>{filteredCompany.location || 'N/A'}</span>
+              </div>
+              <div className="flex items-center gap-2 text-gray-700">
+                <Globe className="h-5 w-5 text-indigo-500" />
+                {filteredCompany.website ? (
+                  <a
+                    href={filteredCompany.website}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-indigo-500 hover:underline"
+                  >
+                    {filteredCompany.website}
+                  </a>
+                ) : (
+                  'N/A'
+                )}
+              </div>
+            </div>
+            <div className="mt-4 flex justify-between items-center text-sm text-gray-600">
+              <span>Created: {formatDate(filteredCompany.createdAt)}</span>
+              <span>Updated: {formatDate(filteredCompany.updatedAt)}</span>
+            </div>
+            <div className="mt-4 flex gap-3 justify-end">
+              <Button
+                variant="outline"
+                className="flex items-center gap-2 text-indigo-600 border-indigo-300 hover:bg-indigo-50"
+                onClick={() => navigate(`/admin/companies/${filteredCompany._id}/update`)}
+              >
+                <Edit2 className="h-4 w-4" />
+                Edit
+              </Button>
+              <Button
+                variant="outline"
+                className="flex items-center gap-2 text-indigo-600 border-indigo-300 hover:bg-indigo-50"
+                onClick={() => navigate(`/admin/companies/${filteredCompany._id}`)}
+              >
+                <FileText className="h-4 w-4" />
+                Details
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      ) : (
+        <div className="text-center py-4">
+          <p className="text-gray-500 mb-4">No company found.</p>
+          <Button
+            onClick={() => navigate('/admin/companies/create')}
+            className="bg-indigo-600 text-white hover:bg-indigo-700 flex items-center gap-2 rounded-full px-6 py-2"
+          >
+            <PlusCircle className="h-5 w-5" />
+            Create Company
+          </Button>
         </div>
-    );
+      )}
+    </div>
+  );
 };
 
 export default CompaniesTable;

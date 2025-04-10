@@ -9,7 +9,7 @@ import {
 import { Label } from './ui/label';
 import { Input } from './ui/input';
 import { Button } from './ui/button';
-import { Loader2, X, ArrowLeft } from 'lucide-react';
+import { Loader2, ArrowLeft } from 'lucide-react';
 import { useDispatch, useSelector } from 'react-redux';
 import axios from 'axios';
 import { USER_API_END_POINT } from '@/utils/constant';
@@ -28,6 +28,8 @@ const UpdateProfileDialog = ({ open, setOpen }) => {
     phoneNumber: user?.phoneNumber || '',
     bio: user?.profile?.bio || '',
     skills: user?.profile?.skills?.join(', ') || '',
+    organization: user?.profile?.organization || '',
+    jobRole: user?.profile?.jobRole || '',
     file: null, // File input starts as null
   });
 
@@ -47,8 +49,15 @@ const UpdateProfileDialog = ({ open, setOpen }) => {
     formData.append('lastname', input.lastname);
     formData.append('email', input.email);
     formData.append('phoneNumber', input.phoneNumber);
-    formData.append('bio', input.bio);
-    formData.append('skills', input.skills); // Skills as a comma-separated string
+
+    if (user?.role === 'candidate') {
+      formData.append('bio', input.bio);
+      formData.append('skills', input.skills); // Skills as a comma-separated string
+    } else if (user?.role === 'recruiter') {
+      formData.append('organization', input.organization || '');
+      formData.append('jobRole', input.jobRole || '');
+    }
+
     if (input.file) {
       formData.append('file', input.file);
     }
@@ -75,23 +84,26 @@ const UpdateProfileDialog = ({ open, setOpen }) => {
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      <DialogContent
-        className="min-w-[50vw] max-w-[60vw] max-h-[70vh] overflow-y-auto p-6 bg-white rounded-xl shadow-xl"
-      >
-        <DialogHeader className="relative">
-          <DialogTitle className="text-2xl font-semibold text-gray-800">Update Profile</DialogTitle>
+      <DialogContent className="min-w-[50vw] max-w-[60vw] max-h-[70vh] overflow-y-auto p-6 bg-white rounded-xl shadow-xl">
+        <DialogHeader className="relative flex items-center justify-between">
           <Button
             variant="ghost"
-            className="absolute top-2 right-2 p-1 hover:bg-gray-100"
+            className="p-1 hover:bg-gray-100"
             onClick={() => setOpen(false)}
           >
-            <X className="h-5 w-5 text-gray-600" />
+            {/* <ArrowLeft className="h-5 w-5 text-gray-600" /> */}
           </Button>
+          <DialogTitle className="text-2xl font-semibold text-gray-800 flex-1 text-center">
+            Update Profile
+          </DialogTitle>
+          <div className="w-10"></div> {/* Spacer for alignment */}
         </DialogHeader>
         <form onSubmit={submitHandler} className="space-y-6">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
-              <Label htmlFor="firstname" className="text-sm font-medium text-gray-700">First Name</Label>
+              <Label htmlFor="firstname" className="text-sm font-medium text-gray-700">
+                First Name
+              </Label>
               <Input
                 id="firstname"
                 name="firstname"
@@ -102,7 +114,9 @@ const UpdateProfileDialog = ({ open, setOpen }) => {
               />
             </div>
             <div>
-              <Label htmlFor="lastname" className="text-sm font-medium text-gray-700">Last Name</Label>
+              <Label htmlFor="lastname" className="text-sm font-medium text-gray-700">
+                Last Name
+              </Label>
               <Input
                 id="lastname"
                 name="lastname"
@@ -113,7 +127,9 @@ const UpdateProfileDialog = ({ open, setOpen }) => {
               />
             </div>
             <div>
-              <Label htmlFor="email" className="text-sm font-medium text-gray-700">Email</Label>
+              <Label htmlFor="email" className="text-sm font-medium text-gray-700">
+                Email
+              </Label>
               <Input
                 id="email"
                 name="email"
@@ -124,7 +140,9 @@ const UpdateProfileDialog = ({ open, setOpen }) => {
               />
             </div>
             <div>
-              <Label htmlFor="phoneNumber" className="text-sm font-medium text-gray-700">Phone Number</Label>
+              <Label htmlFor="phoneNumber" className="text-sm font-medium text-gray-700">
+                Phone Number
+              </Label>
               <Input
                 id="phoneNumber"
                 name="phoneNumber"
@@ -133,50 +151,94 @@ const UpdateProfileDialog = ({ open, setOpen }) => {
                 className="mt-1"
               />
             </div>
-            <div className="md:col-span-2">
-              <Label htmlFor="bio" className="text-sm font-medium text-gray-700">Bio</Label>
-              <Input
-                id="bio"
-                name="bio"
-                value={input.bio}
-                onChange={changeEventHandler}
-                className="mt-1"
-              />
-            </div>
-            <div className="md:col-span-2">
-              <Label htmlFor="skills" className="text-sm font-medium text-gray-700">Skills (comma-separated)</Label>
-              <Input
-                id="skills"
-                name="skills"
-                value={input.skills}
-                onChange={changeEventHandler}
-                placeholder="e.g., HTML, CSS, JavaScript"
-                className="mt-1"
-              />
-            </div>
-            <div className="md:col-span-2">
-              <Label htmlFor="file" className="text-sm font-medium text-gray-700">Resume</Label>
-              <Input
-                id="file"
-                name="file"
-                type="file"
-                accept="application/pdf"
-                onChange={fileChangeHandler}
-                className="mt-1"
-              />
-            </div>
+
+            {user?.role === 'candidate' && (
+              <>
+                <div className="md:col-span-2">
+                  <Label htmlFor="bio" className="text-sm font-medium text-gray-700">
+                    Bio
+                  </Label>
+                  <Input
+                    id="bio"
+                    name="bio"
+                    value={input.bio}
+                    onChange={changeEventHandler}
+                    className="mt-1"
+                  />
+                </div>
+                <div className="md:col-span-2">
+                  <Label htmlFor="skills" className="text-sm font-medium text-gray-700">
+                    Skills (comma-separated)
+                  </Label>
+                  <Input
+                    id="skills"
+                    name="skills"
+                    value={input.skills}
+                    onChange={changeEventHandler}
+                    placeholder="e.g., HTML, CSS, JavaScript"
+                    className="mt-1"
+                  />
+                </div>
+                <div className="md:col-span-2">
+                  <Label htmlFor="file" className="text-sm font-medium text-gray-700">
+                    Resume
+                  </Label>
+                  <Input
+                    id="file"
+                    name="file"
+                    type="file"
+                    accept="application/pdf"
+                    onChange={fileChangeHandler}
+                    className="mt-1"
+                  />
+                </div>
+              </>
+            )}
+
+            {user?.role === 'recruiter' && (
+              <>
+                <div className="md:col-span-2">
+                  <Label htmlFor="organization" className="text-sm font-medium text-gray-700">
+                    Organization
+                  </Label>
+                  <Input
+                    id="organization"
+                    name="organization"
+                    value={input.organization}
+                    onChange={changeEventHandler}
+                    className="mt-1"
+                  />
+                </div>
+                <div className="md:col-span-2">
+                  <Label htmlFor="jobRole" className="text-sm font-medium text-gray-700">
+                    Job Role
+                  </Label>
+                  <Input
+                    id="jobRole"
+                    name="jobRole"
+                    value={input.jobRole}
+                    onChange={changeEventHandler}
+                    className="mt-1"
+                  />
+                </div>
+                <div className="md:col-span-2">
+                  <Label htmlFor="file" className="text-sm font-medium text-gray-700">
+                    Logo
+                  </Label>
+                  <Input
+                    id="file"
+                    name="file"
+                    type="file"
+                    accept="image/*"
+                    onChange={fileChangeHandler}
+                    className="mt-1"
+                  />
+                </div>
+              </>
+            )}
           </div>
-          <DialogFooter className="flex justify-between mt-6">
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => setOpen(false)}
-              className="flex items-center gap-2"
-            >
-              <ArrowLeft className="h-4 w-4" />
-              Back
-            </Button>
-            <Button type="submit" disabled={loading} className="bg-indigo-600 hover:bg-indigo-700">
+          <DialogFooter className="mt-6">
+            <Button type="submit" disabled={loading} className="bg-indigo-600 hover:bg-indigo-700 w-full">
               {loading ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />

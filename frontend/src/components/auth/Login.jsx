@@ -20,7 +20,7 @@ const Login = () => {
     role: "candidate",
     otp: "",
     newPassword: "",
-    stage: "password", // Added stage state for flow control
+    stage: "password",
   });
 
   const { loading, user } = useSelector((store) => store.auth);
@@ -46,7 +46,7 @@ const Login = () => {
       });
       if (res.data.success) {
         dispatch(setUser(res.data.user));
-        navigate("/");
+        navigate("/profile");
         toast.success(res.data.message);
       }
     } catch (error) {
@@ -56,7 +56,7 @@ const Login = () => {
     }
   };
 
-  // Request OTP (for Forgot Password or OTP Login)
+  // Request OTP for Login with OTP
   const requestOtpHandler = async (e) => {
     e.preventDefault();
     try {
@@ -69,8 +69,7 @@ const Login = () => {
       });
       if (res.data.success) {
         toast.success("OTP sent to your email!");
-        // Transition to forgot-otp stage after successful OTP request
-        setInput((prev) => ({ ...prev, stage: "forgot-otp" }));
+        setInput((prev) => ({ ...prev, stage: "otp", newPassword: "" })); // Stay in otp stage, clear newPassword
       }
     } catch (error) {
       toast.error(error.response?.data?.message || "Failed to send OTP");
@@ -104,6 +103,28 @@ const Login = () => {
     }
   };
 
+  // Request OTP for Forgot Password
+  const requestOtpHandlerForgot = async (e) => {
+    e.preventDefault();
+    try {
+      dispatch(setLoading(true));
+      const res = await axios.post(`${USER_API_END_POINT}/request-otp`, {
+        email: input.email,
+        role: input.role,
+      }, {
+        headers: { "Content-Type": "application/json" },
+      });
+      if (res.data.success) {
+        toast.success("OTP sent to your email!");
+        setInput((prev) => ({ ...prev, stage: "forgot-otp" })); // Move to forgot-otp for reset
+      }
+    } catch (error) {
+      toast.error(error.response?.data?.message || "Failed to send OTP");
+    } finally {
+      dispatch(setLoading(false));
+    }
+  };
+
   // Reset Password
   const resetPasswordHandler = async (e) => {
     e.preventDefault();
@@ -113,12 +134,13 @@ const Login = () => {
         email: input.email,
         otp: input.otp,
         newPassword: input.newPassword,
-        role: input.role, // Added role to match backend expectation
+        role: input.role,
       }, {
         headers: { "Content-Type": "application/json" },
       });
       if (res.data.success) {
         toast.success("Password reset successfully! Please login.");
+        navigate("/profile");
         setInput({
           email: "",
           password: "",
@@ -126,7 +148,7 @@ const Login = () => {
           otp: "",
           newPassword: "",
           stage: "password",
-        }); // Reset form and return to password stage
+        });
       }
     } catch (error) {
       toast.error(error.response?.data?.message || "Failed to reset password");
@@ -308,7 +330,7 @@ const Login = () => {
               )}
 
               {input.stage === "forgot" && (
-                <form onSubmit={requestOtpHandler} className="space-y-4">
+                <form onSubmit={requestOtpHandlerForgot} className="space-y-4">
                   <div className="text-yellow-600 flex items-center">
                     <Lock className="mr-2" />
                     <p className="text-sm">Forgot Password?</p>
