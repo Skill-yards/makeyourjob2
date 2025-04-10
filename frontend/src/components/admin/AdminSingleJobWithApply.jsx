@@ -18,7 +18,11 @@ import {
   AlertCircle,
   CheckCircle2,
   Globe,
-  User
+  User,
+  Clock,
+  Award,
+  BookOpen,
+  Tag,
 } from 'lucide-react';
 import { Skeleton } from './../ui/skeleton';
 import { Avatar, AvatarFallback, AvatarImage } from './../ui/avatar';
@@ -26,8 +30,9 @@ import {
   Dialog,
   DialogContent,
   DialogDescription,
-  DialogHeader } from "./../ui/dialog"
-import {DialogTitle } from './../ui/dialog';
+  DialogHeader,
+} from "./../ui/dialog";
+import { DialogTitle } from './../ui/dialog';
 
 const AdminSingleWithApply = () => {
   const { singleJob } = useSelector(store => store.job);
@@ -40,34 +45,6 @@ const AdminSingleWithApply = () => {
   const params = useParams();
   const jobId = params.id;
   const dispatch = useDispatch();
-  // const navigate = useNavigate();
-
-  // const applyJobHandler = async () => {
-  //   if (!user) {
-  //     toast.error("Please login to apply for this job");
-  //     navigate("/login");
-  //     return;
-  //   }
-  //   try {
-  //     setIsLoading(true);
-  //     const res = await axios.get(`${APPLICATION_API_END_POINT}/apply/${jobId}`, { withCredentials: true });
-      
-  //     if (res.data.success) {
-  //       setIsApplied(true);
-  //       const updatedSingleJob = {
-  //         ...singleJob,
-  //         applications: [...singleJob.applications, { applicant: user?._id }]
-  //       };
-  //       dispatch(setSingleJob(updatedSingleJob));
-  //       setShowSuccessDialog(true);
-  //       toast.success(res.data.message);
-  //     }
-  //   } catch (error) {
-  //     toast.error(error.response?.data?.message || 'Application failed');
-  //   } finally {
-  //     setIsLoading(false);
-  //   }
-  // };
 
   useEffect(() => {
     const fetchSingleJob = async () => {
@@ -149,12 +126,12 @@ const AdminSingleWithApply = () => {
           <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
             <div className="space-y-2">
               <CardTitle className="text-2xl sm:text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-violet-800 to-indigo-600">
-                {singleJob?.title}
+                {singleJob?.jobTitle || singleJob?.title}
               </CardTitle>
               <div className="flex flex-wrap gap-2 mt-3">
                 <Badge variant="secondary" className="bg-blue-100 text-blue-800 px-3 py-1 rounded-full">
                   <Users className="h-3.5 w-3.5 mr-1" />
-                  {singleJob?.position} Positions
+                  {singleJob?.vacancies || singleJob?.position} Positions
                 </Badge>
                 <Badge variant="secondary" className="bg-amber-100 text-amber-800 px-3 py-1 rounded-full">
                   <Briefcase className="h-3.5 w-3.5 mr-1" />
@@ -162,7 +139,13 @@ const AdminSingleWithApply = () => {
                 </Badge>
                 <Badge variant="secondary" className="bg-emerald-100 text-emerald-800 px-3 py-1 rounded-full">
                   <DollarSign className="h-3.5 w-3.5 mr-1" />
-                  {singleJob?.salary} LPA
+                  {singleJob?.salaryRangeDiversity 
+                    ? `${singleJob.salaryRangeDiversity.min} - ${singleJob.salaryRangeDiversity.max} ${singleJob.salaryRangeDiversity.currency}/${singleJob.salaryRangeDiversity.frequency}` 
+                    : `${singleJob?.salary} LPA`}
+                </Badge>
+                <Badge variant="secondary" className="bg-purple-100 text-purple-800 px-3 py-1 rounded-full">
+                  <MapPin className="h-3.5 w-3.5 mr-1" />
+                  {singleJob?.workplacePlane} {singleJob?.workLocation ? `(${singleJob.workLocation.city}, ${singleJob.workLocation.country})` : singleJob?.location}
                 </Badge>
               </div>
             </div>
@@ -191,7 +174,7 @@ const AdminSingleWithApply = () => {
                 </div>
                 <div>
                   <h3 className="font-semibold text-gray-700">Role</h3>
-                  <p className="text-gray-600 mt-1">{singleJob?.title}</p>
+                  <p className="text-gray-600 mt-1">{singleJob?.jobTitle || singleJob?.title}</p>
                 </div>
               </div>
               <div className="flex items-center gap-3 group">
@@ -199,8 +182,12 @@ const AdminSingleWithApply = () => {
                   <MapPin className="h-5 w-5 text-blue-600" />
                 </div>
                 <div>
-                  <h3 className="font-semibold text-gray-700">Location</h3>
-                  <p className="text-gray-600 mt-1">{singleJob?.location}</p>
+                  <h3 className="font-semibold text-gray-700">Work Location</h3>
+                  <p className="text-gray-600 mt-1">
+                    {singleJob?.workplacePlane} {singleJob?.workLocation 
+                      ? `${singleJob.workLocation.city}, ${singleJob.workLocation.state ? singleJob.workLocation.state + ', ' : ''}${singleJob.workLocation.country}` 
+                      : singleJob?.location}
+                  </p>
                 </div>
               </div>
               <div className="flex items-center gap-3 group">
@@ -209,7 +196,20 @@ const AdminSingleWithApply = () => {
                 </div>
                 <div>
                   <h3 className="font-semibold text-gray-700">Salary</h3>
-                  <p className="text-gray-600 mt-1">{singleJob?.salary} LPA</p>
+                  <p className="text-gray-600 mt-1">
+                    {singleJob?.salaryRangeDiversity 
+                      ? `${singleJob.salaryRangeDiversity.min} - ${singleJob.salaryRangeDiversity.max} ${singleJob.salaryRangeDiversity.currency}/${singleJob.salaryRangeDiversity.frequency}` 
+                      : `${singleJob?.salary} LPA`}
+                  </p>
+                </div>
+              </div>
+              <div className="flex items-center gap-3 group">
+                <div className="p-3 bg-teal-100 rounded-full group-hover:bg-teal-200 transition-colors">
+                  <Clock className="h-5 w-5 text-teal-600" />
+                </div>
+                <div>
+                  <h3 className="font-semibold text-gray-700">Job Nature</h3>
+                  <p className="text-gray-600 mt-1">{singleJob?.jobNature}</p>
                 </div>
               </div>
             </div>
@@ -230,7 +230,7 @@ const AdminSingleWithApply = () => {
                 <div>
                   <h3 className="font-semibold text-gray-700">Posted Date</h3>
                   <p className="text-gray-600 mt-1">
-                    {new Date(singleJob?.createdAt).toLocaleDateString('en-US', {
+                    {new Date(singleJob?.postedDate || singleJob?.createdAt).toLocaleDateString('en-US', {
                       year: 'numeric',
                       month: 'long',
                       day: 'numeric'
@@ -240,13 +240,38 @@ const AdminSingleWithApply = () => {
               </div>
               <div className="flex items-center gap-3 group">
                 <div className="p-3 bg-rose-100 rounded-full group-hover:bg-rose-200 transition-colors">
-                  <Briefcase className="h-5 w-5 text-rose-600" />
+                  <Award className="h-5 w-5 text-rose-600" />
                 </div>
                 <div>
                   <h3 className="font-semibold text-gray-700">Experience Level</h3>
                   <p className="text-gray-600 mt-1">{singleJob?.experienceLevel}</p>
                 </div>
               </div>
+              <div className="flex items-center gap-3 group">
+                <div className="p-3 bg-purple-100 rounded-full group-hover:bg-purple-200 transition-colors">
+                  <Tag className="h-5 w-5 text-purple-600" />
+                </div>
+                <div>
+                  <h3 className="font-semibold text-gray-700">Category</h3>
+                  <p className="text-gray-600 mt-1">{singleJob?.jobCategory}</p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Additional Job Info */}
+          <div className="p-6 bg-slate-50 rounded-lg border border-slate-200 mb-8">
+            <h3 className="font-semibold text-lg mb-4 text-gray-800">Additional Information</h3>
+            <div className="text-gray-700 space-y-2">
+              {singleJob?.status && <p><strong>Status:</strong> {singleJob.status}</p>}
+              {singleJob?.deadline && (
+                <p><strong>Application Deadline:</strong> {new Date(singleJob.deadline).toLocaleDateString()}</p>
+              )}
+              {singleJob?.vacancies && <p><strong>Vacancies:</strong> {singleJob.vacancies}</p>}
+              {singleJob?.educationLevel && <p><strong>Education Level:</strong> {singleJob.educationLevel}</p>}
+              {singleJob?.availabilityFrame?.startDate && (
+                <p><strong>Start Date:</strong> {new Date(singleJob.availabilityFrame.startDate).toLocaleDateString()}</p>
+              )}
             </div>
           </div>
 
@@ -262,7 +287,7 @@ const AdminSingleWithApply = () => {
                 </div>
                 <div>
                   <h3 className="font-semibold text-gray-700">Company Name</h3>
-                  <p className="text-gray-600 mt-1">{singleJob?.company?.name}</p>
+                  <p className="text-gray-600 mt-1">{singleJob?.companyName || singleJob?.company?.name}</p>
                 </div>
               </div>
               <div className="flex items-center gap-3 group">
@@ -319,6 +344,32 @@ const AdminSingleWithApply = () => {
               <ul className="list-disc list-inside space-y-2 text-gray-700">
                 {singleJob.requirements.map((req, index) => (
                   <li key={index}>{req}</li>
+                ))}
+              </ul>
+            </div>
+          )}
+
+          {/* Skills */}
+          {singleJob?.skills?.length > 0 && (
+            <div className="p-6 bg-slate-50 rounded-lg border border-slate-200 mb-8">
+              <h3 className="font-semibold text-lg mb-4 text-gray-800">Required Skills</h3>
+              <div className="flex flex-wrap gap-2">
+                {singleJob.skills.map((skill, index) => (
+                  <Badge key={index} variant="outline" className="text-gray-600">
+                    {skill}
+                  </Badge>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Benefits */}
+          {singleJob?.benefits?.length > 0 && (
+            <div className="p-6 bg-slate-50 rounded-lg border border-slate-200 mb-8">
+              <h3 className="font-semibold text-lg mb-4 text-gray-800">Benefits</h3>
+              <ul className="list-disc list-inside space-y-2 text-gray-700">
+                {singleJob.benefits.map((benefit, index) => (
+                  <li key={index}>{benefit}</li>
                 ))}
               </ul>
             </div>
