@@ -19,6 +19,7 @@ import {
   AlertDescription,
   AlertTitle
 } from "@/components/ui/alert";
+import Footer from "./shared/Footer";
 
 const Jobs = () => {
   const { allJobs, searchedQuery } = useSelector(store => store.job);
@@ -61,6 +62,7 @@ const Jobs = () => {
   };
 
   return (
+    <>
     <div className="container mx-auto px-4 py-8">
       <Navbar />
       
@@ -146,6 +148,8 @@ const Jobs = () => {
         </div>
       </div>
     </div>
+    <Footer />
+    </>
   );
 };
 

@@ -1,6 +1,6 @@
 import { Company } from "../models/company.model.js";
-import { PutObjectCommand } from '@aws-sdk/client-s3';
-import {s3Client} from "../utils/file.upload.service.js";
+import { PutObjectCommand } from "@aws-sdk/client-s3";
+import { s3Client } from "../utils/file.upload.service.js";
 import { Job } from "../models/job.model.js";
 
 export const registerCompany = async (req, res) => {
@@ -53,61 +53,70 @@ export const registerCompany = async (req, res) => {
 };
 
 export const getCompany = async (req, res) => {
-    try {
-        const userId = req.id; // logged in user id
-        const companies = await Company.find({ userId });
-        if (!companies) {
-            return res.status(404).json({
-                message: "Companies not found.",
-                success: false
-            })
-        }
-        return res.status(200).json({
-            companies,
-            success:true
-        })
-    } catch (error) {
-        console.log(error);
+  try {
+    const userId = req.id; // logged in user id
+    const companies = await Company.find({ userId });
+    if (!companies) {
+      return res.status(404).json({
+        message: "Companies not found.",
+        success: false,
+      });
     }
-}
+    return res.status(200).json({
+      companies,
+      success: true,
+    });
+  } catch (error) {
+    console.log(error);
+  }
+};
 // get company by id
 
 export const getCompanyById = async (req, res) => {
-    try {
-        const companyId = req.params.id;
+  try {
+    const companyId = req.params.id;
 
-        // Fetch company with populated jobs and applicants
-        const company = await Company.findById(companyId);
-        if (!company) {
-            return res.status(404).json({
-                message: "Company not found.",
-                success: false
-            });
-        }
-
-        // Fetch all jobs for this company with populated applicants
-        const jobs = await Job.find({ company: companyId })
-
-        return res.status(200).json({
-            company: company.toObject(),
-            jobs,
-            success: true
-        });
-    } catch (error) {
-        console.log(error);
-        return res.status(500).json({
-            message: "Server error",
-            successful: false
-        });
+    // Fetch company with populated jobs and applicants
+    const company = await Company.findById(companyId);
+    if (!company) {
+      return res.status(404).json({
+        message: "Company not found.",
+        success: false,
+      });
     }
-};
 
+    // Fetch all jobs for this company with populated applicants
+    const jobs = await Job.find({ company: companyId });
+
+    return res.status(200).json({
+      company: company.toObject(),
+      jobs,
+      success: true,
+    });
+  } catch (error) {
+    console.log(error);
+    return res.status(500).json({
+      message: "Server error",
+      successful: false,
+    });
+  }
+};
 
 export const updateCompany = async (req, res) => {
   try {
     const {
-      name, description, website, location, gstNumber, cinNumber, panNumber,
-      foundedYear, employeeCount, industry, contactEmail, contactPhone
+      name,
+      description,
+      website,
+      location,
+      gstNumber,
+      cinNumber,
+      panNumber,
+      foundedYear,
+      employeeCount,
+      industry,
+      contactEmail,
+      contactPhone,
     } = req.body;
     const files = req.files;
     const companyId = req.params.id;
@@ -183,23 +192,39 @@ export const updateCompany = async (req, res) => {
       };
 
       if (files.file && files.file.length > 0) {
-        updateData.logo = await uploadFile(files.file[0], 'company_logos');
+        updateData.logo = await uploadFile(files.file[0], "company_logos");
       }
       if (files.gstDocument && files.gstDocument.length > 0) {
-        updateData.gstDocument = await uploadFile(files.gstDocument[0], 'gst_documents');
+        updateData.gstDocument = await uploadFile(
+          files.gstDocument[0],
+          "gst_documents"
+        );
       }
       if (files.cinDocument && files.cinDocument.length > 0) {
-        updateData.cinDocument = await uploadFile(files.cinDocument[0], 'cin_documents');
+        updateData.cinDocument = await uploadFile(
+          files.cinDocument[0],
+          "cin_documents"
+        );
       }
       if (files.panDocument && files.panDocument.length > 0) {
-        updateData.panDocument = await uploadFile(files.panDocument[0], 'pan_documents');
+        updateData.panDocument = await uploadFile(
+          files.panDocument[0],
+          "pan_documents"
+        );
       }
       if (files.registrationDocument && files.registrationDocument.length > 0) {
-        updateData.registrationDocument = await uploadFile(files.registrationDocument[0], 'registration_documents');
+        updateData.registrationDocument = await uploadFile(
+          files.registrationDocument[0],
+          "registration_documents"
+        );
       }
     }
 
-    const updatedCompany = await Company.findByIdAndUpdate(companyId, updateData, { new: true, runValidators: true });
+    const updatedCompany = await Company.findByIdAndUpdate(
+      companyId,
+      updateData,
+      { new: true, runValidators: true }
+    );
 
     return res.status(200).json({
       message: "Company information updated.",
@@ -208,15 +233,16 @@ export const updateCompany = async (req, res) => {
     });
   } catch (error) {
     console.error("Error updating company:", error);
-    if (error.name === 'ValidationError') {
-      const messages = Object.values(error.errors).map(err => err.message);
+    if (error.name === "ValidationError") {
+      const messages = Object.values(error.errors).map((err) => err.message);
       return res.status(400).json({
         message: "Validation failed.",
         errors: messages,
         success: false,
       });
     }
-    if (error.code === 11000) { // Duplicate key error (e.g., unique name)
+    if (error.code === 11000) {
+      // Duplicate key error (e.g., unique name)
       return res.status(400).json({
         message: "A company with this name already exists.",
         success: false,
