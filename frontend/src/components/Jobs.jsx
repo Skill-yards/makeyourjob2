@@ -4,6 +4,7 @@ import Navbar from './shared/Navbar';
 import FilterCard from './FilterCard';
 import Job from './Job';
 import { motion } from 'framer-motion';
+import Footer from "./shared/Footer";
 import { 
   Briefcase, 
   Search, 
@@ -24,6 +25,7 @@ import Footer from "./shared/Footer";
 const Jobs = () => {
   const { allJobs, searchedQuery } = useSelector(store => store.job);
   const [filterJobs, setFilterJobs] = useState(allJobs);
+  
   
   useEffect(() => {
     if (searchedQuery) {

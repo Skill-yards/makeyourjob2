@@ -31,7 +31,7 @@ const Browse = () => {
       </div>
       <h2 className="text-2xl font-bold text-gray-800 mb-2">No jobs found</h2>
       <p className="text-gray-600 max-w-md mb-6">
-        We're currently refreshing our job listings. The perfect opportunity is just around the corner!
+       {` We're currently refreshing our job listings. The perfect opportunity is just around the corner!`}
       </p>
       <div className="space-y-4 w-full max-w-md">
         <div className="flex items-center border border-gray-200 rounded-lg p-3 bg-white shadow-sm">

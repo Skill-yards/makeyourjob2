@@ -1,9 +1,7 @@
-
-import React from 'react';
-
 import { Badge } from './ui/badge';
 import { StarIcon, BriefcaseIcon, BuildingIcon } from 'lucide-react';
 import CustomCarousel from './crousel';
+
 
 const FeaturedJobsCarousel = () => {
   // Example featured job data

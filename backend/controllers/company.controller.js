@@ -2,6 +2,7 @@ import { Company } from "../models/company.model.js";
 import { PutObjectCommand } from "@aws-sdk/client-s3";
 import { s3Client } from "../utils/file.upload.service.js";
 import { Job } from "../models/job.model.js";
+import path from "path";
 
 export const registerCompany = async (req, res) => {
   try {

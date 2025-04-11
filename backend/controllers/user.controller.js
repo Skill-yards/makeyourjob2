@@ -71,6 +71,7 @@ export const register = async (req, res) => {
       jobRole,
     } = req.body;
     const file = req.file;
+    console.log(req.body, "djhdiiw");
 
     const requiredFields = [
       "email",
@@ -522,7 +523,6 @@ export const resetPassword = async (req, res) => {
         success: false,
       });
     }
-
     const user = await User.findOne({ email });
     if (!user) {
       return res.status(404).json({
@@ -530,7 +530,6 @@ export const resetPassword = async (req, res) => {
         success: false,
       });
     }
-
     if (role !== user.role) {
       return res.status(400).json({
         message: "Account doesn't exist with current role.",
@@ -551,7 +550,6 @@ export const resetPassword = async (req, res) => {
         success: false,
       });
     }
-
     const hashedPassword = await bcrypt.hash(newPassword, 10);
     user.password = hashedPassword;
     user.otp = null;
