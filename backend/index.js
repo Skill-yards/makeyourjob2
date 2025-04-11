@@ -60,6 +60,16 @@ app.get("*", (req, res) => {
     res.sendFile(path.join(frontendBuildPath, "index.html"));
 });
 
+const errorHandler = (err, req, res, next) => {
+    console.error(err.stack);
+    res.status(err.statusCode || 500).json({
+        success: false,
+        message: err.message || "Server Error",
+    });
+};
+app.use(errorHandler);
+
+
 // Start server only after DB connection
 const PORT = process.env.PORT || 3000;
 connectDB().then(() => {

@@ -42,6 +42,8 @@ const Signup = () => {
   const [isOtpSent, setIsOtpSent] = useState(false);
   const [isOtpVerified, setIsOtpVerified] = useState(false);
   const [timer, setTimer] = useState(0);
+  const [sendOtpCooldown, setSendOtpCooldown] = useState(false);
+  const [sentOtp, setSentOtp] = useState(""); // New state to store the OTP from backend
 
   const otpRefs = useRef([]);
   const { loading } = useSelector((store) => store.auth);
@@ -60,6 +62,7 @@ const Signup = () => {
       interval = setInterval(() => setTimer((prev) => prev - 1), 1000);
     } else if (timer === 0 && isOtpSent) {
       setIsOtpSent(false);
+      setSentOtp(""); // Clear sent OTP after timer expires
     }
     return () => clearInterval(interval);
   }, [timer, isOtpSent]);
@@ -109,6 +112,8 @@ const Signup = () => {
   };
 
   const sendOtpHandler = async () => {
+    if (sendOtpCooldown) return;
+
     try {
       if (!input.email || !isValidRecruiterEmail(input.email)) {
         return toast.error(
@@ -118,52 +123,63 @@ const Signup = () => {
         );
       }
 
+      toast.info("Sending OTP...", { duration: 1000 });
       dispatch(setLoading(true));
-      const res = await axios.post(`${USER_API_END_POINT}/send-otp`, { email: input.email });
+      setSendOtpCooldown(true);
+
+      const res = await axios.post(`${USER_API_END_POINT}/send-otp-register`, { email: input.email }, {
+        timeout: 5000,
+      });
       if (res.data.success) {
         setIsOtpSent(true);
         setTimer(60);
-        toast.success("OTP sent to your email!");
+        setSentOtp(res.data.otp); // Store the OTP from backend
+        toast.success("OTP sent! Check your inbox.");
       }
     } catch (err) {
       toast.error(err.response?.data?.message || "Failed to send OTP");
     } finally {
       dispatch(setLoading(false));
+      setTimeout(() => setSendOtpCooldown(false), 3000);
     }
   };
 
   const resendOtpHandler = async () => {
+    if (sendOtpCooldown) return;
+
     try {
       dispatch(setLoading(true));
-      const res = await axios.post(`${USER_API_END_POINT}/reset-otp/otp`, { email: input.email });
+      setSendOtpCooldown(true);
+
+      const res = await axios.post(`${USER_API_END_POINT}/reset-otp/otp`, { email: input.email }, {
+        timeout: 5000,
+      });
       if (res.data.success) {
         setTimer(60);
         setOtp(["", "", "", "", "", ""]);
-        toast.success("OTP resent successfully");
+        setSentOtp(res.data.otp); // Update with new OTP
+        toast.success("OTP resent!");
       }
     } catch (err) {
       toast.error(err.response?.data?.message || "OTP resend failed");
     } finally {
       dispatch(setLoading(false));
+      setTimeout(() => setSendOtpCooldown(false), 3000);
     }
   };
 
-  const verifyOtpHandler = async () => {
-    try {
-      dispatch(setLoading(true));
-      const otpValue = otp.join("");
-      const res = await axios.post(`${USER_API_END_POINT}/verify/otp`, {
-        email: input.email,
-        otp: otpValue,
-      });
-      if (res.data.success) {
-        setIsOtpVerified(true);
-        toast.success("Email verified successfully");
-      }
-    } catch (err) {
-      toast.error(err.response?.data?.message || "OTP verification failed");
-    } finally {
-      dispatch(setLoading(false));
+  const verifyOtpHandler = () => {
+    const enteredOtp = otp.join("");
+    if (!enteredOtp || enteredOtp.length !== 6) {
+      toast.error("Please enter a valid 6-digit OTP");
+      return;
+    }
+
+    if (enteredOtp === sentOtp) {
+      setIsOtpVerified(true);
+      toast.success("Email verified!");
+    } else {
+      toast.error("Invalid OTP");
     }
   };
 
@@ -207,16 +223,12 @@ const Signup = () => {
     formData.append("organization", input.organization || "");
     formData.append("jobRole", input.jobRole || "");
 
-    console.log("Form Data entries:");
-    for (const [key, value] of formData.entries()) {
-      console.log(`${key}: ${value instanceof File ? value.name : value}`);
-    }
-
     try {
       dispatch(setLoading(true));
       const res = await axios.post(`${USER_API_END_POINT}/register`, formData, {
         headers: { "Content-Type": "multipart/form-data" },
         withCredentials: true,
+        timeout: 10000,
       });
       if (res.data.success) {
         dispatch(setUser(res.data.user));
@@ -285,15 +297,23 @@ const Signup = () => {
               {!isOtpVerified && (
                 <Button
                   onClick={sendOtpHandler}
-                  disabled={loading || !input.email || !isValidRecruiterEmail(input.email)}
-                  className="mt-2"
+                  disabled={loading || sendOtpCooldown || !input.email || !isValidRecruiterEmail(input.email)}
+                  className="mt-2 relative"
                 >
-                  {loading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : "Verify Email"}
+                  {loading ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin inline" />
+                      Sending...
+                    </>
+                  ) : (
+                    "Verify Email"
+                  )}
                 </Button>
               )}
               {isOtpSent && !isOtpVerified && (
                 <div className="mt-4 space-y-2">
                   <Label>Enter OTP sent to {input.email}</Label>
+                  <p className="text-sm text-gray-500">Check your inbox or spam folder.</p>
                   <div className="flex gap-2">
                     {otp.map((digit, index) => (
                       <Input
@@ -312,7 +332,7 @@ const Signup = () => {
                     <Button
                       variant="outline"
                       onClick={resendOtpHandler}
-                      disabled={timer > 0 || loading}
+                      disabled={timer > 0 || loading || sendOtpCooldown}
                     >
                       Resend OTP {timer > 0 && `(${formatTime(timer)})`}
                     </Button>
@@ -498,7 +518,6 @@ const Signup = () => {
               </div>
             </div>
           </div>
-
           <div className="w-1/2 p-8 flex flex-col justify-center">
             <div className="space-y-6">
               {renderStep()}

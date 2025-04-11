@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { Badge } from './ui/badge';
 import { Button } from './ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useNavigate, useParams, Link } from 'react-router-dom'; // Added Link
 import axios from 'axios';
 import { APPLICATION_API_END_POINT, JOB_API_END_POINT } from '@/utils/constant';
 import { setSingleJob } from '@/redux/jobSlice';
@@ -23,6 +23,11 @@ import {
     BookOpen,
     List,
     Home,
+    Mail,
+    Phone,
+    FileText,
+    ListChecks,
+    ArrowLeft,
 } from 'lucide-react';
 import { Skeleton } from './ui/skeleton';
 import {
@@ -46,12 +51,37 @@ const JobDescription = () => {
     const dispatch = useDispatch();
     const navigate = useNavigate();
 
+    // Check if profile is complete and return missing fields
+    const checkProfileCompletion = () => {
+        if (!user) return { isComplete: false, missingFields: ['login'] };
+        const { email, phoneNumber, profile } = user;
+        const missingFields = [];
+
+        if (!email) missingFields.push('email');
+        if (!phoneNumber) missingFields.push('phone number');
+        if (!profile?.resume) missingFields.push('resume');
+        if (!profile?.skills?.length) missingFields.push('skills');
+
+        return {
+            isComplete: missingFields.length === 0,
+            missingFields,
+        };
+    };
+
     const applyJobHandler = async () => {
         if (!user) {
             toast.error('Please login to apply for this job');
             navigate('/login');
             return;
         }
+
+        const { isComplete, missingFields } = checkProfileCompletion();
+        if (!isComplete) {
+            toast.error(`Please complete your profile: ${missingFields.join(', ')} required`);
+            navigate('/profile');
+            return;
+        }
+
         try {
             setIsLoading(true);
             const res = await axios.get(`${APPLICATION_API_END_POINT}/apply/${jobId}`, { withCredentials: true });
@@ -160,55 +190,94 @@ const JobDescription = () => {
         );
     }
 
+    const { missingFields } = checkProfileCompletion();
+
     return (
         <div className="max-w-7xl mx-auto my-10 px-4 sm:px-6 lg:px-8">
             <Card className="shadow-xl border-none overflow-hidden bg-gradient-to-b from-white to-slate-50">
                 {/* Header Section */}
                 <CardHeader className="pb-4 border-b">
-                    <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
-                        <div className="space-y-2">
-                            <CardTitle className="text-2xl sm:text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-violet-800 to-indigo-600">
-                                {singleJob?.jobTitle || singleJob?.title}
-                            </CardTitle>
-                            <div className="flex flex-wrap gap-2 mt-3">
-                                <Badge variant="secondary" className="bg-blue-100 text-blue-800 px-3 py-1 rounded-full">
-                                    <Users className="h-3.5 w-3.5 mr-1" />
-                                    {singleJob?.vacancies || singleJob?.position} Vacancies
-                                </Badge>
-                                <Badge variant="secondary" className="bg-amber-100 text-amber-800 px-3 py-1 rounded-full">
-                                    <Briefcase className="h-3.5 w-3.5 mr-1" />
-                                    {singleJob?.jobType}
-                                </Badge>
-                                <Badge variant="secondary" className="bg-emerald-100 text-emerald-800 px-3 py-1 rounded-full">
-                                    <DollarSign className="h-3.5 w-3.5 mr-1" />
-                                    {getSalaryDisplay()}
-                                </Badge>
-                                <Badge variant="secondary" className="bg-indigo-100 text-indigo-800 px-3 py-1 rounded-full">
-                                    <Home className="h-3.5 w-3.5 mr-1" />
-                                    {singleJob?.workplacePlane}
-                                </Badge>
+                    <div className="flex flex-col gap-4">
+                        <div className="flex items-center justify-between">
+                            <Button
+                                onClick={() => navigate(-1)} // Go back to previous page
+                                variant="outline"
+                                className="flex items-center gap-2 text-gray-600 hover:text-gray-800"
+                            >
+                                <ArrowLeft className="h-4 w-4" />
+                                Back
+                            </Button>
+                            <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4 w-full">
+                                <div className="space-y-2">
+                                    <CardTitle className="text-2xl sm:text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-violet-800 to-indigo-600">
+                                        {singleJob?.jobTitle || singleJob?.title}
+                                    </CardTitle>
+                                    <div className="flex flex-wrap gap-2 mt-3">
+                                        <Badge variant="secondary" className="bg-blue-100 text-blue-800 px-3 py-1 rounded-full">
+                                            <Users className="h-3.5 w-3.5 mr-1" />
+                                            {singleJob?.vacancies || singleJob?.position} Vacancies
+                                        </Badge>
+                                        <Badge variant="secondary" className="bg-amber-100 text-amber-800 px-3 py-1 rounded-full">
+                                            <Briefcase className="h-3.5 w-3.5 mr-1" />
+                                            {singleJob?.jobType}
+                                        </Badge>
+                                        <Badge variant="secondary" className="bg-emerald-100 text-emerald-800 px-3 py-1 rounded-full">
+                                            <DollarSign className="h-3.5 w-3.5 mr-1" />
+                                            {getSalaryDisplay()}
+                                        </Badge>
+                                        <Badge variant="secondary" className="bg-indigo-100 text-indigo-800 px-3 py-1 rounded-full">
+                                            <Home className="h-3.5 w-3.5 mr-1" />
+                                            {singleJob?.workplacePlane}
+                                        </Badge>
+                                    </div>
+                                </div>
+                                <div className="flex flex-col gap-2">
+                                    <Button
+                                        onClick={isApplied ? null : applyJobHandler}
+                                        disabled={isApplied || isLoading || (user && missingFields.length > 0)}
+                                        className={`w-full sm:w-auto transition-all duration-300 rounded-full px-6 py-2 text-sm font-medium shadow-md ${
+                                            isApplied
+                                                ? 'bg-slate-200 text-slate-500 cursor-not-allowed border border-slate-300'
+                                                : user && missingFields.length > 0
+                                                ? 'bg-gray-300 text-gray-600 cursor-not-allowed'
+                                                : 'bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-700 hover:to-indigo-700 hover:shadow-lg transform hover:-translate-y-0.5'
+                                        }`}
+                                    >
+                                        {isLoading ? (
+                                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                        ) : isApplied ? (
+                                            <>
+                                                <CheckCircle2 className="mr-2 h-4 w-4" />
+                                                Already Applied
+                                            </>
+                                        ) : (
+                                            'Apply Now'
+                                        )}
+                                    </Button>
+                                    {user && missingFields.length > 0 && (
+                                        <div className="text-sm text-red-600 text-center sm:text-right">
+                                            <p>
+                                                Please{' '}
+                                                <Link to="/profile" className="underline hover:text-red-800">
+                                                    complete your profile
+                                                </Link>:
+                                            </p>
+                                            <ul className="list-disc pl-4">
+                                                {missingFields.map((field, index) => (
+                                                    <li key={index} className="flex items-center gap-1">
+                                                        {field === 'email' && <Mail className="h-3 w-3" />}
+                                                        {field === 'phone number' && <Phone className="h-3 w-3" />}
+                                                        {field === 'resume' && <FileText className="h-3 w-3" />}
+                                                        {field === 'skills' && <ListChecks className="h-3 w-3" />}
+                                                        {field}
+                                                    </li>
+                                                ))}
+                                            </ul>
+                                        </div>
+                                    )}
+                                </div>
                             </div>
                         </div>
-                        <Button
-                            onClick={isApplied ? null : applyJobHandler}
-                            disabled={isApplied || isLoading}
-                            className={`w-full sm:w-auto transition-all duration-300 rounded-full px-6 py-2 text-sm font-medium shadow-md ${
-                                isApplied
-                                    ? 'bg-slate-200 text-slate-500 cursor-not-allowed border border-slate-300'
-                                    : 'bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-700 hover:to-indigo-700 hover:shadow-lg transform hover:-translate-y-0.5'
-                            }`}
-                        >
-                            {isLoading ? (
-                                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                            ) : isApplied ? (
-                                <>
-                                    <CheckCircle2 className="mr-2 h-4 w-4" />
-                                    Already Applied
-                                </>
-                            ) : (
-                                'Apply Now'
-                            )}
-                        </Button>
                     </div>
                 </CardHeader>
 

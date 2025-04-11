@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -7,7 +7,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
 import { useDispatch, useSelector } from "react-redux";
 import { setLoading, setUser } from "@/redux/authSlice";
-import { Loader2, LogIn, Mail, Lock, User, Briefcase, Key } from "lucide-react";
+import { Loader2, User, Briefcase, Lock, Mail, Key } from "lucide-react";
 import axios from "axios";
 import { USER_API_END_POINT } from "@/utils/constant";
 import Navbar from "../shared/Navbar";
@@ -18,22 +18,162 @@ const Login = () => {
     email: "",
     password: "",
     role: "candidate",
-    otp: "",
     newPassword: "",
-    stage: "password",
+    stage: "login", // login, otp, reset
   });
+  const [otp, setOtp] = useState(["", "", "", "", "", ""]);
+  const [isOtpSent, setIsOtpSent] = useState(false);
+  const [sentOtp, setSentOtp] = useState(""); // Store OTP from backend
+  const [timer, setTimer] = useState(0);
+  const [sendOtpCooldown, setSendOtpCooldown] = useState(false);
 
+  const otpRefs = useRef([]);
   const { loading, user } = useSelector((store) => store.auth);
   const navigate = useNavigate();
   const dispatch = useDispatch();
+
+  useEffect(() => {
+    if (user) navigate("/");
+  }, [user, navigate]);
+
+  useEffect(() => {
+    let interval;
+    if (timer > 0) {
+      interval = setInterval(() => setTimer((prev) => prev - 1), 1000);
+    } else if (timer === 0 && isOtpSent) {
+      setIsOtpSent(false);
+      setSentOtp("");
+      setOtp(["", "", "", "", "", ""]);
+    }
+    return () => clearInterval(interval);
+  }, [timer, isOtpSent]);
+
+  const formatTime = (sec) => {
+    const minutes = Math.floor(sec / 60);
+    const seconds = sec % 60;
+    return `${minutes}:${seconds < 10 ? "0" : ""}${seconds}`;
+  };
 
   const changeEventHandler = (e) => {
     setInput({ ...input, [e.target.name]: e.target.value });
   };
 
-  // Login with Password
-  const submitHandlerPassword = async (e) => {
+  const handleOtpChange = (index, value) => {
+    const newOtp = [...otp];
+    newOtp[index] = value.slice(-1);
+    setOtp(newOtp);
+    if (value && index < 5) {
+      otpRefs.current[index + 1].focus();
+    }
+  };
+
+  const handleKeyDown = (index, e) => {
+    if (e.key === "Backspace" && !otp[index] && index > 0) {
+      otpRefs.current[index - 1].focus();
+    }
+  };
+
+  const isValidEmail = (email) => {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    const trimmedEmail = email.trim().toLowerCase();
+    if (!emailRegex.test(trimmedEmail)) return false;
+    const [, domain] = trimmedEmail.split("@");
+    const publicDomains = [
+      "gmail.com",
+      "yahoo.com",
+      "hotmail.com",
+      "outlook.com",
+      "protonmail.com",
+      "icloud.com",
+      "aol.com",
+      "zoho.com",
+    ];
+    if (input.role === "candidate") {
+      return domain === "gmail.com" || domain === "outlook.com" || domain.endsWith(".com");
+    } else if (input.role === "recruiter") {
+      if (publicDomains.includes(domain)) return false;
+      return domain.endsWith(".com") || domain.endsWith(".org") || domain.endsWith(".net") || domain.endsWith(".in");
+    }
+    return false;
+  };
+
+  // Send OTP for Login or Reset
+  const sendOtpHandler = async (e, purpose = "login") => {
     e.preventDefault();
+    if (sendOtpCooldown) return;
+
+    if (!input.email || !isValidEmail(input.email)) {
+      return toast.error(
+        input.role === "candidate"
+          ? "Please use gmail.com, outlook.com, or .com email"
+          : "Recruiter email must be a company-specific domain"
+      );
+    }
+
+    try {
+      toast.info("Sending OTP...", { duration: 1000 });
+      dispatch(setLoading(true));
+      setSendOtpCooldown(true);
+
+      const res = await axios.post(`${USER_API_END_POINT}/send-otp`, {
+        email: input.email,
+        role: input.role,
+      }, {
+        headers: { "Content-Type": "application/json" },
+        timeout: 5000,
+      });
+      if (res.data.success) {
+        setIsOtpSent(true);
+        setTimer(60);
+        setSentOtp(res.data.otp);
+        setInput({ ...input, stage: purpose === "login" ? "otp" : "reset" });
+        toast.success("OTP sent! Check your inbox.");
+      }
+    } catch (error) {
+      toast.error(error.response?.data?.message || "Failed to send OTP");
+    } finally {
+      dispatch(setLoading(false));
+      setTimeout(() => setSendOtpCooldown(false), 3000);
+    }
+  };
+
+  // Resend OTP
+  const resendOtpHandler = async (e) => {
+    e.preventDefault();
+    if (sendOtpCooldown) return;
+
+    try {
+      dispatch(setLoading(true));
+      setSendOtpCooldown(true);
+
+      const res = await axios.post(`${USER_API_END_POINT}/send-otp`, {
+        email: input.email,
+        role: input.role,
+      }, {
+        headers: { "Content-Type": "application/json" },
+        timeout: 5000,
+      });
+      if (res.data.success) {
+        setTimer(60);
+        setOtp(["", "", "", "", "", ""]);
+        setSentOtp(res.data.otp);
+        toast.success("OTP resent!");
+      }
+    } catch (error) {
+      toast.error(error.response?.data?.message || "OTP resend failed");
+    } finally {
+      dispatch(setLoading(false));
+      setTimeout(() => setSendOtpCooldown(false), 3000);
+    }
+  };
+
+  // Login with Password
+  const loginWithPasswordHandler = async (e) => {
+    e.preventDefault();
+    if (!input.email || !input.password) {
+      return toast.error("Email and password are required");
+    }
+
     try {
       dispatch(setLoading(true));
       const res = await axios.post(`${USER_API_END_POINT}/login`, {
@@ -43,10 +183,11 @@ const Login = () => {
       }, {
         headers: { "Content-Type": "application/json" },
         withCredentials: true,
+        timeout: 5000,
       });
       if (res.data.success) {
         dispatch(setUser(res.data.user));
-        navigate("/profile");
+        navigate(input.role === "recruiter" ? "/admin/profile" : "/profile");
         toast.success(res.data.message);
       }
     } catch (error) {
@@ -56,70 +197,38 @@ const Login = () => {
     }
   };
 
-  // Request OTP for Login with OTP
-  const requestOtpHandler = async (e) => {
-    e.preventDefault();
-    try {
-      dispatch(setLoading(true));
-      const res = await axios.post(`${USER_API_END_POINT}/request-otp`, {
-        email: input.email,
-        role: input.role,
-      }, {
-        headers: { "Content-Type": "application/json" },
-      });
-      if (res.data.success) {
-        toast.success("OTP sent to your email!");
-        setInput((prev) => ({ ...prev, stage: "otp", newPassword: "" })); // Stay in otp stage, clear newPassword
-      }
-    } catch (error) {
-      toast.error(error.response?.data?.message || "Failed to send OTP");
-    } finally {
-      dispatch(setLoading(false));
-    }
-  };
-
   // Login with OTP
-  const submitHandlerOtp = async (e) => {
+  const loginWithOtpHandler = async (e) => {
     e.preventDefault();
+
+    const enteredOtp = otp.join("");
+    if (!enteredOtp || enteredOtp.length !== 6) {
+      toast.error("Please enter a valid 6-digit OTP");
+      return;
+    }
+
+    if (enteredOtp !== sentOtp) {
+      toast.error("Invalid OTP");
+      return;
+    }
+
     try {
       dispatch(setLoading(true));
       const res = await axios.post(`${USER_API_END_POINT}/login-otp`, {
         email: input.email,
-        otp: input.otp,
         role: input.role,
       }, {
         headers: { "Content-Type": "application/json" },
         withCredentials: true,
+        timeout: 5000,
       });
       if (res.data.success) {
         dispatch(setUser(res.data.user));
-        navigate("/");
+        navigate(input.role === "recruiter" ? "/admin/profile" : "/profile");
         toast.success(res.data.message);
       }
     } catch (error) {
-      toast.error(error.response?.data?.message || "Invalid OTP");
-    } finally {
-      dispatch(setLoading(false));
-    }
-  };
-
-  // Request OTP for Forgot Password
-  const requestOtpHandlerForgot = async (e) => {
-    e.preventDefault();
-    try {
-      dispatch(setLoading(true));
-      const res = await axios.post(`${USER_API_END_POINT}/request-otp`, {
-        email: input.email,
-        role: input.role,
-      }, {
-        headers: { "Content-Type": "application/json" },
-      });
-      if (res.data.success) {
-        toast.success("OTP sent to your email!");
-        setInput((prev) => ({ ...prev, stage: "forgot-otp" })); // Move to forgot-otp for reset
-      }
-    } catch (error) {
-      toast.error(error.response?.data?.message || "Failed to send OTP");
+      toast.error(error.response?.data?.message || "Login failed");
     } finally {
       dispatch(setLoading(false));
     }
@@ -128,27 +237,37 @@ const Login = () => {
   // Reset Password
   const resetPasswordHandler = async (e) => {
     e.preventDefault();
+
+    const enteredOtp = otp.join("");
+    if (!enteredOtp || enteredOtp.length !== 6) {
+      toast.error("Please enter a valid 6-digit OTP");
+      return;
+    }
+    if (enteredOtp !== sentOtp) {
+      toast.error("Invalid OTP");
+      return;
+    }
+    if (!input.newPassword) {
+      toast.error("Please enter a new password");
+      return;
+    }
+
     try {
       dispatch(setLoading(true));
       const res = await axios.post(`${USER_API_END_POINT}/reset-password`, {
         email: input.email,
-        otp: input.otp,
         newPassword: input.newPassword,
         role: input.role,
       }, {
         headers: { "Content-Type": "application/json" },
+        timeout: 5000,
       });
       if (res.data.success) {
         toast.success("Password reset successfully! Please login.");
-        navigate("/profile");
-        setInput({
-          email: "",
-          password: "",
-          role: input.role,
-          otp: "",
-          newPassword: "",
-          stage: "password",
-        });
+        setInput({ ...input, stage: "login", password: "", newPassword: "" });
+        setIsOtpSent(false);
+        setSentOtp("");
+        setOtp(["", "", "", "", "", ""]);
       }
     } catch (error) {
       toast.error(error.response?.data?.message || "Failed to reset password");
@@ -157,17 +276,12 @@ const Login = () => {
     }
   };
 
-  useEffect(() => {
-    if (user) navigate("/");
-  }, [user, navigate]);
-
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
       <Navbar />
       <div className="flex justify-center items-center min-h-[calc(100vh-64px)] px-4">
         <div className="w-full max-w-6xl flex bg-white shadow-2xl rounded-2xl overflow-hidden transform hover:scale-105 transition duration-300">
-          {/* Left Section */}
-          <div className="w-1/2 bg-gradient-to-br from-yellow-400 to-orange-500 p-8 flex flex-col justify-center items-center relative">
+          <div className="w-1/2 bg-gradient-to-br from-yellow-400 to-orange-500 p-8 flex flex-col justify-center items-center">
             <img src={personImage} alt="Login Illustration" className="w-3/4 h-auto object-cover rounded-xl shadow-lg" />
             <div className="mt-6 text-center text-white">
               <h2 className="text-2xl font-bold">Unlock Your Potential</h2>
@@ -178,10 +292,8 @@ const Login = () => {
               </div>
             </div>
           </div>
-
-          {/* Right Section */}
           <div className="w-1/2 p-8 flex flex-col justify-center">
-            <h1 className="text-3xl font-bold text-center text-gray-800 mb-6">Welcome back</h1>
+            <h1 className="text-3xl font-bold text-center text-gray-800 mb-6">Welcome Back</h1>
             <p className="text-center text-gray-600 mb-6">Access your account</p>
 
             <Tabs value={input.role} onValueChange={(value) => setInput({ ...input, role: value })} className="w-full">
@@ -194,236 +306,228 @@ const Login = () => {
                 </TabsTrigger>
               </TabsList>
 
-              {input.stage === "password" && (
-                <form onSubmit={submitHandlerPassword} className="space-y-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="email" className="flex items-center gap-2 text-gray-700">
-                      <Mail className="h-4 w-4" /> Email
-                    </Label>
-                    <Input
-                      id="email"
-                      type="email"
-                      name="email"
-                      value={input.email}
-                      onChange={changeEventHandler}
-                      placeholder="you@example.com"
-                      className="mt-1 w-full border-gray-300 rounded-md"
-                      required
-                    />
-                  </div>
-                  <div className="flex justify-between items-center">
-                    <Link
-                      to="#"
-                      onClick={() => setInput({ ...input, stage: "otp" })}
-                      className="text-blue-600 text-sm hover:underline"
+              <TabsContent value={input.role}>
+                {input.stage === "login" && (
+                  <form onSubmit={loginWithPasswordHandler} className="space-y-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="email" className="flex items-center gap-2 text-gray-700">
+                        <Mail className="h-4 w-4" /> Email *
+                      </Label>
+                      <Input
+                        id="email"
+                        type="email"
+                        name="email"
+                        value={input.email}
+                        onChange={changeEventHandler}
+                        placeholder={input.role === "candidate" ? "john.doe@gmail.com" : "hr@company.com"}
+                        className="mt-1 w-full border-gray-300 rounded-md"
+                        required
+                      />
+                      {input.email && !isValidEmail(input.email) && (
+                        <p className="text-yellow-600 text-sm mt-1">
+                          * {input.role === "candidate" ? "Use gmail.com, outlook.com, or .com email" : "Use a company-specific domain"}
+                        </p>
+                      )}
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="password" className="flex items-center gap-2 text-gray-700">
+                        <Lock className="h-4 w-4" /> Password *
+                      </Label>
+                      <Input
+                        id="password"
+                        type="password"
+                        name="password"
+                        value={input.password}
+                        onChange={changeEventHandler}
+                        placeholder="••••••••"
+                        className="mt-1 w-full border-gray-300 rounded-md"
+                        required
+                      />
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <Button
+                        type="button"
+                        variant="link"
+                        onClick={(e) => sendOtpHandler(e, "login")}
+                        className="text-blue-600 text-sm p-0"
+                        disabled={loading || !input.email || !isValidEmail(input.email)}
+                      >
+                        Login with OTP
+                      </Button>
+                      <Button
+                        type="button"
+                        variant="link"
+                        onClick={() => setInput({ ...input, stage: "reset" })}
+                        className="text-blue-600 text-sm p-0"
+                      >
+                        Forgot Password?
+                      </Button>
+                    </div>
+                    <Button
+                      type="submit"
+                      className="w-full bg-blue-600 text-white rounded-full py-2 hover:bg-blue-700"
+                      disabled={loading || !input.email || !input.password}
                     >
-                      Login via OTP
-                    </Link>
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="password" className="flex items-center gap-2 text-gray-700">
-                      <Lock className="h-4 w-4" /> Password
-                    </Label>
-                    <Input
-                      id="password"
-                      type="password"
-                      name="password"
-                      value={input.password}
-                      onChange={changeEventHandler}
-                      placeholder="••••••••"
-                      className="mt-1 w-full border-gray-300 rounded-md"
-                      required
-                    />
-                  </div>
-                  <div className="flex justify-between items-center">
-                    <Link
-                      to="#"
-                      onClick={() => setInput({ ...input, stage: "forgot" })}
-                      className="text-blue-600 text-sm hover:underline"
+                      {loading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : "Login with Password"}
+                    </Button>
+                  </form>
+                )}
+
+                {input.stage === "otp" && (
+                  <form onSubmit={loginWithOtpHandler} className="space-y-4">
+                    <div className="space-y-2">
+                      <Label>Enter OTP sent to {input.email}</Label>
+                      <p className="text-sm text-gray-500">Check your inbox or spam folder.</p>
+                      <div className="flex gap-2">
+                        {otp.map((digit, index) => (
+                          <Input
+                            key={index}
+                            ref={(el) => (otpRefs.current[index] = el)}
+                            type="text"
+                            maxLength={1}
+                            value={digit}
+                            onChange={(e) => handleOtpChange(index, e.target.value)}
+                            onKeyDown={(e) => handleKeyDown(index, e)}
+                            className="w-12 h-12 text-center text-2xl font-bold border-gray-300 rounded"
+                          />
+                        ))}
+                      </div>
+                      <div className="flex gap-4">
+                        <Button
+                          variant="outline"
+                          onClick={resendOtpHandler}
+                          disabled={timer > 0 || loading || sendOtpCooldown}
+                        >
+                          Resend OTP {timer > 0 && `(${formatTime(timer)})`}
+                        </Button>
+                        <Button
+                          type="submit"
+                          disabled={loading || otp.some((d) => !d)}
+                          className="bg-blue-600 text-white hover:bg-blue-700"
+                        >
+                          {loading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : "Login with OTP"}
+                        </Button>
+                      </div>
+                      <Button
+                        type="button"
+                        variant="link"
+                        onClick={() => setInput({ ...input, stage: "login" })}
+                        className="text-blue-600 text-sm w-full"
+                      >
+                        Back to Password Login
+                      </Button>
+                    </div>
+                  </form>
+                )}
+
+                {input.stage === "reset" && !isOtpSent && (
+                  <form onSubmit={(e) => sendOtpHandler(e, "reset")} className="space-y-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="email" className="flex items-center gap-2 text-gray-700">
+                        <Mail className="h-4 w-4" /> Email *
+                      </Label>
+                      <Input
+                        id="email"
+                        type="email"
+                        name="email"
+                        value={input.email}
+                        onChange={changeEventHandler}
+                        placeholder={input.role === "candidate" ? "john.doe@gmail.com" : "hr@company.com"}
+                        className="mt-1 w-full border-gray-300 rounded-md"
+                        required
+                      />
+                      {input.email && !isValidEmail(input.email) && (
+                        <p className="text-yellow-600 text-sm mt-1">
+                          * {input.role === "candidate" ? "Use gmail.com, outlook.com, or .com email" : "Use a company-specific domain"}
+                        </p>
+                      )}
+                    </div>
+                    <Button
+                      type="submit"
+                      className="w-full bg-blue-600 text-white rounded-full py-2 hover:bg-blue-700"
+                      disabled={loading || sendOtpCooldown || !input.email || !isValidEmail(input.email)}
                     >
-                      Forgot password?
-                    </Link>
-                  </div>
-                  <Button
-                    type="submit"
-                    className="w-full bg-gray-300 text-gray-700 rounded-full py-2 hover:bg-gray-400 disabled:opacity-50"
-                    disabled={loading}
-                  >
-                    {loading ? (
-                      <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Signing in...</>
-                    ) : (
-                      "Login"
-                    )}
-                  </Button>
-                  <p className="text-center text-sm text-gray-600">
-                    Don’t have an account?{" "}
-                    <Link to="/signup" className="font-medium text-blue-600 hover:underline">
-                      Create one now
-                    </Link>
-                  </p>
-                </form>
-              )}
+                      {loading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : "Send OTP to Reset"}
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="link"
+                      onClick={() => setInput({ ...input, stage: "login" })}
+                      className="text-blue-600 text-sm w-full"
+                    >
+                      Back to Login
+                    </Button>
+                  </form>
+                )}
 
-              {input.stage === "otp" && (
-                <form onSubmit={submitHandlerOtp} className="space-y-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="email" className="flex items-center gap-2 text-gray-700">
-                      <Mail className="h-4 w-4" /> Email
-                    </Label>
-                    <Input
-                      id="email"
-                      type="email"
-                      name="email"
-                      value={input.email}
-                      onChange={changeEventHandler}
-                      placeholder="you@example.com"
-                      className="mt-1 w-full border-gray-300 rounded-md"
-                      required
-                      disabled
-                    />
-                  </div>
-                  <Button
-                    onClick={requestOtpHandler}
-                    className="w-full bg-green-600 hover:bg-green-700 text-white rounded-full py-2"
-                    disabled={loading}
-                  >
-                    {loading ? (
-                      <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Sending OTP...</>
-                    ) : (
-                      "Request OTP"
-                    )}
-                  </Button>
-                  <div className="space-y-2">
-                    <Label htmlFor="otp" className="flex items-center gap-2 text-gray-700">
-                      <Key className="h-4 w-4" /> OTP
-                    </Label>
-                    <Input
-                      id="otp"
-                      type="text"
-                      name="otp"
-                      value={input.otp}
-                      onChange={changeEventHandler}
-                      placeholder="Enter OTP"
-                      className="mt-1 w-full border-gray-300 rounded-md"
-                      required
-                    />
-                  </div>
-                  <Button
-                    type="submit"
-                    className="w-full bg-gray-300 text-gray-700 rounded-full py-2 hover:bg-gray-400 disabled:opacity-50"
-                    disabled={loading}
-                  >
-                    {loading ? (
-                      <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Verifying...</>
-                    ) : (
-                      "Login with OTP"
-                    )}
-                  </Button>
-                  <Button
-                    type="button"
-                    onClick={() => setInput({ ...input, stage: "password", otp: "" })}
-                    className="w-full bg-blue-600 text-white rounded-full py-2 hover:bg-blue-700 mt-2"
-                  >
-                    Back to Login
-                  </Button>
-                </form>
-              )}
-
-              {input.stage === "forgot" && (
-                <form onSubmit={requestOtpHandlerForgot} className="space-y-4">
-                  <div className="text-yellow-600 flex items-center">
-                    <Lock className="mr-2" />
-                    <p className="text-sm">Forgot Password?</p>
-                  </div>
-                  <p className="text-gray-600 text-sm">Create a new password to log into your account.</p>
-                  <div className="space-y-2">
-                    <Label htmlFor="email" className="flex items-center gap-2 text-gray-700">
-                      <Mail className="h-4 w-4" /> Email
-                    </Label>
-                    <Input
-                      id="email"
-                      type="email"
-                      name="email"
-                      value={input.email}
-                      onChange={changeEventHandler}
-                      placeholder="you@example.com"
-                      className="mt-1 w-full border-gray-300 rounded-md"
-                      required
-                    />
-                  </div>
-                  <Button
-                    type="submit"
-                    className="w-full bg-gray-300 text-gray-700 rounded-full py-2 hover:bg-gray-400 disabled:opacity-50"
-                    disabled={loading}
-                  >
-                    {loading ? (
-                      <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Sending...</>
-                    ) : (
-                      "Submit"
-                    )}
-                  </Button>
-                  <Button
-                    type="button"
-                    onClick={() => setInput({ ...input, stage: "password" })}
-                    className="w-full bg-blue-600 text-white rounded-full py-2 hover:bg-blue-700 mt-2"
-                  >
-                    ← Back to Login
-                  </Button>
-                </form>
-              )}
-
-              {input.stage === "forgot-otp" && (
-                <form onSubmit={resetPasswordHandler} className="space-y-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="otp" className="flex items-center gap-2 text-gray-700">
-                      <Key className="h-4 w-4" /> OTP
-                    </Label>
-                    <Input
-                      id="otp"
-                      type="text"
-                      name="otp"
-                      value={input.otp}
-                      onChange={changeEventHandler}
-                      placeholder="Enter OTP"
-                      className="mt-1 w-full border-gray-300 rounded-md"
-                      required
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="newPassword" className="flex items-center gap-2 text-gray-700">
-                      <Lock className="h-4 w-4" /> New Password
-                    </Label>
-                    <Input
-                      id="newPassword"
-                      type="password"
-                      name="newPassword"
-                      value={input.newPassword}
-                      onChange={changeEventHandler}
-                      placeholder="••••••••"
-                      className="mt-1 w-full border-gray-300 rounded-md"
-                      required
-                    />
-                  </div>
-                  <Button
-                    type="submit"
-                    className="w-full bg-gray-300 text-gray-700 rounded-full py-2 hover:bg-gray-400 disabled:opacity-50"
-                    disabled={loading}
-                  >
-                    {loading ? (
-                      <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Resetting...</>
-                    ) : (
-                      "Reset Password"
-                    )}
-                  </Button>
-                  <Button
-                    type="button"
-                    onClick={() => setInput({ ...input, stage: "forgot" })}
-                    className="w-full bg-blue-600 text-white rounded-full py-2 hover:bg-blue-700 mt-2"
-                  >
-                    ← Back to Forgot
-                  </Button>
-                </form>
-              )}
+                {input.stage === "reset" && isOtpSent && (
+                  <form onSubmit={resetPasswordHandler} className="space-y-4">
+                    <div className="space-y-2">
+                      <Label>Enter OTP sent to {input.email}</Label>
+                      <p className="text-sm text-gray-500">Check your inbox or spam folder.</p>
+                      <div className="flex gap-2">
+                        {otp.map((digit, index) => (
+                          <Input
+                            key={index}
+                            ref={(el) => (otpRefs.current[index] = el)}
+                            type="text"
+                            maxLength={1}
+                            value={digit}
+                            onChange={(e) => handleOtpChange(index, e.target.value)}
+                            onKeyDown={(e) => handleKeyDown(index, e)}
+                            className="w-12 h-12 text-center text-2xl font-bold border-gray-300 rounded"
+                          />
+                        ))}
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="newPassword" className="flex items-center gap-2 text-gray-700">
+                          <Lock className="h-4 w-4" /> New Password *
+                        </Label>
+                        <Input
+                          id="newPassword"
+                          type="password"
+                          name="newPassword"
+                          value={input.newPassword}
+                          onChange={changeEventHandler}
+                          placeholder="••••••••"
+                          className="mt-1 w-full border-gray-300 rounded-md"
+                          required
+                        />
+                      </div>
+                      <div className="flex gap-4">
+                        <Button
+                          variant="outline"
+                          onClick={resendOtpHandler}
+                          disabled={timer > 0 || loading || sendOtpCooldown}
+                        >
+                          Resend OTP {timer > 0 && `(${formatTime(timer)})`}
+                        </Button>
+                        <Button
+                          type="submit"
+                          disabled={loading || otp.some((d) => !d) || !input.newPassword}
+                          className="bg-blue-600 text-white hover:bg-blue-700"
+                        >
+                          {loading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : "Reset Password"}
+                        </Button>
+                      </div>
+                      <Button
+                        type="button"
+                        variant="link"
+                        onClick={() => setInput({ ...input, stage: "login" })}
+                        className="text-blue-600 text-sm w-full"
+                      >
+                        Back to Login
+                      </Button>
+                    </div>
+                  </form>
+                )}
+                <p className="text-center text-sm text-gray-600 mt-4">
+                  Don’t have an account?{" "}
+                  <Link to="/signup" className="font-medium text-blue-600 hover:underline">
+                    Create one now
+                  </Link>
+                </p>
+              </TabsContent>
             </Tabs>
           </div>
         </div>
