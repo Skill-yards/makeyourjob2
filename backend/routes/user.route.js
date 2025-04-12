@@ -12,11 +12,16 @@ import {
 } from "../controllers/user.controller.js";
 import isAuthenticated from "../middlewares/isAuthenticated.js";
 import multer from "multer";
-
+import rateLimit from "express-rate-limit";
+const limiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 2, // Limit each IP to 100 requests per windowMs
+  message: "Too many requests from this IP, please try again later.",
+});
 const upload = multer({ storage: multer.memoryStorage() });
 const router = express.Router();
 
-router.route("/send-otp-register").post(sendOtpForRegister);
+router.route("/send-otp-register").post(limiter, sendOtpForRegister);
 router.route("/send-otp").post(sendOtp);
 router.route("/register").post(upload.single("file"), register);
 router.route("/login").post(login);
