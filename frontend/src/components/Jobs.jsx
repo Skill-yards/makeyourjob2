@@ -4,6 +4,7 @@ import Navbar from './shared/Navbar';
 import FilterCard from './FilterCard';
 import Job from './Job';
 import { motion } from 'framer-motion';
+import Footer from './shared/Footer'
 import { 
   Briefcase, 
   Search, 
@@ -19,6 +20,7 @@ import {
   AlertDescription,
   AlertTitle
 } from "@/components/ui/alert";
+
 
 const Jobs = () => {
   const { allJobs, searchedQuery } = useSelector(store => store.job);
@@ -61,9 +63,9 @@ const Jobs = () => {
   };
 
   return (
+    <>
+    <Navbar />
     <div className="container mx-auto px-4 py-8">
-      <Navbar />
-      
       <div className="flex flex-col gap-6 md:flex-row md:gap-8 mt-6">
         <div className="md:w-1/4">
           <FilterCard />
@@ -146,6 +148,8 @@ const Jobs = () => {
         </div>
       </div>
     </div>
+    <Footer />
+    </>
   );
 };
 

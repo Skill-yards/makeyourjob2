@@ -145,9 +145,6 @@ export const updateCompany = async (req, res) => {
         });
       }
     }
-
-    console.log("Files received:", files);
-
     const company = await Company.findById(companyId);
     if (!company) {
       return res.status(404).json({

@@ -72,6 +72,8 @@ export const postJob = async (req, res) => {
         success: false,
       });
     }
+  
+    
 
     const job = await Job.create({
       title: jobTitle, // Backward compatibility

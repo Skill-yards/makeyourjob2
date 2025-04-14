@@ -17,7 +17,7 @@ const transporter = nodemailer.createTransport({
 });
 
 export const sendEmail = async ({ to, subject, otp }) => {
-    console.log(`Sending email to ${to} with subject "${subject}" and OTP "${otp}"`);
+    
     try {
         if (!to || !subject || !otp) {
             throw new Error("Missing required email parameters");

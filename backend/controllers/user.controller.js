@@ -235,6 +235,7 @@ export const register = asyncHandler(async (req, res) => {
 
 // Login
 export const login = asyncHandler(async (req, res) => {
+    console.log(req.body,"sjabdkja")
     const { email, password, role } = req.body;
 
     if (!email || !password || !role) {

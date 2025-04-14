@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import Navbar from '../shared/Navbar';
 import { Label } from '../ui/label';
 import { Input } from '../ui/input';
@@ -11,6 +11,7 @@ import { JOB_API_END_POINT } from '@/utils/constant';
 import { toast } from 'sonner';
 import { useNavigate } from 'react-router-dom';
 import { Loader2, Briefcase, DollarSign, MapPin, Clock, Building, Tag } from 'lucide-react';
+import useGetAllCompanies from '@/hooks/useGetAllCompanies';
 
 const PostJob = () => {
   const [input, setInput] = useState({
@@ -35,6 +36,8 @@ const PostJob = () => {
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
   const { companies } = useSelector((store) => store.company);
+  useGetAllCompanies()
+  
 
   const changeEventHandler = (e) => {
     const { name, value } = e.target;

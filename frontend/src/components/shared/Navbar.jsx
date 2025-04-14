@@ -69,13 +69,12 @@ const Navbar = () => {
                     {/* Logo */}
                     <div className="flex items-center">
                         <Link to="/" className="flex items-center space-x-2">
-                            <Briefcase className="h-6 w-6 text-purple-600" />
-                            <span className="text-xl font-bold tracking-tight">
-                                Make<span className="text-orange-600">YourJob</span>
-                            </span>
+                            <div className='w-30 h-10 mt-2 bg-transparent'>
+                                <img src="../../../public/logo-removebg-preview.png" alt="Logo" className="w-full h-full bg-transparent object-contain" />
+                            </div>
                         </Link>
                     </div>
-
+                   
                     {/* Desktop Navigation */}
                     <nav className="hidden md:flex items-center space-x-1">
                         {getNavLinks().map((link, index) => (

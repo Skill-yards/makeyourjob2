@@ -39,16 +39,15 @@ const CompanyJobApplicants = () => {
       try {
         setIsLoading(true);
         setError(null);
-
         const response = await axios.get(`${COMPANY_API_END_POINT}/get/${companyId}`, {
           withCredentials: true,
         });
-
         if (response.data.success) {
           const { company, jobs } = response.data;
           dispatch(setSingleCompany(company));
           setCompanyData({ ...company, jobs: jobs || [] });
         }
+        console.log(response.data)
       } catch (error) {
         setError(error.response?.data?.message || 'Failed to load company details');
       } finally {

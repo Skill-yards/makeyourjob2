@@ -7,9 +7,8 @@ import axios from 'axios';
 import { COMPANY_API_END_POINT, JOB_API_END_POINT } from '@/utils/constant';
 import { setSingleCompany } from '@/redux/companySlice';
 import { useDispatch, useSelector } from 'react-redux';
-import { toast } from 'sonner';
+
 import { 
-  Loader2, 
   MapPin, 
   Briefcase, 
   DollarSign, 

@@ -21,7 +21,6 @@ import {
     Tag,
     Award,
     BookOpen,
-    List,
     Home,
     Mail,
     Phone,
@@ -37,6 +36,8 @@ import {
     DialogHeader,
     DialogTitle,
 } from './ui/dialog';
+import Footer from './shared/Footer'
+import Navbar from './shared/Navbar'
 
 const JobDescription = () => {
     const { singleJob } = useSelector((store) => store.job);
@@ -193,6 +194,8 @@ const JobDescription = () => {
     const { missingFields } = checkProfileCompletion();
 
     return (
+       <>
+       <Navbar/>
         <div className="max-w-7xl mx-auto my-10 px-4 sm:px-6 lg:px-8">
             <Card className="shadow-xl border-none overflow-hidden bg-gradient-to-b from-white to-slate-50">
                 {/* Header Section */}
@@ -473,6 +476,8 @@ const JobDescription = () => {
             </Card>
             <SuccessDialog />
         </div>
+        <Footer/>
+       </>
     );
 };
 
