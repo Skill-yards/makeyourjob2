@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 
 const LatestJobCards = ({ job }) => {
+  console.log(job, "job details....");
   const navigate = useNavigate();
 
   // Function to truncate text with ellipsis

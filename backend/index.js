@@ -9,6 +9,7 @@ import userRoute from "./routes/user.route.js";
 import companyRoute from "./routes/company.route.js";
 import jobRoute from "./routes/job.route.js";
 import applicationRoute from "./routes/application.route.js";
+import contactRoute from "./routes/contact.route.js"
 
 dotenv.config();
 
@@ -46,6 +47,7 @@ app.use("/api/v1/user", userRoute);
 app.use("/api/v1/company", companyRoute);
 app.use("/api/v1/job", jobRoute);
 app.use("/api/v1/application", applicationRoute);
+app.use("/api/v1/contact", contactRoute);
 
 // Handle 404 for API routes
 app.use("/api", (req, res) => {

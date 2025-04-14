@@ -8,6 +8,8 @@ import { APPLICATION_API_END_POINT, JOB_API_END_POINT } from '@/utils/constant';
 import { setSingleJob } from '@/redux/jobSlice';
 import { useDispatch, useSelector } from 'react-redux';
 import { toast } from 'sonner';
+import Footer from './shared/Footer'
+import Navbar from './shared/Navbar'
 import {
     Loader2,
     MapPin,
@@ -193,12 +195,14 @@ const JobDescription = () => {
     const { missingFields } = checkProfileCompletion();
 
     return (
+      <>
+        <Navbar />
         <div className="max-w-7xl mx-auto my-10 px-4 sm:px-6 lg:px-8">
             <Card className="shadow-xl border-none overflow-hidden bg-gradient-to-b from-white to-slate-50">
                 {/* Header Section */}
                 <CardHeader className="pb-4 border-b">
-                    <div className="flex flex-col gap-4">
-                        <div className="flex items-center justify-between">
+                    <div className="flex flex-col ">
+                        <div className="flex items-center justify-between  gap-8">
                             <Button
                                 onClick={() => navigate(-1)} // Go back to previous page
                                 variant="outline"
@@ -473,6 +477,8 @@ const JobDescription = () => {
             </Card>
             <SuccessDialog />
         </div>
+        <Footer />
+      </>
     );
 };
 

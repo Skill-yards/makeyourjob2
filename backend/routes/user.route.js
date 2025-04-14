@@ -21,7 +21,7 @@ const limiter = rateLimit({
 const upload = multer({ storage: multer.memoryStorage() });
 const router = express.Router();
 
-router.route("/send-otp-register").post(limiter, sendOtpForRegister);
+router.route("/send-otp-register").post( sendOtpForRegister);
 router.route("/send-otp").post(sendOtp);
 router.route("/register").post(upload.single("file"), register);
 router.route("/login").post(login);
