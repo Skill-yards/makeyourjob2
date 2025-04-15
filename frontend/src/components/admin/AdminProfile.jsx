@@ -1,22 +1,68 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useCallback } from 'react';
 import { useSelector } from 'react-redux';
 import Navbar from '../shared/Navbar';
 import { Card, CardContent } from '../ui/card';
 import { Button } from '../ui/button';
-import { Contact, FileText, Mail, Pen, Building, Briefcase } from 'lucide-react';
+import { Contact, Mail, Pen, Building, Briefcase, X } from 'lucide-react';
 import { Badge } from '../ui/badge';
 import Footer from '../shared/Footer';
 import { Avatar, AvatarImage } from '../ui/avatar';
 import CompaniesTable from './CompaniesTable';
 import UpdateProfileDialog from '../UpdateProfileDialog';
 import useGetAllCompanies from '@/hooks/useGetAllCompanies';
+import Cropper from 'react-easy-crop';
+import { Input } from '../ui/input';
+import { getCroppedImg } from '../../utils/cropUtil'; // Adjust path if different
 
 const AdminProfile = () => {
   const [open, setOpen] = useState(false);
   const { user } = useSelector((store) => store.auth);
+  const [imageSrc, setImageSrc] = useState(null); // Selected image for cropping
+  const [croppedImage, setCroppedImage] = useState(null); // Cropped image
+  const [crop, setCrop] = useState({ x: 0, y: 0 });
+  const [zoom, setZoom] = useState(1);
+  const [croppedAreaPixels, setCroppedAreaPixels] = useState(null);
+  const [showCropper, setShowCropper] = useState(false);
 
-  // Fetch companies on mount to ensure fresh data
+  // Fetch companies on mount
   useGetAllCompanies();
+
+  // Handle image selection
+  const handleImageChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = () => {
+        setImageSrc(reader.result);
+        setShowCropper(true);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  // Update cropped area
+  const onCropComplete = useCallback((croppedArea, croppedAreaPixels) => {
+    setCroppedAreaPixels(croppedAreaPixels);
+  }, []);
+
+  // Generate cropped image and open dialog
+  const handleCrop = useCallback(async () => {
+    try {
+      const croppedImageUrl = await getCroppedImg(imageSrc, croppedAreaPixels);
+      setCroppedImage(croppedImageUrl);
+      setShowCropper(false);
+      setOpen(true); // Open UpdateProfileDialog
+    } catch (e) {
+      console.error('Error cropping image:', e);
+    }
+  }, [imageSrc, croppedAreaPixels]);
+
+  // Cancel cropping
+  const handleCancelCrop = () => {
+    setShowCropper(false);
+    setImageSrc(null);
+    setCroppedImage(null);
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-white to-purple-50">
@@ -28,12 +74,31 @@ const AdminProfile = () => {
           </div>
           <CardContent className="relative pt-16 pb-8 px-6">
             <div className="absolute -top-14 left-6">
-              <Avatar className="h-28 w-28 border-4 border-white shadow-lg ring-2 ring-indigo-300">
-                <AvatarImage
-                  src={user?.profile?.profilePhoto || 'https://www.shutterstock.com/image-vector/circle-line-simple-design-logo-600nw-2174926871.jpg'}
-                  alt="profile"
+              <div className="relative group">
+                <Avatar className="h-28 w-28 border-4 border-white shadow-lg ring-2 ring-indigo-300">
+                  <AvatarImage
+                    src={
+                      croppedImage ||
+                      user?.profile?.profilePhoto ||
+                      'https://www.shutterstock.com/image-vector/circle-line-simple-design-logo-600nw-2174926871.jpg'
+                    }
+                    alt="profile"
+                  />
+                </Avatar>
+                <label
+                  htmlFor="profilePhoto"
+                  className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-50 flex items-center justify-center rounded-full cursor-pointer transition-all duration-200"
+                >
+                  <span className="text-white text-sm opacity-0 group-hover:opacity-100">Change Photo</span>
+                </label>
+                <Input
+                  id="profilePhoto"
+                  type="file"
+                  accept="image/*"
+                  onChange={handleImageChange}
+                  className="hidden"
                 />
-              </Avatar>
+              </div>
             </div>
             <div className="flex justify-between items-start mt-4">
               <div className="ml-36">
@@ -78,8 +143,52 @@ const AdminProfile = () => {
           </CardContent>
         </Card>
       </div>
-      <UpdateProfileDialog open={open} setOpen={setOpen} />
-      <Footer />
+      <UpdateProfileDialog
+        open={open}
+        setOpen={setOpen}
+        croppedImage={croppedImage}
+      />
+      {showCropper && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-xl p-6 w-full max-w-lg relative">
+            <button
+              onClick={handleCancelCrop}
+              className="absolute top-2 right-2 text-gray-500 hover:text-gray-700"
+            >
+              <X className="h-6 w-6" />
+            </button>
+            <h2 className="text-lg font-semibold mb-4">Crop Profile Photo</h2>
+            <div className="relative w-full h-64">
+              <Cropper
+                image={imageSrc}
+                crop={crop}
+                zoom={zoom}
+                aspect={1}
+                cropShape="round"
+                showGrid={false}
+                onCropChange={setCrop}
+                onZoomChange={setZoom}
+                onCropComplete={onCropComplete}
+              />
+            </div>
+            <div className="mt-4 flex space-x-4">
+              <Button
+                onClick={handleCrop}
+                className="bg-indigo-600 hover:bg-indigo-700 text-white"
+              >
+                Crop & Save
+              </Button>
+              <Button
+                onClick={handleCancelCrop}
+                variant="outline"
+                className="border-gray-300 text-gray-700 hover:bg-gray-100"
+              >
+                Cancel
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

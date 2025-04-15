@@ -1,10 +1,11 @@
-import { createBrowserRouter, RouterProvider } from 'react-router-dom';
-import { Suspense, lazy } from 'react';
+import { createBrowserRouter, RouterProvider, useLocation } from 'react-router-dom';
+import { Suspense, lazy, useEffect } from 'react';
 
 // Shared Components
 
 import ProtectedRoute from './components/admin/ProtectedRoute';
 import PrivacyPolicy from './components/PrivacyPolicy.jsx';
+import ScrollToTop from './utils/scrollToTop';
 
 // Lazy-loaded Components
 const Home = lazy(() => import('./components/Home'));
@@ -31,49 +32,51 @@ const AdminJobs = lazy(() => import('./components/admin/AdminJobs'));
 const PostJob = lazy(() => import('./components/admin/PostJob'));
 const Applicants = lazy(() => import('./components/admin/Applicants'));
 
+import Layout from "./utils/Layout";
+
 const appRouter = createBrowserRouter([
   {
     path: '/',
-    element: <Home />
+    element: <Layout><Home /></Layout>
   },
   {
     path: '/login',
-    element: <Login />
+    element: <Layout><Login /></Layout>
   },
   {
     path: '/signup',
-    element: <Signup />
+    element: <Layout><Signup /></Layout>
   },
   {
     path: "/jobs",
-    element: <Jobs />
+    element: <Layout><Jobs /></Layout>
   },
   {
     path: "/jobs/:id",
-    element: <JobDescription />
+    element: <Layout><JobDescription /></Layout>
   },
-  { 
+  {
     path: "/browse",
-    element: <Browse />
+    element: <Layout><Browse /></Layout>
   },
   {
     path: "/contact",
-    element: <ContactUs/>
+    element: <Layout><ContactUs/></Layout>
   },
-
   {
     path: "/privacy",
-    element: <PrivacyPolicy/>
+    element: <Layout><PrivacyPolicy/></Layout>
   },
   {
     path: "/terms",
-    element: <TermsAndConditions/>
+    element: <Layout><TermsAndConditions/></Layout>
   },
-  
   {
     path: "/profile",
-    element: <Profile />
+    element: <Layout><Profile /></Layout>
   },
+
+
   // admin ke liye yha se start hoga
   {
     path:"/admin/companies",
@@ -118,13 +121,18 @@ const appRouter = createBrowserRouter([
 ])
 
 function App() {
+ 
   return (
-    <Suspense fallback={<div className="flex justify-center items-center text-3xl  h-screen"><div className='w-30 h-10 mt-2 bg-transparent'>
+   <div>
+    
+     <Suspense fallback={<div className="flex justify-center items-center text-3xl  h-screen"><div className='w-30 h-10 mt-2 bg-transparent'>
       <img src="../../../public/logo-removebg-preview.png"  alt="Logo" className="w-full h-full bg-transparent object-contain"></img>
       </div>....
       </div>}>
       <RouterProvider router={appRouter} />
+     
     </Suspense>
+   </div>
   );
 }
 

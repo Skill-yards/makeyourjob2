@@ -13,7 +13,7 @@ import {
 } from "lucide-react";
 import { 
   Card, 
-  CardContent 
+  CardContent   
 } from "@/components/ui/card";
 import {
   Alert,

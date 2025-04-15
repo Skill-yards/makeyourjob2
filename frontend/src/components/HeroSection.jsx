@@ -7,6 +7,8 @@ import { Button } from './ui/button';
 import { Input } from './ui/input';
 import { Badge } from './ui/badge';
 
+
+
 const HeroSection = () => {
     const [query, setQuery] = useState("");
     const dispatch = useDispatch();
@@ -24,12 +26,15 @@ const HeroSection = () => {
     };
 
     return (
-        <div className="relative bg-gradient-to-b from-purple-50 to-white dark:from-gray-900 dark:to-gray-950 overflow-hidden">
+      <div>
+     
+          <div className="relative bg-gradient-to-b from-purple-50 to-white dark:from-gray-900 dark:to-gray-950 overflow-hidden">
             {/* Background pattern elements */}
             <div className="absolute inset-0 z-0 opacity-30">
                 <div className="absolute top-20 left-10 w-64 h-64 rounded-full bg-purple-200 dark:bg-purple-900 blur-3xl"></div>
                 <div className="absolute bottom-10 right-10 w-80 h-80 rounded-full bg-blue-200 dark:bg-blue-900 blur-3xl"></div>
             </div>
+           
 
             <div className="relative z-10 container mx-auto px-4 py-16 sm:py-24 md:py-32">
                 <div className="flex flex-col items-center text-center max-w-4xl mx-auto">
@@ -90,6 +95,7 @@ const HeroSection = () => {
                 </div>
             </div>
         </div>
+      </div>
     );
 };
 
