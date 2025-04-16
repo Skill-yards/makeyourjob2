@@ -16,7 +16,6 @@ import { useNavigate } from 'react-router-dom';
 import {
   Loader2,
   Briefcase,
-  MapPin,
   Check,
   ChevronsUpDown,
   Edit,
@@ -899,4 +898,4 @@ const PostJob = () => {
   );
 };
 
-export default PostJob;
+export default  PostJob;
