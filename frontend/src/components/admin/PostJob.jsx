@@ -21,9 +21,23 @@ import {
   ChevronsUpDown,
   Edit,
   AlertCircle,
-  X as XIcon
+  X as XIcon,
+  Plus
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+
+// Predefined common benefits
+const commonBenefits = [
+  "Health Insurance",
+  "Provident Fund",
+  "Cell Phone Insurance",
+  "Paid Sick Time",
+  "Work From Home",
+  "Food Provided",
+  "Life Insurance",
+  "Internet Reimbursement",
+  "Commuter Assistance"
+];
 
 const indianStates = [
   "Andhra Pradesh", "Arunachal Pradesh", "Assam", "Bihar", "Chhattisgarh", "Goa", "Gujarat",
@@ -105,8 +119,10 @@ const PostJob = () => {
     numberOfPositions: '1', // Default to 1 position
   });
 
-  // State for badges
+  // State for benefits badges
   const [benefitBadges, setBenefitBadges] = useState([]);
+  const [showCustomBenefitInput, setShowCustomBenefitInput] = useState(false);
+  const [customBenefitInput, setCustomBenefitInput] = useState('');
 
   // State for UI controls
   const [loading, setLoading] = useState(false);
@@ -119,24 +135,29 @@ const PostJob = () => {
   const [isCustomCategory, setIsCustomCategory] = useState(false);
   const [fetchingAreas, setFetchingAreas] = useState(false);
   const [pincodeError, setPincodeError] = useState('');
-  const [benefitInput, setBenefitInput] = useState('');
 
   const navigate = useNavigate();
   const { companies } = useSelector((store) => store.company);
 
-  // Effect to update badges when benefits input changes
+  // Effect to update input.benefits when benefitBadges changes
   useEffect(() => {
-    // Skip initial render or when directly editing
-    if (benefitInput !== input.benefits && input.benefits) {
-      // Split benefits by comma and create badges
-      const newBadges = input.benefits
+    setInput({
+      ...input,
+      benefits: benefitBadges.join(', ')
+    });
+  }, [benefitBadges]);
+
+  // Effect to sync benefits from input when loading initial data
+  useEffect(() => {
+    if (input.benefits && !benefitBadges.length) {
+      const initialBenefits = input.benefits
         .split(',')
         .map(benefit => benefit.trim())
         .filter(benefit => benefit !== '');
 
-      setBenefitBadges(newBadges);
+      setBenefitBadges(initialBenefits);
     }
-  }, [input.benefits]);
+  }, []);
 
   const fetchPincodeDetails = async (pincode) => {
     if (!pincode || pincode.length !== 6 || !/^\d+$/.test(pincode)) {
@@ -233,62 +254,33 @@ const PostJob = () => {
     }
   };
 
-  const handleBenefitInputChange = (e) => {
-    const value = e.target.value;
-    setBenefitInput(value);
-
-    // If the user types a comma, create a new badge
-    if (value.endsWith(',')) {
-      const benefitText = value.slice(0, -1).trim();
-
-      if (benefitText && !benefitBadges.includes(benefitText)) {
-        const newBadges = [...benefitBadges, benefitText];
-        setBenefitBadges(newBadges);
-        setBenefitInput('');
-
-        // Update the input.benefits with the comma-separated string
-        setInput({
-          ...input,
-          benefits: newBadges.join(', ')
-        });
-      } else {
-        setBenefitInput('');
-      }
+  // Toggle benefit selection
+  const toggleBenefit = (benefit) => {
+    if (benefitBadges.includes(benefit)) {
+      setBenefitBadges(benefitBadges.filter(b => b !== benefit));
     } else {
-      // Otherwise just update the temporary input
-      setBenefitInput(value);
+      setBenefitBadges([...benefitBadges, benefit]);
     }
   };
 
-  const handleBenefitKeyDown = (e) => {
-    // Add badge on Enter key
+  // Handle adding custom benefit
+  const handleAddCustomBenefit = () => {
+    if (customBenefitInput.trim()) {
+      const newBenefit = customBenefitInput.trim();
+      if (!benefitBadges.includes(newBenefit)) {
+        setBenefitBadges([...benefitBadges, newBenefit]);
+      }
+      setCustomBenefitInput('');
+      setShowCustomBenefitInput(false);
+    }
+  };
+
+  // Handle custom benefit input keydown
+  const handleCustomBenefitKeyDown = (e) => {
     if (e.key === 'Enter') {
       e.preventDefault();
-      const benefitText = benefitInput.trim();
-
-      if (benefitText && !benefitBadges.includes(benefitText)) {
-        const newBadges = [...benefitBadges, benefitText];
-        setBenefitBadges(newBadges);
-        setBenefitInput('');
-
-        // Update the input.benefits with the comma-separated string
-        setInput({
-          ...input,
-          benefits: newBadges.join(', ')
-        });
-      }
+      handleAddCustomBenefit();
     }
-  };
-
-  const removeBenefitBadge = (indexToRemove) => {
-    const newBadges = benefitBadges.filter((_, index) => index !== indexToRemove);
-    setBenefitBadges(newBadges);
-
-    // Update the input.benefits with the comma-separated string
-    setInput({
-      ...input,
-      benefits: newBadges.join(', ')
-    });
   };
 
   const selectChangeHandler = (name, value) => {
@@ -413,7 +405,7 @@ const PostJob = () => {
   return (
     <div className="min-h-screen bg-gradient-to-br from-indigo-100 via-purple-50 to-pink-100">
       <Navbar />
-      <div className="max-w-5xl mx-auto py-12 px-4 sm:px-6 lg:px-8">
+      <div className=" mx-auto py-12 px-2 sm:px-2 lg:px-2">
         <Card className="bg-white shadow-2xl rounded-3xl overflow-hidden border border-indigo-100 transition-all duration-300 hover:shadow-3xl">
           <div className="bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-500 h-24"></div>
           <CardHeader className="relative pt-8 pb-4 px-8">
@@ -525,37 +517,90 @@ const PostJob = () => {
                   />
                 </div>
 
-                {/* Benefits field with badges */}
+                {/* Benefits field with selectable badges and custom option */}
                 <div>
                   <Label htmlFor="benefits" className="text-sm font-semibold text-gray-800">Benefits</Label>
-                  <Input
-                    id="benefits"
-                    type="text"
-                    value={benefitInput}
-                    onChange={handleBenefitInputChange}
-                    onKeyDown={handleBenefitKeyDown}
-                    className="mt-2 h-12 border-gray-200 bg-gray-50 focus:border-indigo-600 focus:ring-indigo-600 rounded-xl shadow-sm transition-all duration-200"
-                    placeholder="Type benefit and press Enter or comma to add"
-                  />
-                  {benefitBadges.length > 0 && (
-                    <div className="flex flex-wrap gap-2 mt-2">
-                      {benefitBadges.map((benefit, index) => (
+                  <div className="mt-2">
+                    <div className="flex flex-wrap gap-2 mb-3">
+                      {commonBenefits.map((benefit) => (
                         <Badge
-                          key={index}
-                          className="bg-indigo-100 text-indigo-800 hover:bg-indigo-200 gap-1 pl-3 pr-2 py-1"
+                          key={benefit}
+                          className={cn(
+                            "cursor-pointer px-3 py-1.5 text-sm",
+                            benefitBadges.includes(benefit)
+                              ? "bg-indigo-600 text-white hover:bg-indigo-700"
+                              : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                          )}
+                          onClick={() => toggleBenefit(benefit)}
                         >
                           {benefit}
-                          <button
-                            type="button"
-                            onClick={() => removeBenefitBadge(index)}
-                            className="text-indigo-600 hover:text-indigo-800 rounded-full focus:outline-none focus:ring-2 focus:ring-indigo-500 p-1"
-                          >
-                            <XIcon className="h-3 w-3" />
-                          </button>
+                          {benefitBadges.includes(benefit) && (
+                            <Check className="ml-1 h-3 w-3" />
+                          )}
                         </Badge>
                       ))}
+                      <Badge
+                        className="cursor-pointer bg-gray-100 text-gray-700 hover:bg-gray-200 px-3 py-1.5 text-sm flex items-center gap-1"
+                        onClick={() => setShowCustomBenefitInput(true)}
+                      >
+                        <Plus className="h-3 w-3" />
+                        Other
+                      </Badge>
                     </div>
-                  )}
+
+                    {/* Custom benefit badges that have been added */}
+                    {benefitBadges.filter(b => !commonBenefits.includes(b)).length > 0 && (
+                      <div className="flex flex-wrap gap-2 mb-3">
+                        {benefitBadges.filter(b => !commonBenefits.includes(b)).map((benefit, index) => (
+                          <Badge
+                            key={`custom-${index}`}
+                            className="bg-indigo-600 text-white hover:bg-indigo-700 px-3 py-1.5 text-sm flex items-center gap-1"
+                          >
+                            {benefit}
+                            <button
+                              type="button"
+                              onClick={() => setBenefitBadges(benefitBadges.filter(b => b !== benefit))}
+                              className="ml-1 rounded-full focus:outline-none"
+                            >
+                              <XIcon className="h-3 w-3" />
+                            </button>
+                          </Badge>
+                        ))}
+                      </div>
+                    )}
+
+                    {/* Custom benefit input */}
+                    {showCustomBenefitInput && (
+                      <div className="flex mt-2">
+                        <Input
+                          type="text"
+                          value={customBenefitInput}
+                          onChange={(e) => setCustomBenefitInput(e.target.value)}
+                          onKeyDown={handleCustomBenefitKeyDown}
+                          placeholder="Type custom benefit..."
+                          className="flex-1 h-10 border-gray-200 bg-gray-50 focus:border-indigo-600 focus:ring-indigo-600 rounded-l-lg shadow-sm transition-all duration-200"
+                        />
+                        <Button
+                          type="button"
+                          onClick={handleAddCustomBenefit}
+                          className="rounded-r-lg bg-indigo-600 text-white hover:bg-indigo-700"
+                        >
+                          Add
+                        </Button>
+                        <Button
+                          type="button"
+                          onClick={() => {
+                            setShowCustomBenefitInput(false);
+                            setCustomBenefitInput('');
+                          }}
+                          variant="ghost"
+                          className="ml-2 px-2 rounded-lg border border-gray-200 bg-gray-50 hover:bg-gray-100"
+                        >
+                          <XIcon className="h-4 w-4 text-gray-600" />
+                        </Button>
+                      </div>
+                    )}
+                  </div>
                 </div>
 
                 <div>
@@ -727,12 +772,11 @@ const PostJob = () => {
                   </Popover>
                 </div>
 
-                {/* Job Type Field with Select Tag */}
                 <div>
                   <Label htmlFor="jobType" className="text-sm font-semibold text-gray-800">Job Type</Label>
                   <Select onValueChange={(value) => selectChangeHandler('jobType', value)}>
                     <SelectTrigger className="mt-2 h-12 border-gray-200 bg-gray-50 focus:border-indigo-600 focus:ring-indigo-600 rounded-xl shadow-sm">
-                      <SelectValue placeholder="Select job type" />
+                      <SelectValue placeholder="Select job type..." />
                     </SelectTrigger>
                     <SelectContent>
                       <SelectGroup>
@@ -754,8 +798,6 @@ const PostJob = () => {
                     name="experienceLevel"
                     value={input.experienceLevel}
                     onChange={changeEventHandler}
-                    min="0"
-                    step="0.1"
                     className="mt-2 h-12 border-gray-200 bg-gray-50 focus:border-indigo-600 focus:ring-indigo-600 rounded-xl shadow-sm transition-all duration-200"
                     placeholder="e.g., 2"
                   />
@@ -770,11 +812,10 @@ const PostJob = () => {
                     value={input.workplacePlane}
                     onChange={changeEventHandler}
                     className="mt-2 h-12 border-gray-200 bg-gray-50 focus:border-indigo-600 focus:ring-indigo-600 rounded-xl shadow-sm transition-all duration-200"
-                    placeholder="e.g., On-site, Remote, Hybrid"
+                    placeholder="e.g., Office, Remote, Hybrid"
                   />
                 </div>
 
-                {/* Job Category Field with Custom Input Option */}
                 <div>
                   <Label htmlFor="jobCategory" className="text-sm font-semibold text-gray-800">Job Category</Label>
                   {isCustomCategory ? (
@@ -861,7 +902,6 @@ const PostJob = () => {
                   />
                 </div>
 
-                {/* Number of Positions Field */}
                 <div>
                   <Label htmlFor="numberOfPositions" className="text-sm font-semibold text-gray-800">Number of Positions</Label>
                   <Input
@@ -870,25 +910,20 @@ const PostJob = () => {
                     name="numberOfPositions"
                     value={input.numberOfPositions}
                     onChange={changeEventHandler}
-                    min="1"
                     className="mt-2 h-12 border-gray-200 bg-gray-50 focus:border-indigo-600 focus:ring-indigo-600 rounded-xl shadow-sm transition-all duration-200"
                     placeholder="e.g., 1"
                   />
                 </div>
               </div>
 
-              <Button
-                type="submit"
-                disabled={loading}
-                className="w-full h-12 bg-indigo-600 text-white font-semibold rounded-xl shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 transition-all duration-200"
-              >
+              <Button type="submit" className="w-full h-12 bg-indigo-600 text-white hover:bg-indigo-700 rounded-xl shadow-sm transition-all duration-200">
                 {loading ? (
-                  <>
+                  <div className="flex items-center justify-center">
                     <Loader2 className="h-5 w-5 animate-spin mr-2" />
                     Posting...
-                  </>
+                  </div>
                 ) : (
-                  'Post Job'
+                  "Post Job"
                 )}
               </Button>
             </form>

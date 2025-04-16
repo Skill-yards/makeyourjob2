@@ -5,7 +5,7 @@ import { Suspense, lazy, useEffect } from 'react';
 
 import ProtectedRoute from './components/admin/ProtectedRoute';
 import PrivacyPolicy from './components/PrivacyPolicy.jsx';
-import ScrollToTop from './utils/scrollToTop';
+
 
 // Lazy-loaded Components
 const Home = lazy(() => import('./components/Home'));
