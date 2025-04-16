@@ -1,6 +1,5 @@
 
-const url="http://localhost:3000";
-
+const url="https://makeyourjobs.com";
 
 
 export const USER_API_END_POINT=`${url}/api/v1/user`;
