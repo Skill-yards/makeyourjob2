@@ -1,22 +1,91 @@
-import React, { useState, useEffect } from 'react';
-import { useSelector } from 'react-redux';
+import  { useState, useEffect, useRef } from 'react';
+import { useSelector, useDispatch } from 'react-redux';
 import Navbar from '../shared/Navbar';
 import { Card, CardContent } from '../ui/card';
 import { Button } from '../ui/button';
-import { Contact, FileText, Mail, Pen, Building, Briefcase } from 'lucide-react';
-import { Badge } from '../ui/badge';
+import { Contact, Mail, Pen, Building, Briefcase, Loader2 } from 'lucide-react';
 import Footer from '../shared/Footer';
 import { Avatar, AvatarImage } from '../ui/avatar';
 import CompaniesTable from './CompaniesTable';
 import UpdateProfileDialog from '../UpdateProfileDialog';
 import useGetAllCompanies from '@/hooks/useGetAllCompanies';
+import axios from 'axios';
+import { toast } from 'sonner';
+import { USER_API_END_POINT } from '@/utils/constant';
+import { setUser } from '@/redux/authSlice';
+// import { Navigate } from 'react-router-dom';
 
 const AdminProfile = () => {
   const [open, setOpen] = useState(false);
   const { user } = useSelector((store) => store.auth);
+  const dispatch = useDispatch();
+  const [profilePhoto, setProfilePhoto] = useState(
+    user?.profile?.profilePhoto || 'https://www.shutterstock.com/image-vector/circle-line-simple-design-logo-600nw-2174926871.jpg'
+  );
+  const [uploading, setUploading] = useState(false);
+  const fileInputRef = useRef(null);
 
-  // Fetch companies on mount to ensure fresh data
+  // Fetch companies on mount
   useGetAllCompanies();
+
+  // Sync local profile photo with Redux user data
+  useEffect(() => {
+    if (user?.profile?.profilePhoto) {
+      setProfilePhoto(user.profile.profilePhoto);
+    }
+  }, [user]);
+
+  // Trigger file input on logo click
+  const handleLogoClick = () => {
+    fileInputRef.current.click();
+  };
+
+  // Handle file selection and upload
+  const handleFileChange = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    // Validate file type and size
+    const validTypes = ['image/jpeg', 'image/png', 'image/gif'];
+    if (!validTypes.includes(file.type)) {
+      toast.error('Please upload a valid image (JPEG, PNG, or GIF).');
+      return;
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error('Image size must be less than 5MB.');
+      return;
+    }
+
+    const formData = new FormData();
+    formData.append('file', file); // Match UpdateProfileDialog's file field
+
+    try {
+      setUploading(true);
+      const res = await axios.post(
+        `${USER_API_END_POINT}/profile/update`,
+        formData,
+        {
+          headers: { 'Content-Type': 'multipart/form-data' },
+          withCredentials: true,
+        }
+      );
+      if (res.data.success) {
+        setProfilePhoto(res.data.user.profile.profilePhoto); // Update local state
+        dispatch(setUser(res.data.user)); // Update Redux state
+        toast.success('Profile logo updated successfully!');
+        // Navigate('/admin/profile')
+      }
+    } catch (error) {
+      console.error('Logo upload error:', error);
+      const message =
+        error.response?.data?.message ||
+        error.response?.data?.error ||
+        'Failed to update profile logo. Please check the API endpoint.';
+      toast.error(message);
+    } finally {
+      setUploading(false);
+    }
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-white to-purple-50">
@@ -28,12 +97,27 @@ const AdminProfile = () => {
           </div>
           <CardContent className="relative pt-16 pb-8 px-6">
             <div className="absolute -top-14 left-6">
-              <Avatar className="h-28 w-28 border-4 border-white shadow-lg ring-2 ring-indigo-300">
-                <AvatarImage
-                  src={user?.profile?.profilePhoto || 'https://www.shutterstock.com/image-vector/circle-line-simple-design-logo-600nw-2174926871.jpg'}
-                  alt="profile"
+              <div className="relative group">
+                <Avatar
+                  className="h-28 w-28 border-4 border-white shadow-lg ring-2 ring-indigo-300 cursor-pointer hover:ring-indigo-500 transition-all"
+                  onClick={handleLogoClick}
+                >
+                  <AvatarImage src={profilePhoto} alt="profile" />
+                  {uploading && (
+                    <Loader2 className="absolute h-6 w-6 animate-spin text-white top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2" />
+                  )}
+                </Avatar>
+                <input
+                  type="file"
+                  ref={fileInputRef}
+                  accept="image/*"
+                  onChange={handleFileChange}
+                  className="hidden"
                 />
-              </Avatar>
+                <span className="absolute bottom-0 left-0 bg-gray-800 text-white text-xs px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity">
+                  Click to change logo
+                </span>
+              </div>
             </div>
             <div className="flex justify-between items-start mt-4">
               <div className="ml-36">

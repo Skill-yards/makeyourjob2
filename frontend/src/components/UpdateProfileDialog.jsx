@@ -30,7 +30,7 @@ const UpdateProfileDialog = ({ open, setOpen }) => {
     skills: user?.profile?.skills?.join(', ') || '',
     organization: user?.profile?.organization || '',
     jobRole: user?.profile?.jobRole || '',
-    file: null, // File input starts as null
+    file: null, // For resume (candidates only)
   });
 
   const changeEventHandler = (e) => {
@@ -52,23 +52,25 @@ const UpdateProfileDialog = ({ open, setOpen }) => {
 
     if (user?.role === 'candidate') {
       formData.append('bio', input.bio);
-      formData.append('skills', input.skills); // Skills as a comma-separated string
+      formData.append('skills', input.skills);
+      if (input.file) {
+        formData.append('file', input.file); // Resume for candidates
+      }
     } else if (user?.role === 'recruiter') {
       formData.append('organization', input.organization || '');
       formData.append('jobRole', input.jobRole || '');
     }
 
-    if (input.file) {
-      formData.append('file', input.file);
-    }
-
     try {
       setLoading(true);
-      const res = await axios.post(`${USER_API_END_POINT}/profile/update`, formData, {
-        headers: { 'Content-Type': 'multipart/form-data' },
-        withCredentials: true,
-      });
-
+      const res = await axios.post(
+        `${USER_API_END_POINT}/profile/update`,
+        formData,
+        {
+          headers: { 'Content-Type': 'multipart/form-data' },
+          withCredentials: true,
+        }
+      );
       if (res.data.success) {
         dispatch(setUser(res.data.user));
         toast.success(res.data.message);
@@ -91,12 +93,12 @@ const UpdateProfileDialog = ({ open, setOpen }) => {
             className="p-1 hover:bg-gray-100"
             onClick={() => setOpen(false)}
           >
-            {/* <ArrowLeft className="h-5 w-5 text-gray-600" /> */}
+            <ArrowLeft className="h-5 w-5 text-gray-600" />
           </Button>
           <DialogTitle className="text-2xl font-semibold text-gray-800 flex-1 text-center">
             Update Profile
           </DialogTitle>
-          <div className="w-10"></div> {/* Spacer for alignment */}
+          <div className="w-10"></div>
         </DialogHeader>
         <form onSubmit={submitHandler} className="space-y-6">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -151,7 +153,6 @@ const UpdateProfileDialog = ({ open, setOpen }) => {
                 className="mt-1"
               />
             </div>
-
             {user?.role === 'candidate' && (
               <>
                 <div className="md:col-span-2">
@@ -194,7 +195,6 @@ const UpdateProfileDialog = ({ open, setOpen }) => {
                 </div>
               </>
             )}
-
             {user?.role === 'recruiter' && (
               <>
                 <div className="md:col-span-2">
@@ -221,24 +221,15 @@ const UpdateProfileDialog = ({ open, setOpen }) => {
                     className="mt-1"
                   />
                 </div>
-                <div className="md:col-span-2">
-                  <Label htmlFor="file" className="text-sm font-medium text-gray-700">
-                    Logo
-                  </Label>
-                  <Input
-                    id="file"
-                    name="file"
-                    type="file"
-                    accept="image/*"
-                    onChange={fileChangeHandler}
-                    className="mt-1"
-                  />
-                </div>
               </>
             )}
           </div>
           <DialogFooter className="mt-6">
-            <Button type="submit" disabled={loading} className="bg-indigo-600 hover:bg-indigo-700 w-full">
+            <Button
+              type="submit"
+              disabled={loading}
+              className="bg-indigo-600 hover:bg-indigo-700 w-full"
+            >
               {loading ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />

@@ -21,30 +21,19 @@ const JobSetup = () => {
     const navigate = useNavigate();
 
     const [input, setInput] = useState({
-        title: '',
         jobTitle: '',
-        description: '',
-        requirements: '',
-        salary: '',
-        salaryRangeDiversity: { min: '', max: '', currency: 'USD', frequency: 'yearly' },
+        jobDescription: '',
+        salaryRange: { minSalary: '', maxSalary: '', currency: 'INR', frequency: 'yearly' },
         experienceLevel: '',
-        location: '',
-        workLocation: { city: '', state: '', country: '' },
+        workLocation: { city: '', state: '', area: '', streetAddress: '', pincode: '' },
         jobType: '',
-        position: '',
+        numberOfPositions: '',
         companyName: '',
-        jobNature: '',
         workplacePlane: '',
         jobCategory: '',
         skills: '',
-        availabilityFrame: { startDate: '', endDate: '' },
         status: '',
-        postedDate: '',
         deadline: '',
-        vacancies: '',
-        benefits: '',
-        educationLevel: '',
-        keywords: '',
     });
 
     const [errors, setErrors] = useState({});
@@ -52,27 +41,26 @@ const JobSetup = () => {
     const validateInput = () => {
         const newErrors = {};
 
-        if (!input.title || input.title.length < 3) newErrors.title = 'Title is required (min 3 chars).';
         if (!input.jobTitle || input.jobTitle.length < 3) newErrors.jobTitle = 'Job title is required (min 3 chars).';
-        if (!input.description || input.description.length < 10) newErrors.description = 'Description is required (min 10 chars).';
-        if (!input.salary) newErrors.salary = 'Salary is required.';
+        if (!input.jobDescription || input.jobDescription.length < 10) newErrors.jobDescription = 'Description is required (min 10 chars).';
         if (!input.companyName) newErrors.companyName = 'Company name is required.';
-        if (input.salaryRangeDiversity.min && !/^\d+$/.test(input.salaryRangeDiversity.min)) newErrors['salaryRangeDiversity.min'] = 'Min salary must be a number.';
-        if (input.salaryRangeDiversity.max && !/^\d+$/.test(input.salaryRangeDiversity.max)) newErrors['salaryRangeDiversity.max'] = 'Max salary must be a number.';
-        if (input.salaryRangeDiversity.min && input.salaryRangeDiversity.max && Number(input.salaryRangeDiversity.min) >= Number(input.salaryRangeDiversity.max)) {
-            newErrors['salaryRangeDiversity.max'] = 'Max salary must be greater than min.';
+        if (!input.salaryRange.minSalary || !/^\d+$/.test(input.salaryRange.minSalary)) newErrors['salaryRange.minSalary'] = 'Min salary must be a number.';
+        if (!input.salaryRange.maxSalary || !/^\d+$/.test(input.salaryRange.maxSalary)) newErrors['salaryRange.maxSalary'] = 'Max salary must be a number.';
+        if (input.salaryRange.minSalary && input.salaryRange.maxSalary && Number(input.salaryRange.minSalary) >= Number(input.salaryRange.maxSalary)) {
+            newErrors['salaryRange.maxSalary'] = 'Max salary must be greater than min.';
         }
+        if (!input.salaryRange.currency) newErrors['salaryRange.currency'] = 'Currency is required.';
+        if (!input.salaryRange.frequency) newErrors['salaryRange.frequency'] = 'Frequency is required.';
         if (!input.experienceLevel) newErrors.experienceLevel = 'Experience level is required.';
-        if (!input.location) newErrors.location = 'Location is required.';
+        if (!input.workLocation.city) newErrors['workLocation.city'] = 'City is required.';
+        if (!input.workLocation.state) newErrors['workLocation.state'] = 'State is required.';
         if (!input.jobType) newErrors.jobType = 'Job type is required.';
-        if (!input.position) newErrors.position = 'Position is required.';
-        if (!input.workLocation.country) newErrors['workLocation.country'] = 'Country is required.';
-        if (!input.jobNature) newErrors.jobNature = 'Job nature is required.';
+        if (!input.numberOfPositions || !/^\d+$/.test(input.numberOfPositions) || Number(input.numberOfPositions) < 1) {
+            newErrors.numberOfPositions = 'Number of positions must be a positive number.';
+        }
         if (!input.workplacePlane) newErrors.workplacePlane = 'Workplace type is required.';
         if (!input.jobCategory) newErrors.jobCategory = 'Job category is required.';
         if (!input.skills) newErrors.skills = 'At least one skill is required.';
-        if (!input.availabilityFrame.startDate) newErrors['availabilityFrame.startDate'] = 'Start date is required.';
-        if (input.vacancies && (!/^\d+$/.test(input.vacancies) || Number(input.vacancies) < 1)) newErrors.vacancies = 'Vacancies must be a positive number.';
         if (input.deadline && new Date(input.deadline) < new Date()) newErrors.deadline = 'Deadline must be in the future.';
 
         setErrors(newErrors);
@@ -90,7 +78,7 @@ const JobSetup = () => {
         } else {
             setInput({ ...input, [name]: value });
         }
-        setErrors({ ...errors, [name]: '' }); // Clear error on change
+        setErrors({ ...errors, [name]: '' });
     };
 
     const selectChangeHandler = (name, value) => {
@@ -103,7 +91,7 @@ const JobSetup = () => {
         } else {
             setInput({ ...input, [name]: value });
         }
-        setErrors({ ...errors, [name]: '' }); // Clear error on change
+        setErrors({ ...errors, [name]: '' });
     };
 
     const submitHandler = async (e) => {
@@ -114,41 +102,30 @@ const JobSetup = () => {
         }
 
         const updatedFields = {
-            title: input.title,
             jobTitle: input.jobTitle,
-            description: input.description,
-            requirements: input.requirements,
-            salary: input.salary,
-            salaryRangeDiversity: {
-                min: input.salaryRangeDiversity.min,
-                max: input.salaryRangeDiversity.max,
-                currency: input.salaryRangeDiversity.currency,
-                frequency: input.salaryRangeDiversity.frequency,
+            jobDescription: input.jobDescription,
+            salaryRange: {
+                minSalary: input.salaryRange.minSalary,
+                maxSalary: input.salaryRange.maxSalary,
+                currency: input.salaryRange.currency,
+                frequency: input.salaryRange.frequency,
             },
             experienceLevel: input.experienceLevel,
-            location: input.location,
             workLocation: {
                 city: input.workLocation.city,
                 state: input.workLocation.state,
-                country: input.workLocation.country,
+                area: input.workLocation.area,
+                streetAddress: input.workLocation.streetAddress,
+                pincode: input.workLocation.pincode,
             },
             jobType: input.jobType,
-            position: input.position,
+            numberOfPositions: input.numberOfPositions,
             companyName: input.companyName,
-            jobNature: input.jobNature,
             workplacePlane: input.workplacePlane,
             jobCategory: input.jobCategory,
-            skills: input.skills,
-            availabilityFrame: {
-                startDate: input.availabilityFrame.startDate,
-                endDate: input.availabilityFrame.endDate || undefined,
-            },
+            skills: input.skills.split(',').map((s) => s.trim()).filter((s) => s),
             status: input.status,
             deadline: input.deadline || undefined,
-            vacancies: input.vacancies,
-            benefits: input.benefits,
-            educationLevel: input.educationLevel,
-            keywords: input.keywords,
         };
 
         Object.keys(updatedFields).forEach((key) => {
@@ -197,42 +174,30 @@ const JobSetup = () => {
     useEffect(() => {
         if (singleJob) {
             setInput({
-                title: singleJob.title || '',
-                jobTitle: singleJob.jobTitle || singleJob.title || '',
-                description: singleJob.description || '',
-                requirements: singleJob.requirements?.join(', ') || '',
-                salary: singleJob.salary || '',
-                salaryRangeDiversity: {
-                    min: singleJob.salaryRangeDiversity?.min?.toString() || '',
-                    max: singleJob.salaryRangeDiversity?.max?.toString() || '',
-                    currency: singleJob.salaryRangeDiversity?.currency || 'USD',
-                    frequency: singleJob.salaryRangeDiversity?.frequency || 'yearly',
+                jobTitle: singleJob.jobTitle || '',
+                jobDescription: singleJob.jobDescription || '',
+                salaryRange: {
+                    minSalary: singleJob.salaryRange?.minSalary?.toString() || '',
+                    maxSalary: singleJob.salaryRange?.maxSalary?.toString() || '',
+                    currency: singleJob.salaryRange?.currency || 'INR',
+                    frequency: singleJob.salaryRange?.frequency || 'yearly',
                 },
                 experienceLevel: singleJob.experienceLevel || '',
-                location: singleJob.location || '',
                 workLocation: {
                     city: singleJob.workLocation?.city || '',
                     state: singleJob.workLocation?.state || '',
-                    country: singleJob.workLocation?.country || '',
+                    area: singleJob.workLocation?.area || '',
+                    streetAddress: singleJob.workLocation?.streetAddress || '',
+                    pincode: singleJob.workLocation?.pincode || '',
                 },
                 jobType: singleJob.jobType || '',
-                position: singleJob.position || '',
-                companyName: singleJob.companyName || singleJob.company?.name || '',
-                jobNature: singleJob.jobNature || '',
+                numberOfPositions: singleJob.numberOfPositions?.toString() || '',
+                companyName: singleJob.companyName || '',
                 workplacePlane: singleJob.workplacePlane || '',
                 jobCategory: singleJob.jobCategory || '',
                 skills: singleJob.skills?.join(', ') || '',
-                availabilityFrame: {
-                    startDate: formatDate(singleJob.availabilityFrame?.startDate) || '',
-                    endDate: formatDate(singleJob.availabilityFrame?.endDate) || '',
-                },
                 status: singleJob.status || '',
-                postedDate: formatDate(singleJob.postedDate) || '',
                 deadline: formatDate(singleJob.deadline) || '',
-                vacancies: singleJob.vacancies?.toString() || '',
-                benefits: singleJob.benefits?.join(', ') || '',
-                educationLevel: singleJob.educationLevel || '',
-                keywords: singleJob.keywords?.join(', ') || '',
             });
         }
     }, [singleJob]);
@@ -260,19 +225,6 @@ const JobSetup = () => {
                         <form onSubmit={submitHandler} className="space-y-6">
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                 <div>
-                                    <Label htmlFor="title" className="text-sm font-medium text-gray-700">Title</Label>
-                                    <Input
-                                        id="title"
-                                        type="text"
-                                        name="title"
-                                        value={input.title}
-                                        onChange={changeEventHandler}
-                                        className={`mt-1 border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 ${errors.title ? 'border-red-500' : ''}`}
-                                        placeholder="e.g., Software Engineer"
-                                    />
-                                    {errors.title && <p className="text-red-500 text-xs mt-1">{errors.title}</p>}
-                                </div>
-                                <div>
                                     <Label htmlFor="jobTitle" className="text-sm font-medium text-gray-700">Job Title</Label>
                                     <Input
                                         id="jobTitle"
@@ -281,7 +233,7 @@ const JobSetup = () => {
                                         value={input.jobTitle}
                                         onChange={changeEventHandler}
                                         className={`mt-1 border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 ${errors.jobTitle ? 'border-red-500' : ''}`}
-                                        placeholder="e.g., Senior Software Engineer"
+                                        placeholder="e.g., Software Engineer"
                                     />
                                     {errors.jobTitle && <p className="text-red-500 text-xs mt-1">{errors.jobTitle}</p>}
                                 </div>
@@ -299,29 +251,17 @@ const JobSetup = () => {
                                     {errors.companyName && <p className="text-red-500 text-xs mt-1">{errors.companyName}</p>}
                                 </div>
                                 <div className="md:col-span-2">
-                                    <Label htmlFor="description" className="text-sm font-medium text-gray-700">Description</Label>
+                                    <Label htmlFor="jobDescription" className="text-sm font-medium text-gray-700">Description</Label>
                                     <Input
-                                        id="description"
+                                        id="jobDescription"
                                         type="text"
-                                        name="description"
-                                        value={input.description}
+                                        name="jobDescription"
+                                        value={input.jobDescription}
                                         onChange={changeEventHandler}
-                                        className={`mt-1 border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 ${errors.description ? 'border-red-500' : ''}`}
+                                        className={`mt-1 border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 ${errors.jobDescription ? 'border-red-500' : ''}`}
                                         placeholder="e.g., Develop and maintain web applications..."
                                     />
-                                    {errors.description && <p className="text-red-500 text-xs mt-1">{errors.description}</p>}
-                                </div>
-                                <div>
-                                    <Label htmlFor="requirements" className="text-sm font-medium text-gray-700">Requirements (comma-separated)</Label>
-                                    <Input
-                                        id="requirements"
-                                        type="text"
-                                        name="requirements"
-                                        value={input.requirements}
-                                        onChange={changeEventHandler}
-                                        className="mt-1 border-gray-300 focus:border-indigo-500 focus:ring-indigo-500"
-                                        placeholder="e.g., JavaScript, React"
-                                    />
+                                    {errors.jobDescription && <p className="text-red-500 text-xs mt-1">{errors.jobDescription}</p>}
                                 </div>
                                 <div>
                                     <Label htmlFor="skills" className="text-sm font-medium text-gray-700">Skills (comma-separated)</Label>
@@ -332,80 +272,69 @@ const JobSetup = () => {
                                         value={input.skills}
                                         onChange={changeEventHandler}
                                         className={`mt-1 border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 ${errors.skills ? 'border-red-500' : ''}`}
-                                        placeholder="e.g., Node.js, MongoDB"
+                                        placeholder="e.g., JavaScript, React, Node.js"
                                     />
                                     {errors.skills && <p className="text-red-500 text-xs mt-1">{errors.skills}</p>}
                                 </div>
                                 <div>
-                                    <Label htmlFor="salary" className="text-sm font-medium text-gray-700">Salary (legacy)</Label>
+                                    <Label htmlFor="minSalary" className="text-sm font-medium text-gray-700">Salary Min (₹ LPA)</Label>
                                     <Input
-                                        id="salary"
-                                        type="text"
-                                        name="salary"
-                                        value={input.salary}
+                                        id="minSalary"
+                                        type="number"
+                                        name="salaryRange.minSalary"
+                                        value={input.salaryRange.minSalary}
                                         onChange={changeEventHandler}
-                                        className={`mt-1 border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 ${errors.salary ? 'border-red-500' : ''}`}
-                                        placeholder="e.g., $50,000 - $70,000"
+                                        className={`mt-1 border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 ${errors['salaryRange.minSalary'] ? 'border-red-500' : ''}`}
+                                        placeholder="e.g., 4"
                                     />
-                                    {errors.salary && <p className="text-red-500 text-xs mt-1">{errors.salary}</p>}
+                                    {errors['salaryRange.minSalary'] && <p className="text-red-500 text-xs mt-1">{errors['salaryRange.minSalary']}</p>}
                                 </div>
                                 <div>
-                                    <Label htmlFor="salaryMin" className="text-sm font-medium text-gray-700">Salary Min</Label>
+                                    <Label htmlFor="maxSalary" className="text-sm font-medium text-gray-700">Salary Max (₹ LPA)</Label>
                                     <Input
-                                        id="salaryMin"
+                                        id="maxSalary"
                                         type="number"
-                                        name="salaryRangeDiversity.min"
-                                        value={input.salaryRangeDiversity.min}
+                                        name="salaryRange.maxSalary"
+                                        value={input.salaryRange.maxSalary}
                                         onChange={changeEventHandler}
-                                        className={`mt-1 border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 ${errors['salaryRangeDiversity.min'] ? 'border-red-500' : ''}`}
-                                        placeholder="e.g., 50000"
+                                        className={`mt-1 border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 ${errors['salaryRange.maxSalary'] ? 'border-red-500' : ''}`}
+                                        placeholder="e.g., 6"
                                     />
-                                    {errors['salaryRangeDiversity.min'] && <p className="text-red-500 text-xs mt-1">{errors['salaryRangeDiversity.min']}</p>}
-                                </div>
-                                <div>
-                                    <Label htmlFor="salaryMax" className="text-sm font-medium text-gray-700">Salary Max</Label>
-                                    <Input
-                                        id="salaryMax"
-                                        type="number"
-                                        name="salaryRangeDiversity.max"
-                                        value={input.salaryRangeDiversity.max}
-                                        onChange={changeEventHandler}
-                                        className={`mt-1 border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 ${errors['salaryRangeDiversity.max'] ? 'border-red-500' : ''}`}
-                                        placeholder="e.g., 70000"
-                                    />
-                                    {errors['salaryRangeDiversity.max'] && <p className="text-red-500 text-xs mt-1">{errors['salaryRangeDiversity.max']}</p>}
+                                    {errors['salaryRange.maxSalary'] && <p className="text-red-500 text-xs mt-1">{errors['salaryRange.maxSalary']}</p>}
                                 </div>
                                 <div>
                                     <Label htmlFor="currency" className="text-sm font-medium text-gray-700">Currency</Label>
                                     <Select
-                                        value={input.salaryRangeDiversity.currency}
-                                        onValueChange={(value) => selectChangeHandler('salaryRangeDiversity.currency', value)}
+                                        value={input.salaryRange.currency}
+                                        onValueChange={(value) => selectChangeHandler('salaryRange.currency', value)}
                                     >
-                                        <SelectTrigger className="mt-1 border-gray-300 focus:border-indigo-500 focus:ring-indigo-500">
+                                        <SelectTrigger className={`mt-1 border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 ${errors['salaryRange.currency'] ? 'border-red-500' : ''}`}>
                                             <SelectValue placeholder="Select Currency" />
                                         </SelectTrigger>
                                         <SelectContent>
-                                            {['USD', 'INR', 'EUR', 'GBP'].map((currency) => (
+                                            {['INR', 'USD', 'EUR', 'GBP'].map((currency) => (
                                                 <SelectItem key={currency} value={currency}>{currency}</SelectItem>
                                             ))}
                                         </SelectContent>
                                     </Select>
+                                    {errors['salaryRange.currency'] && <p className="text-red-500 text-xs mt-1">{errors['salaryRange.currency']}</p>}
                                 </div>
                                 <div>
                                     <Label htmlFor="frequency" className="text-sm font-medium text-gray-700">Frequency</Label>
                                     <Select
-                                        value={input.salaryRangeDiversity.frequency}
-                                        onValueChange={(value) => selectChangeHandler('salaryRangeDiversity.frequency', value)}
+                                        value={input.salaryRange.frequency}
+                                        onValueChange={(value) => selectChangeHandler('salaryRange.frequency', value)}
                                     >
-                                        <SelectTrigger className="mt-1 border-gray-300 focus:border-indigo-500 focus:ring-indigo-500">
+                                        <SelectTrigger className={`mt-1 border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 ${errors['salaryRange.frequency'] ? 'border-red-500' : ''}`}>
                                             <SelectValue placeholder="Select Frequency" />
                                         </SelectTrigger>
                                         <SelectContent>
-                                            {['hourly', 'monthly', 'yearly'].map((freq) => (
+                                            {['yearly', 'monthly', 'hourly'].map((freq) => (
                                                 <SelectItem key={freq} value={freq}>{freq}</SelectItem>
                                             ))}
                                         </SelectContent>
                                     </Select>
+                                    {errors['salaryRange.frequency'] && <p className="text-red-500 text-xs mt-1">{errors['salaryRange.frequency']}</p>}
                                 </div>
                                 <div>
                                     <Label htmlFor="experienceLevel" className="text-sm font-medium text-gray-700">Experience Level</Label>
@@ -425,19 +354,6 @@ const JobSetup = () => {
                                     {errors.experienceLevel && <p className="text-red-500 text-xs mt-1">{errors.experienceLevel}</p>}
                                 </div>
                                 <div>
-                                    <Label htmlFor="location" className="text-sm font-medium text-gray-700">Location (legacy)</Label>
-                                    <Input
-                                        id="location"
-                                        type="text"
-                                        name="location"
-                                        value={input.location}
-                                        onChange={changeEventHandler}
-                                        className={`mt-1 border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 ${errors.location ? 'border-red-500' : ''}`}
-                                        placeholder="e.g., New York, USA"
-                                    />
-                                    {errors.location && <p className="text-red-500 text-xs mt-1">{errors.location}</p>}
-                                </div>
-                                <div>
                                     <Label htmlFor="city" className="text-sm font-medium text-gray-700">City</Label>
                                     <Input
                                         id="city"
@@ -445,9 +361,10 @@ const JobSetup = () => {
                                         name="workLocation.city"
                                         value={input.workLocation.city}
                                         onChange={changeEventHandler}
-                                        className="mt-1 border-gray-300 focus:border-indigo-500 focus:ring-indigo-500"
-                                        placeholder="e.g., New York"
+                                        className={`mt-1 border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 ${errors['workLocation.city'] ? 'border-red-500' : ''}`}
+                                        placeholder="e.g., Mumbai"
                                     />
+                                    {errors['workLocation.city'] && <p className="text-red-500 text-xs mt-1">{errors['workLocation.city']}</p>}
                                 </div>
                                 <div>
                                     <Label htmlFor="state" className="text-sm font-medium text-gray-700">State</Label>
@@ -457,22 +374,46 @@ const JobSetup = () => {
                                         name="workLocation.state"
                                         value={input.workLocation.state}
                                         onChange={changeEventHandler}
+                                        className={`mt-1 border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 ${errors['workLocation.state'] ? 'border-red-500' : ''}`}
+                                        placeholder="e.g., Maharashtra"
+                                    />
+                                    {errors['workLocation.state'] && <p className="text-red-500 text-xs mt-1">{errors['workLocation.state']}</p>}
+                                </div>
+                                <div>
+                                    <Label htmlFor="area" className="text-sm font-medium text-gray-700">Area (optional)</Label>
+                                    <Input
+                                        id="area"
+                                        type="text"
+                                        name="workLocation.area"
+                                        value={input.workLocation.area}
+                                        onChange={changeEventHandler}
                                         className="mt-1 border-gray-300 focus:border-indigo-500 focus:ring-indigo-500"
-                                        placeholder="e.g., NY"
+                                        placeholder="e.g., Fort"
                                     />
                                 </div>
                                 <div>
-                                    <Label htmlFor="country" className="text-sm font-medium text-gray-700">Country</Label>
+                                    <Label htmlFor="streetAddress" className="text-sm font-medium text-gray-700">Street Address (optional)</Label>
                                     <Input
-                                        id="country"
+                                        id="streetAddress"
                                         type="text"
-                                        name="workLocation.country"
-                                        value={input.workLocation.country}
+                                        name="workLocation.streetAddress"
+                                        value={input.workLocation.streetAddress}
                                         onChange={changeEventHandler}
-                                        className={`mt-1 border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 ${errors['workLocation.country'] ? 'border-red-500' : ''}`}
-                                        placeholder="e.g., USA"
+                                        className="mt-1 border-gray-300 focus:border-indigo-500 focus:ring-indigo-500"
+                                        placeholder="e.g., 123 Main St"
                                     />
-                                    {errors['workLocation.country'] && <p className="text-red-500 text-xs mt-1">{errors['workLocation.country']}</p>}
+                                </div>
+                                <div>
+                                    <Label htmlFor="pincode" className="text-sm font-medium text-gray-700">Pincode (optional)</Label>
+                                    <Input
+                                        id="pincode"
+                                        type="text"
+                                        name="workLocation.pincode"
+                                        value={input.workLocation.pincode}
+                                        onChange={changeEventHandler}
+                                        className="mt-1 border-gray-300 focus:border-indigo-500 focus:ring-indigo-500"
+                                        placeholder="e.g., 400001"
+                                    />
                                 </div>
                                 <div>
                                     <Label htmlFor="jobType" className="text-sm font-medium text-gray-700">Job Type</Label>
@@ -492,34 +433,17 @@ const JobSetup = () => {
                                     {errors.jobType && <p className="text-red-500 text-xs mt-1">{errors.jobType}</p>}
                                 </div>
                                 <div>
-                                    <Label htmlFor="position" className="text-sm font-medium text-gray-700">Position</Label>
+                                    <Label htmlFor="numberOfPositions" className="text-sm font-medium text-gray-700">Number of Positions</Label>
                                     <Input
-                                        id="position"
-                                        type="text"
-                                        name="position"
-                                        value={input.position}
+                                        id="numberOfPositions"
+                                        type="number"
+                                        name="numberOfPositions"
+                                        value={input.numberOfPositions}
                                         onChange={changeEventHandler}
-                                        className={`mt-1 border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 ${errors.position ? 'border-red-500' : ''}`}
-                                        placeholder="e.g., Developer"
+                                        className={`mt-1 border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 ${errors.numberOfPositions ? 'border-red-500' : ''}`}
+                                        placeholder="e.g., 2"
                                     />
-                                    {errors.position && <p className="text-red-500 text-xs mt-1">{errors.position}</p>}
-                                </div>
-                                <div>
-                                    <Label htmlFor="jobNature" className="text-sm font-medium text-gray-700">Job Nature</Label>
-                                    <Select
-                                        value={input.jobNature}
-                                        onValueChange={(value) => selectChangeHandler('jobNature', value)}
-                                    >
-                                        <SelectTrigger className={`mt-1 border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 ${errors.jobNature ? 'border-red-500' : ''}`}>
-                                            <SelectValue placeholder="Select Job Nature" />
-                                        </SelectTrigger>
-                                        <SelectContent>
-                                            {['Permanent', 'Temporary', 'Seasonal', 'Project-Based'].map((nature) => (
-                                                <SelectItem key={nature} value={nature}>{nature}</SelectItem>
-                                            ))}
-                                        </SelectContent>
-                                    </Select>
-                                    {errors.jobNature && <p className="text-red-500 text-xs mt-1">{errors.jobNature}</p>}
+                                    {errors.numberOfPositions && <p className="text-red-500 text-xs mt-1">{errors.numberOfPositions}</p>}
                                 </div>
                                 <div>
                                     <Label htmlFor="workplacePlane" className="text-sm font-medium text-gray-700">Workplace Type</Label>
@@ -556,29 +480,6 @@ const JobSetup = () => {
                                     {errors.jobCategory && <p className="text-red-500 text-xs mt-1">{errors.jobCategory}</p>}
                                 </div>
                                 <div>
-                                    <Label htmlFor="startDate" className="text-sm font-medium text-gray-700">Start Date</Label>
-                                    <Input
-                                        id="startDate"
-                                        type="datetime-local"
-                                        name="availabilityFrame.startDate"
-                                        value={input.availabilityFrame.startDate}
-                                        onChange={changeEventHandler}
-                                        className={`mt-1 border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 ${errors['availabilityFrame.startDate'] ? 'border-red-500' : ''}`}
-                                    />
-                                    {errors['availabilityFrame.startDate'] && <p className="text-red-500 text-xs mt-1">{errors['availabilityFrame.startDate']}</p>}
-                                </div>
-                                <div>
-                                    <Label htmlFor="endDate" className="text-sm font-medium text-gray-700">End Date (optional)</Label>
-                                    <Input
-                                        id="endDate"
-                                        type="datetime-local"
-                                        name="availabilityFrame.endDate"
-                                        value={input.availabilityFrame.endDate}
-                                        onChange={changeEventHandler}
-                                        className="mt-1 border-gray-300 focus:border-indigo-500 focus:ring-indigo-500"
-                                    />
-                                </div>
-                                <div>
                                     <Label htmlFor="status" className="text-sm font-medium text-gray-700">Status</Label>
                                     <Select
                                         value={input.status}
@@ -595,17 +496,7 @@ const JobSetup = () => {
                                     </Select>
                                 </div>
                                 <div>
-                                    <Label htmlFor="postedDate" className="text-sm font-medium text-gray-700">Posted Date</Label>
-                                    <Input
-                                        id="postedDate"
-                                        type="text"
-                                        value={input.postedDate}
-                                        disabled
-                                        className="mt-1 border-gray-300 bg-gray-100"
-                                    />
-                                </div>
-                                <div>
-                                    <Label htmlFor="deadline" className="text-sm font-medium text-gray-700">Deadline</Label>
+                                    <Label htmlFor="deadline" className="text-sm font-medium text-gray-700">Deadline (optional)</Label>
                                     <Input
                                         id="deadline"
                                         type="datetime-local"
@@ -615,59 +506,6 @@ const JobSetup = () => {
                                         className={`mt-1 border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 ${errors.deadline ? 'border-red-500' : ''}`}
                                     />
                                     {errors.deadline && <p className="text-red-500 text-xs mt-1">{errors.deadline}</p>}
-                                </div>
-                                <div>
-                                    <Label htmlFor="vacancies" className="text-sm font-medium text-gray-700">Vacancies</Label>
-                                    <Input
-                                        id="vacancies"
-                                        type="number"
-                                        name="vacancies"
-                                        value={input.vacancies}
-                                        onChange={changeEventHandler}
-                                        className={`mt-1 border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 ${errors.vacancies ? 'border-red-500' : ''}`}
-                                        placeholder="e.g., 5"
-                                    />
-                                    {errors.vacancies && <p className="text-red-500 text-xs mt-1">{errors.vacancies}</p>}
-                                </div>
-                                <div>
-                                    <Label htmlFor="benefits" className="text-sm font-medium text-gray-700">Benefits (comma-separated)</Label>
-                                    <Input
-                                        id="benefits"
-                                        type="text"
-                                        name="benefits"
-                                        value={input.benefits}
-                                        onChange={changeEventHandler}
-                                        className="mt-1 border-gray-300 focus:border-indigo-500 focus:ring-indigo-500"
-                                        placeholder="e.g., Health Insurance, Paid Leave"
-                                    />
-                                </div>
-                                <div>
-                                    <Label htmlFor="educationLevel" className="text-sm font-medium text-gray-700">Education Level</Label>
-                                    <Select
-                                        value={input.educationLevel}
-                                        onValueChange={(value) => selectChangeHandler('educationLevel', value)}
-                                    >
-                                        <SelectTrigger className="mt-1 border-gray-300 focus:border-indigo-500 focus:ring-indigo-500">
-                                            <SelectValue placeholder="Select Education Level" />
-                                        </SelectTrigger>
-                                        <SelectContent>
-                                            {['High School', 'Bachelor', 'Master', 'PhD', 'Other'].map((level) => (
-                                                <SelectItem key={level} value={level}>{level}</SelectItem>
-                                            ))}
-                                        </SelectContent>
-                                    </Select>
-                                </div>
-                                <div>
-                                    <Label htmlFor="keywords" className="text-sm font-medium text-gray-700">Keywords (comma-separated)</Label>
-                                    <Input
-                                        id="keywords"
-                                        type="text"
-                                        name="keywords"
-                                        value={input.keywords}
-                                        onChange={changeEventHandler}
-                                        className="mt-1 border-gray-300 focus:border-indigo-500 focus:ring-indigo-500"
-                                        placeholder="e.g., coding, teamwork"
-                                    />
                                 </div>
                             </div>
                             <Button
