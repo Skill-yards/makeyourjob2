@@ -43,6 +43,8 @@ const AdminJobsTable = () => {
         if (job.salaryRangeDiversity?.min && job.salaryRangeDiversity?.max) {
             return `${job.salaryRangeDiversity.min} - ${job.salaryRangeDiversity.max} ${job.salaryRangeDiversity.currency} (${job.salaryRangeDiversity.frequency})`;
         }
+        console.log(job,"this is job");
+        
         return job.salary || 'N/A';
     };
 

@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import Navbar from '../shared/Navbar';
 import { Button } from '../ui/button';
-import { ArrowLeft, Loader2, Briefcase, MapPin, Check, ChevronsUpDown, Edit, AlertCircle, X as XIcon, Plus } from 'lucide-react';
+import { ArrowLeft, Loader2, Check, ChevronsUpDown, Edit, AlertCircle, X as XIcon, Plus } from 'lucide-react';
 import { Label } from '../ui/label';
 import { Input } from '../ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
@@ -88,6 +88,12 @@ const jobTypes = [
   "Freelancing"
 ];
 
+const workplaceTypes = [
+  "Remote",
+  "On-site",
+  "Hybrid"
+];
+
 const JobSetup = () => {
   const params = useParams();
   useGetJobById(params.id);
@@ -104,7 +110,7 @@ const JobSetup = () => {
       pincode: '',
       area: '',
       streetAddress: '',
-      country: 'India'
+      country: 'India' // Added default country field
     },
     jobType: '',
     experienceLevel: '',
@@ -113,8 +119,7 @@ const JobSetup = () => {
     workplacePlane: '',
     jobCategory: '',
     skills: '',
-    benefits: '',
-    salaryRange: { minSalary: '', maxSalary: '', currency: 'INR', frequency: 'yearly' },
+    salaryRange: '',
     numberOfPositions: '',
     status: '',
   });
@@ -136,31 +141,105 @@ const JobSetup = () => {
 
   const { companies } = useSelector((store) => store.company);
 
+ // console.log(companies,"check1");
+  
+
   const validateInput = () => {
     const newErrors = {};
 
-    if (!input.jobTitle || input.jobTitle.length < 3) newErrors.jobTitle = 'Job title is required (min 3 chars).';
-    if (!input.jobDescription || input.jobDescription.length < 10) newErrors.jobDescription = 'Description is required (min 10 chars).';
-    if (!input.workLocation.city) newErrors['workLocation.city'] = 'City is required.';
-    if (!input.workLocation.state) newErrors['workLocation.state'] = 'State is required.';
-    if (!input.workLocation.pincode || !/^\d{6}$/.test(input.workLocation.pincode)) newErrors['workLocation.pincode'] = 'Pincode must be a 6-digit number.';
-    if (!input.workLocation.area) newErrors['workLocation.area'] = 'Area is required.';
-    if (!input.workLocation.streetAddress) newErrors['workLocation.streetAddress'] = 'Street address is required.';
-    if (!input.jobType) newErrors.jobType = 'Job type is required.';
-    if (!input.experienceLevel || !/^\d+(\.\d)?$/.test(input.experienceLevel)) newErrors.experienceLevel = 'Experience level must be a number (e.g., 2 or 2.5).';
-    if (!input.companyName) newErrors.companyName = 'Company name is required.';
-    if (!input.workplacePlane) newErrors.workplacePlane = 'Workplace type is required.';
-    if (!input.jobCategory) newErrors.jobCategory = 'Job category is required.';
-    if (!input.skills) newErrors.skills = 'At least one skill is required.';
-    if (!input.numberOfPositions || !/^\d+$/.test(input.numberOfPositions) || Number(input.numberOfPositions) < 1) {
+    // Basic validation for required fields
+    if (!input.jobTitle || input.jobTitle.trim().length < 3) {
+      newErrors.jobTitle = 'Job title is required (min 3 chars).';
+    }
+
+    if (!input.jobDescription || input.jobDescription.trim().length < 10) {
+      newErrors.jobDescription = 'Description is required (min 10 chars).';
+    }
+
+    // Work location validation
+    if (!input.workLocation.city) {
+      newErrors['workLocation.city'] = 'City is required.';
+    }
+
+    if (!input.workLocation.state) {
+      newErrors['workLocation.state'] = 'State is required.';
+    }
+
+    if (!input.workLocation.pincode || !/^\d{6}$/.test(input.workLocation.pincode)) {
+      newErrors['workLocation.pincode'] = 'Pincode must be a 6-digit number.';
+    }
+
+    if (!input.workLocation.area) {
+      newErrors['workLocation.area'] = 'Area is required.';
+    }
+
+    if (!input.workLocation.streetAddress) {
+      newErrors['workLocation.streetAddress'] = 'Street address is required.';
+    }
+
+    // Job details validation
+    if (!input.jobType) {
+      newErrors.jobType = 'Job type is required.';
+    }
+
+    if (!input.experienceLevel) {
+      newErrors.experienceLevel = 'Experience level is required.';
+    } else if (!/^\d+(\.\d+)?$/.test(input.experienceLevel) || Number(input.experienceLevel) < 0) {
+      newErrors.experienceLevel = 'Experience level must be a positive number.';
+    }
+
+    // Company details validation
+    if (!input.companyName) {
+      newErrors.companyName = 'Company name is required.';
+    }
+
+    // Additional job information validation
+    if (!input.workplacePlane) {
+      newErrors.workplacePlane = 'Workplace type is required.';
+    }
+
+    if (!input.jobCategory) {
+      newErrors.jobCategory = 'Job category is required.';
+    }
+
+    // Skills validation
+    if (!input.skills || input.skills.trim() === '') {
+      newErrors.skills = 'At least one skill is required.';
+    } else {
+      const skillsArray = input.skills.split(',').map(skill => skill.trim()).filter(Boolean);
+      if (skillsArray.length === 0) {
+        newErrors.skills = 'At least one valid skill is required.';
+      }
+    }
+
+    // Numerical fields validation
+    if (!input.numberOfPositions) {
+      newErrors.numberOfPositions = 'Number of positions is required.';
+    } else if (!/^\d+$/.test(input.numberOfPositions) || Number(input.numberOfPositions) < 1) {
       newErrors.numberOfPositions = 'Number of positions must be a positive number.';
     }
-    if (input.salaryRange.minSalary && !/^\d+$/.test(input.salaryRange.minSalary)) newErrors['salaryRange.minSalary'] = 'Min salary must be a number.';
-    if (input.salaryRange.maxSalary && !/^\d+$/.test(input.salaryRange.maxSalary)) newErrors['salaryRange.maxSalary'] = 'Max salary must be a number.';
-    if (input.salaryRange.minSalary && input.salaryRange.maxSalary && Number(input.salaryRange.minSalary) >= Number(input.salaryRange.maxSalary)) {
-      newErrors['salaryRange.maxSalary'] = 'Max salary must be greater than min.';
+
+    // Salary range validation (optional field)
+    if (input.salaryRange) {
+      const salaryParts = input.salaryRange.split(/[,|-]/);
+      if (salaryParts.length !== 2) {
+        newErrors.salaryRange = 'Salary range format should be min-max or min,max';
+      } else {
+        const [minSalary, maxSalary] = salaryParts.map(part => part.trim());
+        if (!/^\d+$/.test(minSalary)) {
+          newErrors.salaryRange = 'Minimum salary must be a number.';
+        }
+        if (!/^\d+$/.test(maxSalary)) {
+          newErrors.salaryRange = 'Maximum salary must be a number.';
+        }
+        if (Number(minSalary) >= Number(maxSalary)) {
+          newErrors.salaryRange = 'Maximum salary must be greater than minimum salary.';
+        }
+      }
     }
-    if (!input.status) newErrors.status = 'Status is required.';
+
+    // Status validation
+    // if (!input.status) newErrors.status = 'Status is required.';
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -177,21 +256,33 @@ const JobSetup = () => {
     } else {
       setInput({ ...input, [name]: value });
     }
-    setErrors({ ...errors, [name]: '' });
+    // Clear error when field is changed
+    if (name.includes('.')) {
+      setErrors({ ...errors, [name]: '' });
+    } else {
+      setErrors({ ...errors, [name]: '' });
+    }
   };
 
   const selectChangeHandler = (name, value) => {
-    if (name.includes('.')) {
-      const [parent, child] = name.split('.');
-      setInput({
-        ...input,
-        [parent]: { ...input[parent], [child]: value },
-      });
-    } else {
-      setInput({ ...input, [name]: value });
-    }
-    setErrors({ ...errors, [name]: '' });
+    setInput(prev => {
+      if (name.includes('.')) {
+        const [parent, child] = name.split('.');
+        return {
+          ...prev,
+          [parent]: { ...prev[parent], [child]: value },
+        };
+      } else {
+        return { ...prev, [name]: value };
+      }
+    });
+  
+    setErrors(prev => ({
+      ...prev,
+      [name]: '',
+    }));
   };
+  
 
   const handlePincodeChange = async (e) => {
     const pincode = e.target.value;
@@ -200,9 +291,11 @@ const JobSetup = () => {
       workLocation: { ...input.workLocation, pincode },
     });
     setErrors({ ...errors, 'workLocation.pincode': '' });
+    setPincodeError('');
 
     if (/^\d{6}$/.test(pincode)) {
       try {
+        setFetchingAreas(true);
         const res = await axios.get(`https://api.postalpincode.in/pincode/${pincode}`);
         if (res.data[0].Status === 'Success' && res.data[0].PostOffice) {
           const { District, State } = res.data[0].PostOffice[0];
@@ -212,21 +305,32 @@ const JobSetup = () => {
               ...prev.workLocation,
               city: District,
               state: State,
-              country: 'India',
+              country: 'India', // Ensure country is set
             },
           }));
+
+          // Set available areas from PostOffice data
+          const areas = res.data[0].PostOffice.map(po => po.Name);
+          setAvailableAreas(areas);
+
           setErrors({
             ...errors,
             'workLocation.city': '',
             'workLocation.state': '',
-            'workLocation.country': '',
           });
         } else {
-          setErrors({ ...errors, 'workLocation.pincode': 'Invalid pincode.' });
+          setPincodeError('Invalid pincode. Please check and try again.');
+          setAvailableAreas([]);
         }
       } catch (error) {
-        setErrors({ ...errors, 'workLocation.pincode': 'Failed to fetch pincode details.' });
+        setPincodeError('Failed to fetch pincode details. Please enter location manually.');
+        setAvailableAreas([]);
+      } finally {
+        setFetchingAreas(false);
       }
+    } else if (pincode !== '') {
+      setPincodeError('Pincode must be a 6-digit number.');
+      setAvailableAreas([]);
     }
   };
 
@@ -260,43 +364,49 @@ const JobSetup = () => {
     e.preventDefault();
     if (!validateInput()) {
       toast.error('Please fix the errors in the form.');
+      window.scrollTo({ top: 0, behavior: 'smooth' });
       return;
     }
 
     const updatedFields = {
-      jobTitle: input.jobTitle,
-      jobDescription: input.jobDescription,
+      jobTitle: input.jobTitle.trim(),
+      jobDescription: input.jobDescription.trim(),
       workLocation: {
         city: input.workLocation.city,
         state: input.workLocation.state,
         pincode: input.workLocation.pincode,
         area: input.workLocation.area,
         streetAddress: input.workLocation.streetAddress,
-        country: input.workLocation.country,
+        country: input.workLocation.country || 'India',
       },
       jobType: input.jobType,
-      experienceLevel: input.experienceLevel,
+      experienceLevel: Number(input.experienceLevel),
       companyId: input.companyId,
       companyName: input.companyName,
       workplacePlane: input.workplacePlane,
       jobCategory: input.jobCategory,
+      // Process skills as array - match backend expectations
       skills: input.skills.split(',').map((skill) => skill.trim()).filter(Boolean),
-      benefits: benefitBadges.filter(Boolean),
-      salaryRange: input.salaryRange.minSalary
+      // Pass benefits directly as array - match backend expectations
+      benefits: benefitBadges,
+      // Format salary range properly
+      salaryRange: input.salaryRange
         ? {
-            minSalary: Number(input.salaryRange.minSalary),
-            maxSalary: Number(input.salaryRange.maxSalary),
-            currency: input.salaryRange.currency,
-            frequency: input.salaryRange.frequency,
+            minSalary: Number(input.salaryRange.split(/[,|-]/)[0].trim()),
+            maxSalary: Number(input.salaryRange.split(/[,|-]/)[1].trim()),
+            currency: 'INR', // Default
+            frequency: 'yearly' // Default
           }
-        : undefined,
+        : null,
       numberOfPositions: Number(input.numberOfPositions),
       status: input.status,
     };
 
     // Remove undefined or empty fields
     Object.keys(updatedFields).forEach((key) => {
-      if (updatedFields[key] === undefined || (Array.isArray(updatedFields[key]) && updatedFields[key].length === 0)) {
+      if (updatedFields[key] === undefined ||
+         (Array.isArray(updatedFields[key]) && updatedFields[key].length === 0) ||
+         updatedFields[key] === null) {
         delete updatedFields[key];
       } else if (typeof updatedFields[key] === 'object' && updatedFields[key] !== null) {
         Object.keys(updatedFields[key]).forEach((subKey) => {
@@ -325,16 +435,39 @@ const JobSetup = () => {
       console.error(error);
       const errorMsg = error.response?.data?.message || 'Failed to update job';
       const errorDetails = error.response?.data?.errors || [];
-      setErrors(errorDetails.reduce((acc, err) => ({ ...acc, [err.path]: err.message }), {}));
-      toast.error(errorMsg);
+
+      // Process backend validation errors and set them in the UI
+      if (errorDetails.length > 0) {
+        const newErrors = {};
+        errorDetails.forEach(err => {
+          newErrors[err.path] = err.message;
+        });
+        setErrors(newErrors);
+        toast.error('Please fix the validation errors');
+      } else {
+        toast.error(errorMsg);
+      }
     } finally {
       setLoading(false);
     }
   };
 
+  // This useEffect will run whenever singleJob changes
   useEffect(() => {
-    if (singleJob) {
-      setInput({
+   
+      console.log("Setting job data from API:", singleJob);
+  
+      // Find company in companies array
+      const company = companies.find(
+        (c) => c._id === singleJob.companyId || c.name === singleJob.companyName
+      );
+
+      // console.log(company,"this is company");
+      
+  
+      // Update input state using functional update
+      setInput((prev) => ({
+        ...prev,
         jobTitle: singleJob.jobTitle || '',
         jobDescription: singleJob.jobDescription || '',
         workLocation: {
@@ -346,25 +479,29 @@ const JobSetup = () => {
           country: singleJob.workLocation?.country || 'India',
         },
         jobType: singleJob.jobType || '',
-        experienceLevel: singleJob.experienceLevel || '',
-        companyId: singleJob.companyId || '',
-        companyName: singleJob.companyName || '',
+        experienceLevel: String(singleJob.experienceLevel || ''),
+        companyId: company?._id || singleJob.companyId || '',
+        companyName: company?.name || singleJob.companyName || '',
         workplacePlane: singleJob.workplacePlane || '',
         jobCategory: singleJob.jobCategory || '',
-        skills: singleJob.skills?.join(', ') || '',
-        benefits: singleJob.benefits?.join(', ') || '',
-        salaryRange: {
-          minSalary: singleJob.salaryRange?.minSalary?.toString() || '',
-          maxSalary: singleJob.salaryRange?.maxSalary?.toString() || '',
-          currency: singleJob.salaryRange?.currency || 'INR',
-          frequency: singleJob.salaryRange?.frequency || 'yearly',
-        },
-        numberOfPositions: singleJob.numberOfPositions?.toString() || '',
-        status: singleJob.status || '',
-      });
-      setBenefitBadges(singleJob.benefits || []);
-    }
-  }, [singleJob]);
+        skills: Array.isArray(singleJob.skills) ? singleJob.skills.join(', ') : singleJob.skills || '',
+        salaryRange: singleJob.salaryRange
+          ? `${singleJob.salaryRange.minSalary || ''}-${singleJob.salaryRange.maxSalary || ''}`
+          : '',
+        numberOfPositions: String(singleJob.numberOfPositions || ''),
+        // status: singleJob.status || '',
+      }));
+  
+      // Set benefits array
+      if (Array.isArray(singleJob.benefits)) {
+        setBenefitBadges(singleJob.benefits);
+      } else {
+        setBenefitBadges([]);
+      }
+    
+  }, [singleJob, companies, setBenefitBadges]);
+
+  console.log(input,"check")
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-white to-purple-50">
@@ -389,7 +526,7 @@ const JobSetup = () => {
             <form onSubmit={submitHandler} className="space-y-6">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
-                  <Label htmlFor="jobTitle" className="text-sm font-medium text-gray-700">Job Title</Label>
+                  <Label htmlFor="jobTitle" className="text-sm font-medium text-gray-700">Job Title <span className="text-red-500">*</span></Label>
                   {isCustomTitle ? (
                     <div className="flex mt-2">
                       <Input
@@ -416,7 +553,7 @@ const JobSetup = () => {
                           variant="outline"
                           role="combobox"
                           aria-expanded={jobTitleOpen}
-                          className="w-full justify-between mt-2 h-12 border-gray-200 bg-gray-50 focus:border-indigo-600 focus:ring-indigo-600 rounded-xl shadow-sm text-left font-normal"
+                          className={`w-full justify-between mt-2 h-12 border-gray-200 bg-gray-50 focus:border-indigo-600 focus:ring-indigo-600 rounded-xl shadow-sm text-left font-normal ${errors.jobTitle ? 'border-red-500 focus:border-red-500 focus:ring-red-500' : ''}`}
                         >
                           {input.jobTitle || "Select job title..."}
                           <div className="flex items-center">
@@ -442,6 +579,7 @@ const JobSetup = () => {
                                 value={title}
                                 onSelect={() => {
                                   setInput({ ...input, jobTitle: title });
+                                  setErrors({ ...errors, jobTitle: '' });
                                   setJobTitleOpen(false);
                                 }}
                               >
@@ -462,22 +600,49 @@ const JobSetup = () => {
                   {errors.jobTitle && <p className="text-red-500 text-xs mt-1">{errors.jobTitle}</p>}
                 </div>
 
+                <div>
+                  <Label htmlFor="companyName" className="text-sm font-medium text-gray-700">Company <span className="text-red-500">*</span></Label>
+                  <Select
+                    value={input.companyName}
+                    onValueChange={(value) => {
+                      selectChangeHandler('companyName', value);
+                      // Also set companyId if needed
+                      const selectedCompany = companies.find(c => c.name === value);
+                      if (selectedCompany) {
+                        selectChangeHandler('companyId', selectedCompany._id);
+                      }
+                    }}
+                  >
+                    <SelectTrigger className={`mt-2 h-12 border-gray-200 bg-gray-50 focus:border-indigo-600 focus:ring-indigo-600 rounded-xl shadow-sm ${errors.companyName ? 'border-red-500' : ''}`}>
+                      <SelectValue placeholder="Select a Company" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {companies.map((company) => (
+                        <SelectItem key={company._id} value={company.name}>
+                          {company.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  {errors.companyName && <p className="text-red-500 text-xs mt-1">{errors.companyName}</p>}
+                </div>
+
                 <div className="md:col-span-2">
-                  <Label htmlFor="jobDescription" className="text-sm font-medium text-gray-700">Job Description</Label>
-                  <Input
+                  <Label htmlFor="jobDescription" className="text-sm font-medium text-gray-700">Job Description <span className="text-red-500">*</span></Label>
+                  <textarea
                     id="jobDescription"
-                    type="text"
                     name="jobDescription"
                     value={input.jobDescription}
                     onChange={changeEventHandler}
-                    className={`mt-2 h-12 border-gray-200 bg-gray-50 focus:border-indigo-600 focus:ring-indigo-600 rounded-xl shadow-sm transition-all duration-200 ${errors.jobDescription ? 'border-red-500 focus:border-red-500 focus:ring-red-500' : ''}`}
+                    rows={4}
+                    className={`mt-2 w-full border-gray-200 bg-gray-50 focus:border-indigo-600 focus:ring-indigo-600 rounded-xl shadow-sm transition-all duration-200 ${errors.jobDescription ? 'border-red-500 focus:border-red-500 focus:ring-red-500' : ''}`}
                     placeholder="e.g., Develop and maintain web applications..."
                   />
                   {errors.jobDescription && <p className="text-red-500 text-xs mt-1">{errors.jobDescription}</p>}
                 </div>
 
                 <div>
-                  <Label htmlFor="skills" className="text-sm font-medium text-gray-700">Skills (comma-separated)</Label>
+                  <Label htmlFor="skills" className="text-sm font-medium text-gray-700">Skills (comma-separated) <span className="text-red-500">*</span></Label>
                   <Input
                     id="skills"
                     type="text"
@@ -491,25 +656,27 @@ const JobSetup = () => {
                 </div>
 
                 <div>
-                  <Label htmlFor="companyId" className="text-sm font-medium text-gray-700">Company</Label>
-                  <Select onValueChange={(value) => selectChangeHandler('companyId', value)}>
-                    <SelectTrigger className="mt-2 h-12 border-gray-200 bg-gray-50 focus:border-indigo-600 focus:ring-indigo-600 rounded-xl shadow-sm">
-                      <SelectValue placeholder="Select a Company" />
+                  <Label htmlFor="jobType" className="text-sm font-medium text-gray-700">Job Type <span className="text-red-500">*</span></Label>
+                  <Select
+                    value={input.jobType}
+                    onValueChange={(value) => selectChangeHandler('jobType', value)}
+                  >
+                    <SelectTrigger className={`mt-2 h-12 border-gray-200 bg-gray-50 focus:border-indigo-600 focus:ring-indigo-600 rounded-xl shadow-sm ${errors.jobType ? 'border-red-500' : ''}`}>
+                      <SelectValue placeholder="Select job type..." />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectGroup>
-                        {companies.map((company) => (
-                          <SelectItem key={company._id} value={company.name.toLowerCase()}>
-                            {company.name}
-                          </SelectItem>
-                        ))}
-                      </SelectGroup>
+                      {jobTypes.map((type) => (
+                        <SelectItem key={type} value={type}>
+                          {type}
+                        </SelectItem>
+                      ))}
                     </SelectContent>
                   </Select>
+                  {errors.jobType && <p className="text-red-500 text-xs mt-1">{errors.jobType}</p>}
                 </div>
 
                 <div>
-                  <Label htmlFor="workLocation.pincode" className="text-sm font-medium text-gray-700">Pincode</Label>
+                  <Label htmlFor="workLocation.pincode" className="text-sm font-medium text-gray-700">Pincode <span className="text-red-500">*</span></Label>
                   <div className="mt-2 relative">
                     <Input
                       id="workLocation.pincode"
@@ -519,7 +686,7 @@ const JobSetup = () => {
                       onChange={handlePincodeChange}
                       className={cn(
                         "h-12 border-gray-200 bg-gray-50 focus:border-indigo-600 focus:ring-indigo-600 rounded-xl shadow-sm transition-all duration-200",
-                        pincodeError && "border-red-500 focus:border-red-500 focus:ring-red-500"
+                        (errors['workLocation.pincode'] || pincodeError) && "border-red-500 focus:border-red-500 focus:ring-red-500"
                       )}
                       placeholder="e.g., 400001"
                     />
@@ -529,16 +696,16 @@ const JobSetup = () => {
                       </div>
                     )}
                   </div>
-                  {pincodeError && (
+                  {(errors['workLocation.pincode'] || pincodeError) && (
                     <div className="mt-1 text-sm text-red-500 flex items-center">
                       <AlertCircle className="h-3 w-3 mr-1" />
-                      {pincodeError}
+                      {errors['workLocation.pincode'] || pincodeError}
                     </div>
                   )}
                 </div>
 
                 <div>
-                  <Label htmlFor="workLocation.area" className="text-sm font-medium text-gray-700">Area</Label>
+                  <Label htmlFor="workLocation.area" className="text-sm font-medium text-gray-700">Area <span className="text-red-500">*</span></Label>
                   <Popover open={areaOpen} onOpenChange={setAreaOpen}>
                     <PopoverTrigger asChild>
                       <Button
@@ -546,29 +713,27 @@ const JobSetup = () => {
                         role="combobox"
                         aria-expanded={areaOpen}
                         disabled={fetchingAreas || availableAreas.length === 0}
-                        className="w-full justify-between mt-2 h-12 border-gray-200 bg-gray-50 focus:border-indigo-600 focus:ring-indigo-600 rounded-xl shadow-sm text-left font-normal"
+                        className="w-full justify-between mt-2 h-12 border-gray-200 bg-gray-50 focus:border-indigo-600                       focus:ring-indigo-600 rounded-xl shadow-sm text-left font-normal"
                       >
-                        {input.workLocation.area || (
-                          fetchingAreas
-                            ? "Loading areas..."
-                            : availableAreas.length === 0
-                              ? "Enter valid pincode first"
-                              : "Select area..."
-                        )}
-                        <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                        {input.workLocation.area || "Select area..."}
+                        <ChevronsUpDown className="h-4 w-4 shrink-0 opacity-50" />
                       </Button>
                     </PopoverTrigger>
                     <PopoverContent className="w-full p-0">
                       <Command>
                         <CommandInput placeholder="Search area..." />
-                        <CommandEmpty>No area found for this pincode.</CommandEmpty>
+                        <CommandEmpty>No area found.</CommandEmpty>
                         <CommandGroup className="max-h-60 overflow-y-auto">
                           {availableAreas.map((area) => (
                             <CommandItem
                               key={area}
                               value={area}
                               onSelect={() => {
-                                selectChangeHandler('workLocation.area', area);
+                                setInput({
+                                  ...input,
+                                  workLocation: { ...input.workLocation, area },
+                                });
+                                setErrors({ ...errors, 'workLocation.area': '' });
                                 setAreaOpen(false);
                               }}
                             >
@@ -585,24 +750,11 @@ const JobSetup = () => {
                       </Command>
                     </PopoverContent>
                   </Popover>
+                  {errors['workLocation.area'] && <p className="text-red-500 text-xs mt-1">{errors['workLocation.area']}</p>}
                 </div>
 
                 <div>
-                  <Label htmlFor="workLocation.streetAddress" className="text-sm font-medium text-gray-700">Street Address</Label>
-                  <Input
-                    id="workLocation.streetAddress"
-                    type="text"
-                    name="workLocation.streetAddress"
-                    value={input.workLocation.streetAddress}
-                    onChange={changeEventHandler}
-                    className={`mt-2 h-12 border-gray-200 bg-gray-50 focus:border-indigo-600 focus:ring-indigo-600 rounded-xl shadow-sm transition-all duration-200 ${errors['workLocation.streetAddress'] ? 'border-red-500 focus:border-red-500 focus:ring-red-500' : ''}`}
-                    placeholder="e.g., 123 Main Street, Building 4, Floor 2"
-                  />
-                  {errors['workLocation.streetAddress'] && <p className="text-red-500 text-xs mt-1">{errors['workLocation.streetAddress']}</p>}
-                </div>
-
-                <div>
-                  <Label htmlFor="workLocation.city" className="text-sm font-medium text-gray-700">City</Label>
+                  <Label htmlFor="workLocation.city" className="text-sm font-medium text-gray-700">City <span className="text-red-500">*</span></Label>
                   <Input
                     id="workLocation.city"
                     type="text"
@@ -616,7 +768,7 @@ const JobSetup = () => {
                 </div>
 
                 <div>
-                  <Label htmlFor="workLocation.state" className="text-sm font-medium text-gray-700">State</Label>
+                  <Label htmlFor="workLocation.state" className="text-sm font-medium text-gray-700">State <span className="text-red-500">*</span></Label>
                   <Popover open={stateOpen} onOpenChange={setStateOpen}>
                     <PopoverTrigger asChild>
                       <Button
@@ -626,7 +778,7 @@ const JobSetup = () => {
                         className="w-full justify-between mt-2 h-12 border-gray-200 bg-gray-50 focus:border-indigo-600 focus:ring-indigo-600 rounded-xl shadow-sm text-left font-normal"
                       >
                         {input.workLocation.state || "Select state..."}
-                        <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                        <ChevronsUpDown className="h-4 w-4 shrink-0 opacity-50" />
                       </Button>
                     </PopoverTrigger>
                     <PopoverContent className="w-full p-0">
@@ -639,7 +791,11 @@ const JobSetup = () => {
                               key={state}
                               value={state}
                               onSelect={() => {
-                                selectChangeHandler('workLocation.state', state);
+                                setInput({
+                                  ...input,
+                                  workLocation: { ...input.workLocation, state },
+                                });
+                                setErrors({ ...errors, 'workLocation.state': '' });
                                 setStateOpen(false);
                               }}
                             >
@@ -656,29 +812,25 @@ const JobSetup = () => {
                       </Command>
                     </PopoverContent>
                   </Popover>
+                  {errors['workLocation.state'] && <p className="text-red-500 text-xs mt-1">{errors['workLocation.state']}</p>}
                 </div>
 
                 <div>
-                  <Label htmlFor="jobType" className="text-sm font-medium text-gray-700">Job Type</Label>
-                  <Select onValueChange={(value) => selectChangeHandler('jobType', value)}>
-                    <SelectTrigger className={`mt-2 h-12 border-gray-200 bg-gray-50 focus:border-indigo-600 focus:ring-indigo-600 rounded-xl shadow-sm ${errors.jobType ? 'border-red-500 focus:border-red-500 focus:ring-red-500' : ''}`}>
-                      <SelectValue placeholder="Select job type..." />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectGroup>
-                        {jobTypes.map((type) => (
-                          <SelectItem key={type} value={type}>
-                            {type}
-                          </SelectItem>
-                        ))}
-                      </SelectGroup>
-                    </SelectContent>
-                  </Select>
-                  {errors.jobType && <p className="text-red-500 text-xs mt-1">{errors.jobType}</p>}
+                  <Label htmlFor="workLocation.streetAddress" className="text-sm font-medium text-gray-700">Street Address <span className="text-red-500">*</span></Label>
+                  <Input
+                    id="workLocation.streetAddress"
+                    type="text"
+                    name="workLocation.streetAddress"
+                    value={input.workLocation.streetAddress}
+                    onChange={changeEventHandler}
+                    className={`mt-2 h-12 border-gray-200 bg-gray-50 focus:border-indigo-600 focus:ring-indigo-600 rounded-xl shadow-sm transition-all duration-200 ${errors['workLocation.streetAddress'] ? 'border-red-500 focus:border-red-500 focus:ring-red-500' : ''}`}
+                    placeholder="e.g., 123 Main St"
+                  />
+                  {errors['workLocation.streetAddress'] && <p className="text-red-500 text-xs mt-1">{errors['workLocation.streetAddress']}</p>}
                 </div>
 
                 <div>
-                  <Label htmlFor="experienceLevel" className="text-sm font-medium text-gray-700">Experience Level (in years)</Label>
+                  <Label htmlFor="experienceLevel" className="text-sm font-medium text-gray-700">Experience Level <span className="text-red-500">*</span></Label>
                   <Input
                     id="experienceLevel"
                     type="number"
@@ -692,21 +844,27 @@ const JobSetup = () => {
                 </div>
 
                 <div>
-                  <Label htmlFor="workplacePlane" className="text-sm font-medium text-gray-700">Workplace Plane</Label>
-                  <Input
-                    id="workplacePlane"
-                    type="text"
-                    name="workplacePlane"
+                  <Label htmlFor="workplacePlane" className="text-sm font-medium text-gray-700">Workplace Type <span className="text-red-500">*</span></Label>
+                  <Select
                     value={input.workplacePlane}
-                    onChange={changeEventHandler}
-                    className={`mt-2 h-12 border-gray-200 bg-gray-50 focus:border-indigo-600 focus:ring-indigo-600 rounded-xl shadow-sm transition-all duration-200 ${errors.workplacePlane ? 'border-red-500 focus:border-red-500 focus:ring-red-500' : ''}`}
-                    placeholder="e.g., Office, Remote, Hybrid"
-                  />
+                    onValueChange={(value) => selectChangeHandler('workplacePlane', value)}
+                  >
+                    <SelectTrigger className={`mt-2 h-12 border-gray-200 bg-gray-50 focus:border-indigo-600 focus:ring-indigo-600 rounded-xl shadow-sm ${errors.workplacePlane ? 'border-red-500' : ''}`}>
+                      <SelectValue placeholder="Select workplace type..." />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {workplaceTypes.map((type) => (
+                        <SelectItem key={type} value={type}>
+                          {type}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                   {errors.workplacePlane && <p className="text-red-500 text-xs mt-1">{errors.workplacePlane}</p>}
                 </div>
 
                 <div>
-                  <Label htmlFor="jobCategory" className="text-sm font-medium text-gray-700">Job Category</Label>
+                  <Label htmlFor="jobCategory" className="text-sm font-medium text-gray-700">Job Category <span className="text-red-500">*</span></Label>
                   {isCustomCategory ? (
                     <div className="flex mt-2">
                       <Input
@@ -715,7 +873,7 @@ const JobSetup = () => {
                         name="jobCategory"
                         value={input.jobCategory}
                         onChange={changeEventHandler}
-                        className="flex-1 h-12 border-gray-200 bg-gray-50 focus:border-indigo-600 focus:ring-indigo-600 rounded-l-xl shadow-sm transition-all duration-200"
+                        className={`flex-1 h-12 border-gray-200 bg-gray-50 focus:border-indigo-600 focus:ring-indigo-600 rounded-l-xl shadow-sm transition-all duration-200 ${errors.jobCategory ? 'border-red-500 focus:border-red-500 focus:ring-red-500' : ''}`}
                         placeholder="Enter custom job category"
                       />
                       <Button
@@ -733,7 +891,7 @@ const JobSetup = () => {
                           variant="outline"
                           role="combobox"
                           aria-expanded={jobCategoryOpen}
-                          className="w-full justify-between mt-2 h-12 border-gray-200 bg-gray-50 focus:border-indigo-600 focus:ring-indigo-600 rounded-xl shadow-sm text-left font-normal"
+                          className={`w-full justify-between mt-2 h-12 border-gray-200 bg-gray-50 focus:border-indigo-600 focus:ring-indigo-600 rounded-xl shadow-sm text-left font-normal ${errors.jobCategory ? 'border-red-500 focus:border-red-500 focus:ring-red-500' : ''}`}
                         >
                           {input.jobCategory || "Select job category..."}
                           <div className="flex items-center">
@@ -759,6 +917,7 @@ const JobSetup = () => {
                                 value={category}
                                 onSelect={() => {
                                   setInput({ ...input, jobCategory: category });
+                                  setErrors({ ...errors, jobCategory: '' });
                                   setJobCategoryOpen(false);
                                 }}
                               >
@@ -780,77 +939,21 @@ const JobSetup = () => {
                 </div>
 
                 <div>
-                  <Label htmlFor="salaryRange.minSalary" className="text-sm font-medium text-gray-700">Salary Min</Label>
+                  <Label htmlFor="salaryRange" className="text-sm font-medium text-gray-700">Salary Range</Label>
                   <Input
-                    id="salaryRange.minSalary"
-                    type="number"
-                    name="salaryRange.minSalary"
-                    value={input.salaryRange.minSalary}
+                    id="salaryRange"
+                    type="text"
+                    name="salaryRange"
+                    value={input.salaryRange}
                     onChange={changeEventHandler}
-                    className={`mt-2 h-12 border-gray-200 bg-gray-50 focus:border-indigo-600 focus:ring-indigo-600 rounded-xl shadow-sm transition-all duration-200 ${errors['salaryRange.minSalary'] ? 'border-red-500 focus:border-red-500 focus:ring-red-500' : ''}`}
-                    placeholder="e.g., 50000"
+                    className={`mt-2 h-12 border-gray-200 bg-gray-50 focus:border-indigo-600 focus:ring-indigo-600 rounded-xl shadow-sm transition-all duration-200 ${errors.salaryRange ? 'border-red-500 focus:border-red-500 focus:ring-red-500' : ''}`}
+                    placeholder="e.g., 50000-70000"
                   />
-                  {errors['salaryRange.minSalary'] && <p className="text-red-500 text-xs mt-1">{errors['salaryRange.minSalary']}</p>}
+                  {errors.salaryRange && <p className="text-red-500 text-xs mt-1">{errors.salaryRange}</p>}
                 </div>
 
                 <div>
-                  <Label htmlFor="salaryRange.maxSalary" className="text-sm font-medium text-gray-700">Salary Max</Label>
-                  <Input
-                    id="salaryRange.maxSalary"
-                    type="number"
-                    name="salaryRange.maxSalary"
-                    value={input.salaryRange.maxSalary}
-                    onChange={changeEventHandler}
-                    className={`mt-2 h-12 border-gray-200 bg-gray-50 focus:border-indigo-600 focus:ring-indigo-600 rounded-xl shadow-sm transition-all duration-200 ${errors['salaryRange.maxSalary'] ? 'border-red-500 focus:border-red-500 focus:ring-red-500' : ''}`}
-                    placeholder="e.g., 70000"
-                  />
-                  {errors['salaryRange.maxSalary'] && <p className="text-red-500 text-xs mt-1">{errors['salaryRange.maxSalary']}</p>}
-                </div>
-
-                <div>
-                  <Label htmlFor="salaryRange.currency" className="text-sm font-medium text-gray-700">Currency</Label>
-                  <Select
-                    value={input.salaryRange.currency}
-                    onValueChange={(value) => selectChangeHandler('salaryRange.currency', value)}
-                  >
-                    <SelectTrigger className="mt-2 h-12 border-gray-200 bg-gray-50 focus:border-indigo-600 focus:ring-indigo-600 rounded-xl shadow-sm">
-                      <SelectValue placeholder="Select Currency" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectGroup>
-                        {['INR', 'USD', 'EUR', 'GBP'].map((currency) => (
-                          <SelectItem key={currency} value={currency}>
-                            {currency}
-                          </SelectItem>
-                        ))}
-                      </SelectGroup>
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div>
-                  <Label htmlFor="salaryRange.frequency" className="text-sm font-medium text-gray-700">Frequency</Label>
-                  <Select
-                    value={input.salaryRange.frequency}
-                    onValueChange={(value) => selectChangeHandler('salaryRange.frequency', value)}
-                  >
-                    <SelectTrigger className="mt-2 h-12 border-gray-200 bg-gray-50 focus:border-indigo-600 focus:ring-indigo-600 rounded-xl shadow-sm">
-                      <SelectValue placeholder="Select Frequency" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectGroup>
-                        {['hourly', 'monthly', 'yearly'].map((freq) => (
-                          <SelectItem key={freq} value={freq}>
-                            {freq}
-                          </SelectItem>
-                        ))}
-                      </SelectGroup>
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div>
-                  <Label htmlFor="numberOfPositions" className="text-sm font-medium text-gray-700">Number of Positions</Label>
+                  <Label htmlFor="numberOfPositions" className="text-sm font-medium text-gray-700">Number of Positions <span className="text-red-500">*</span></Label>
                   <Input
                     id="numberOfPositions"
                     type="number"
@@ -862,123 +965,81 @@ const JobSetup = () => {
                   />
                   {errors.numberOfPositions && <p className="text-red-500 text-xs mt-1">{errors.numberOfPositions}</p>}
                 </div>
-
+{/* 
                 <div>
-                  <Label htmlFor="status" className="text-sm font-medium text-gray-700">Status</Label>
-                  <Select onValueChange={(value) => selectChangeHandler('status', value)}>
-                    <SelectTrigger className={`mt-2 h-12 border-gray-200 bg-gray-50 focus:border-indigo-600 focus:ring-indigo-600 rounded-xl shadow-sm ${errors.status ? 'border-red-500 focus:border-red-500 focus:ring-red-500' : ''}`}>
+                  <Label htmlFor="status" className="text-sm font-medium text-gray-700">Status <span className="text-red-500">*</span></Label>
+                  <Select
+                    value={input.status}
+                    onValueChange={(value) => selectChangeHandler('status', value)}
+                  >
+                    <SelectTrigger className={`mt-2 h-12 border-gray-200 bg-gray-50 focus:border-indigo-600 focus:ring-indigo-600 rounded-xl shadow-sm ${errors.status ? 'border-red-500' : ''}`}>
                       <SelectValue placeholder="Select status..." />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectGroup>
-                        {['Open', 'Closed', 'Draft', 'Expired'].map((status) => (
-                          <SelectItem key={status} value={status}>
-                            {status}
-                          </SelectItem>
-                        ))}
-                      </SelectGroup>
+                      <SelectItem value="Active">Active</SelectItem>
+                      <SelectItem value="Inactive">Inactive</SelectItem>
                     </SelectContent>
                   </Select>
                   {errors.status && <p className="text-red-500 text-xs mt-1">{errors.status}</p>}
-                </div>
+                </div> */}
 
-                <div>
-                  <Label htmlFor="benefits" className="text-sm font-medium text-gray-700">Benefits</Label>
-                  <div className="mt-2">
-                    <div className="flex flex-wrap gap-2 mb-3">
-                      {commonBenefits.map((benefit) => (
-                        <Badge
-                          key={benefit}
-                          className={cn(
-                            "cursor-pointer px-3 py-1.5 text-sm",
-                            benefitBadges.includes(benefit)
-                              ? "bg-indigo-600 text-white hover:bg-indigo-700"
-                              : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-                          )}
-                          onClick={() => toggleBenefit(benefit)}
-                        >
-                          {benefit}
-                          {benefitBadges.includes(benefit) && (
-                            <Check className="ml-1 h-3 w-3" />
-                          )}
-                        </Badge>
-                      ))}
+                <div className="md:col-span-2">
+                  <Label className="text-sm font-medium text-gray-700">Benefits</Label>
+                  <div className="mt-2 flex flex-wrap gap-2">
+                    {commonBenefits.map((benefit) => (
                       <Badge
-                        className="cursor-pointer bg-gray-100 text-gray-700 hover:bg-gray-200 px-3 py-1.5 text-sm flex items-center gap-1"
-                        onClick={() => setShowCustomBenefitInput(true)}
+                        key={benefit}
+                        className={`cursor-pointer ${benefitBadges.includes(benefit) ? 'bg-indigo-600 text-white' : 'bg-gray-200 text-gray-700'}`}
+                        onClick={() => toggleBenefit(benefit)}
                       >
-                        <Plus className="h-3 w-3" />
-                        Other
+                        {benefit}
                       </Badge>
-                    </div>
-
-                    {benefitBadges.filter(b => !commonBenefits.includes(b)).length > 0 && (
-                      <div className="flex flex-wrap gap-2 mb-3">
-                        {benefitBadges.filter(b => !commonBenefits.includes(b)).map((benefit, index) => (
-                          <Badge
-                            key={`custom-${index}`}
-                            className="bg-indigo-600 text-white hover:bg-indigo-700 px-3 py-1.5 text-sm flex items-center gap-1"
-                          >
-                            {benefit}
-                            <button
-                              type="button"
-                              onClick={() => setBenefitBadges(benefitBadges.filter(b => b !== benefit))}
-                              className="ml-1 rounded-full focus:outline-none"
-                            >
-                              <XIcon className="h-3 w-3" />
-                            </button>
-                          </Badge>
-                        ))}
-                      </div>
-                    )}
-
-                    {showCustomBenefitInput && (
-                      <div className="flex mt-2">
+                    ))}
+                    {showCustomBenefitInput ? (
+                      <div className="flex items-center gap-2">
                         <Input
                           type="text"
                           value={customBenefitInput}
                           onChange={(e) => setCustomBenefitInput(e.target.value)}
                           onKeyDown={handleCustomBenefitKeyDown}
-                          placeholder="Type custom benefit..."
-                          className="flex-1 h-10 border-gray-200 bg-gray-50 focus:border-indigo-600 focus:ring-indigo-600 rounded-l-lg shadow-sm transition-all duration-200"
+                          className="h-10 border-gray-200 bg-gray-50 focus:border-indigo-600 focus:ring-indigo-600 rounded-xl shadow-sm"
+                          placeholder="Add custom benefit"
                         />
                         <Button
                           type="button"
                           onClick={handleAddCustomBenefit}
-                          className="rounded-r-lg bg-indigo-600 text-white hover:bg-indigo-700"
+                          className="h-10 px-4 bg-indigo-600 text-white rounded-xl hover:bg-indigo-700 transition-colors"
                         >
                           Add
                         </Button>
                         <Button
                           type="button"
-                          onClick={() => {
-                            setShowCustomBenefitInput(false);
-                            setCustomBenefitInput('');
-                          }}
-                          variant="ghost"
-                          className="ml-2 px-2 rounded-lg border border-gray-200 bg-gray-50 hover:bg-gray-100"
+                          onClick={() => setShowCustomBenefitInput(false)}
+                          className="h-10 px-4 bg-gray-200 text-gray-700 rounded-xl hover:bg-gray-300 transition-colors"
                         >
-                          <XIcon className="h-4 w-4 text-gray-600" />
+                          <XIcon className="h-4 w-4" />
                         </Button>
                       </div>
+                    ) : (
+                      <Button
+                        type="button"
+                        onClick={() => setShowCustomBenefitInput(true)}
+                        className="h-10 px-4 bg-gray-200 text-gray-700 rounded-xl hover:bg-gray-300 transition-colors"
+                      >
+                        <Plus className="h-4 w-4 mr-2" />
+                        Add Custom Benefit
+                      </Button>
                     )}
                   </div>
                 </div>
               </div>
-
               <Button
                 type="submit"
                 disabled={loading}
-                className="w-full mt-6 bg-indigo-600 text-white hover:bg-indigo-700 rounded-xl shadow-sm transition-all duration-200"
+                className="w-full h-12 bg-indigo-600 text-white rounded-xl hover:bg-indigo-700 transition-colors flex items-center justify-center"
               >
-                {loading ? (
-                  <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Please wait
-                  </>
-                ) : (
-                  'Update Job'
-                )}
+                {loading ? <Loader2 className="h-5 w-5 animate-spin mr-2" /> : null}
+                Save Changes
               </Button>
             </form>
           </CardContent>
