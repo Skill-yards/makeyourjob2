@@ -557,9 +557,9 @@ const CompanySetup = () => {
                     className={`mt-1 ${errors.file ? 'border-red-500 focus:ring-red-500 focus:border-red-500' : ''}`}
                     required={!singleCompany?.logo}
                   />
-                  {renderFileLink('file', 'Company Logo') && (
+                  {renderFileLink('logo', 'Company Logo') && (
                     <p className="text-sm mt-1">
-                      Current file: {renderFileLink('file', 'Company Logo')}
+                      Current file: {renderFileLink('logo', 'Company Logo')}
                     </p>
                   )}
                   {errors.file && <p className="text-red-500 text-xs mt-1">{errors.file}</p>}
