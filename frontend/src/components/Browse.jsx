@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import  { useEffect } from 'react';
 import Navbar from './shared/Navbar';
 import Job from './Job';
 import { useDispatch, useSelector } from 'react-redux';
@@ -12,11 +12,23 @@ import Footer from './shared/Footer'
 
 const Browse = () => {
   useGetAllJobs();
-  const { allJobs, isLoading } = useSelector(store => store.job);
+ 
   const dispatch = useDispatch();
+  const { searchedJobs, loading, error } = useSelector((state) => state.jobBrowse);
+
+
+
+  
+  // console.log(searchedJobs,"check in browse page");
+
+
+  
   
   useEffect(() => {
-    return () => {
+    // return () => {
+    //   dispatch(setSearchedQuery(""));
+    // }
+    if(searchedJobs.length===0){
       dispatch(setSearchedQuery(""));
     }
   }, [dispatch]);
@@ -74,7 +86,7 @@ const Browse = () => {
     <div className="min-h-screen bg-gradient-to-b from-gray-50 to-white">
       <Navbar />
       <div className="max-w-7xl mx-auto my-10 px-4 sm:px-6 lg:px-8">
-        {isLoading ? (
+        {loading ? (
           <>
             <div className="flex justify-between items-center mb-10">
               <h1 className="font-bold text-2xl text-gray-800">Discovering Jobs...</h1>
@@ -84,10 +96,10 @@ const Browse = () => {
         ) : (
           <>
             <div className="flex justify-between items-center mb-10">
-              {allJobs.length > 0 ? (
+              {searchedJobs.length > 0 ? (
                 <h1 className="font-bold text-2xl text-gray-800">
                   <span className="bg-clip-text text-transparent bg-gradient-to-r from-indigo-600 to-violet-600">
-                    {allJobs.length}
+                    {searchedJobs.length}
                   </span> Opportunities Found
                 </h1>
               ) : (
@@ -95,9 +107,9 @@ const Browse = () => {
               )}
             </div>
             
-            {allJobs.length > 0 ? (
+            {searchedJobs.length > 0 ? (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {allJobs.map((job) => (
+                {searchedJobs.map((job) => (
                   <motion.div
                     key={job._id}
                     initial={{ opacity: 0, y: 20 }}

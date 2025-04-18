@@ -127,6 +127,7 @@ import { Company } from "../models/company.model.js";
 
 
 export const postJob = async (req, res) => {
+  console.log(req.body,"dhadso")
   try {
     const {
       jobTitle,
@@ -145,7 +146,7 @@ export const postJob = async (req, res) => {
     } = req.body;
 
     const userId = req.id; // Assuming req.id is set by authentication middleware
-
+    console.log(companyId,"jfejhe check....")
     // Validate required fields
     const requiredFields = {
       jobTitle: "Job title is required",
@@ -884,4 +885,61 @@ export const adminGetJob = async (req, res) => {
             success: false
         });
     }
+};
+
+
+export const SearchJob = async (req, res) => {
+  try {
+    const { jobTitle, city, limit = 10, page = 1 } = req.query;
+    const query = {};
+    if (jobTitle) {
+      const sanitizedTitle = jobTitle.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      query.jobTitle = { $regex: new RegExp(sanitizedTitle, 'i') };
+    }
+    if (city) {
+      const sanitizedCity = city.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      query['workLocation.city'] = { $regex: new RegExp(sanitizedCity, 'i') };
+    }
+    if (Object.keys(query).length === 0) {
+      return res.status(400).json({
+        success: false,
+        message: 'Please provide at least one search parameter (jobTitle or city)',
+      });
+    }
+    const maxLimit = 100;
+    const parsedLimit = Math.max(1, Math.min(maxLimit, parseInt(limit, 10)));
+    const parsedPage = Math.max(1, parseInt(page, 10));
+    const skip = (parsedPage - 1) * parsedLimit;
+    const jobs = await Job.find(query)
+      .populate('company', 'name createdAt')
+      // .limit(parsedLimit)
+      .skip(skip)
+      .lean();
+
+    if (!jobs || jobs.length === 0) {
+      return res.status(404).json({
+        success: false,
+        message: 'No jobs found matching the criteria',
+      });
+    }
+    const totalJobs = await Job.countDocuments(query);
+
+    return res.status(200).json({
+      success: true,
+      jobs,
+      pagination: {
+        totalJobs,
+        totalPages: Math.ceil(totalJobs / parsedLimit),
+        currentPage: parsedPage,
+        limit: parsedLimit,
+      },
+    });
+  } catch (error) {
+    console.error('Error searching for jobs:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'An error occurred while searching for jobs',
+      error: error.message,
+    });
+  }
 };

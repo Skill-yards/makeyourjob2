@@ -929,28 +929,39 @@ const PostJob = () => {
                     </div>
                   )}
                 </div>
-
                 <div>
-                  <Label htmlFor="workplacePlane" className="text-sm font-semibold text-gray-800">Workplace Plane</Label>
-                  <Input
-                    id="workplacePlane"
-                    type="text"
-                    name="workplacePlane"
-                    value={input.workplacePlane}
-                    onChange={changeEventHandler}
-                    className={cn(
-                      "mt-2 h-12 border-gray-200 bg-gray-50 focus:border-indigo-600 focus:ring-indigo-600 rounded-xl shadow-sm transition-all duration-200",
-                      validationErrors.workplacePlane && "border-red-500 focus:border-red-500 focus:ring-red-500"
-                    )}
-                    placeholder="e.g., Office, Remote, Hybrid"
-                  />
-                  {validationErrors.workplacePlane && (
-                    <div className="mt-1 text-sm text-red-500 flex items-center">
-                      <AlertCircle className="h-3 w-3 mr-1" />
-                      {validationErrors.workplacePlane}
-                    </div>
-                  )}
-                </div>
+  <Label htmlFor="workplacePlane" className="text-sm font-semibold text-gray-800">
+    Workplace Plane
+  </Label>
+
+  <Select
+    value={input.workplacePlane}
+    onValueChange={(value) => changeEventHandler({ target: { name: "workplacePlane", value } })}
+  >
+    <SelectTrigger
+      id="workplacePlane"
+      className={cn(
+        "mt-2 h-12 border-gray-200 bg-gray-50 focus:border-indigo-600 focus:ring-indigo-600 rounded-xl shadow-sm transition-all duration-200",
+        validationErrors.workplacePlane && "border-red-500 focus:border-red-500 focus:ring-red-500"
+      )}
+    >
+      <SelectValue placeholder="Select workplace type" />
+    </SelectTrigger>
+    <SelectContent>
+      <SelectItem value="Office">Office</SelectItem>
+      <SelectItem value="Remote">Remote</SelectItem>
+      <SelectItem value="Hybrid">Hybrid</SelectItem>
+    </SelectContent>
+  </Select>
+
+  {validationErrors.workplacePlane && (
+    <div className="mt-1 text-sm text-red-500 flex items-center">
+      <AlertCircle className="h-3 w-3 mr-1" />
+      {validationErrors.workplacePlane}
+    </div>
+  )}
+</div>
+
 
                 <div>
                   <Label htmlFor="jobCategory" className="text-sm font-semibold text-gray-800">Job Category</Label>

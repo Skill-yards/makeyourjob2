@@ -506,7 +506,7 @@ const JobSetup = () => {
   return (
     <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-white to-purple-50">
       <Navbar />
-      <div className="max-w-5xl mx-auto py-10 px-4 sm:px-6 lg:px-8">
+      <div className=" mx-auto py-10 px-4 sm:px-6 lg:px-8">
         <Card className="bg-white shadow-xl rounded-2xl overflow-hidden border border-gray-200">
           <div className="bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-500 h-20"></div>
           <CardHeader className="relative pt-6 pb-4 px-6">
