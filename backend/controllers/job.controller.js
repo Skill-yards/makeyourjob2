@@ -158,6 +158,116 @@ export const postJob = async (req, res) => {
 };
 
 
+// export const getAllJobs = async (req, res) => {
+//   try {
+//     const keyword = req.query.keyword || "";
+//     const location = req.query.location || "all";
+
+//     console.log("Keyword:", keyword);
+//     console.log("Location:", location);
+//     const query = {
+//       $or: [
+//         { title: { $regex: keyword, $options: "i" } },
+//         { description: { $regex: keyword, $options: "i" } },
+//       ],
+//     };
+
+//     // Only add location filter if not "all"
+//     if (location !== "all") {
+//       query.location = { $regex: location, $options: "i" };
+//     }
+
+//     const jobs = await Job.find(query)
+//       .populate({
+//         path: "company",
+//       })
+//       .sort({ createdAt: -1 });
+
+//     if (!jobs || jobs.length === 0) {
+//       return res.status(404).json({
+//         message: "No jobs found matching the criteria.",
+//         success: false,
+//       });
+//     }
+
+//     return res.status(200).json({
+//       jobs,
+//       success: true,
+//     });
+//   } catch (error) {
+//     console.error('Error in getAllJobs:', error);
+//     return res.status(500).json({
+//       message: "Server error while fetching jobs.",
+//       success: false,
+//     });
+//   }
+// };
+
+export const SearchJob = async (req, res) => {
+  try {
+    // Extract and validate query parameters
+    const { jobTitle, city, limit = 10, page = 1 } = req.query;
+
+    // Parse limit and page to numbers and validate
+    const parsedLimit = Math.max(1, parseInt(limit, 10)); // Ensure limit is at least 1
+    const parsedPage = Math.max(1, parseInt(page, 10)); // Ensure page is at least 1
+    const skip = (parsedPage - 1) * parsedLimit; // Calculate documents to skip
+
+    // Log for debugging
+    console.log("Job Title:", jobTitle);
+    console.log("City:", city);
+
+    // Build query object
+    const query = {};
+    if (jobTitle) {
+      query.jobTitle = { $regex: jobTitle, $options: "i" }; // Case-insensitive search
+    }
+    if (city && city !== "all") {
+      query["workLocation.state"] = { $regex: city, $options: "i" }; // Filter by state
+    }
+
+    // Execute query with pagination, population, and sorting
+    const jobs = await Job.find(query)
+      .populate({
+        path: "company",
+        select: "name industry logo" // Example: Select specific fields from company
+      })
+      .sort({ createdAt: 1 }) // Sort by oldest first
+      .skip(skip) // Skip documents for pagination
+      .limit(parsedLimit); // Limit number of documents
+
+    // Check if jobs were found
+    if (!jobs || jobs.length === 0) {
+      return res.status(404).json({
+        message: "No jobs found matching the criteria.",
+        success: false,
+      });
+    }
+
+    // Count total matching documents for pagination
+    const totalJobs = await Job.countDocuments(query);
+
+    // Return response with jobs and pagination metadata
+    return res.status(200).json({
+      success: true,
+      jobs,
+      pagination: {
+        totalJobs,
+        totalPages: Math.ceil(totalJobs / parsedLimit),
+        currentPage: parsedPage,
+        limit: parsedLimit,
+      },
+    });
+  } catch (error) {
+    console.error("Error searching for jobs:", error);
+    return res.status(500).json({
+      success: false,
+      message: "An error occurred while searching for jobs",
+      error: error.message,
+    });
+  }
+};
+
 export const getAllJobs = async (req, res) => {
   try {
     const keyword = req.query.keyword || "";
@@ -165,16 +275,16 @@ export const getAllJobs = async (req, res) => {
 
     console.log("Keyword:", keyword);
     console.log("Location:", location);
-    const query = {
-      $or: [
-        { title: { $regex: keyword, $options: "i" } },
-        { description: { $regex: keyword, $options: "i" } },
-      ],
-    };
+    const query = {};
 
-    // Only add location filter if not "all"
+    // Filter by keyword (e.g., "hr") in jobTitle if provided
+    if (keyword) {
+      query.jobTitle = { $regex: keyword, $options: "i" };
+    }
+
+    // Add location filter based on workLocation.state if not "all"
     if (location !== "all") {
-      query.location = { $regex: location, $options: "i" };
+      query["workLocation.state"] = { $regex: location, $options: "i" };
     }
 
     const jobs = await Job.find(query)
