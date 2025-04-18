@@ -5,6 +5,7 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
+  DialogDescription,
 } from './ui/dialog';
 import { Label } from './ui/label';
 import { Input } from './ui/input';
@@ -15,8 +16,10 @@ import axios from 'axios';
 import { USER_API_END_POINT } from '@/utils/constant';
 import { setUser } from '@/redux/authSlice';
 import { toast } from 'sonner';
+import { Avatar, AvatarImage } from './ui/avatar';
+import PropTypes from 'prop-types';
 
-const UpdateProfileDialog = ({ open, setOpen }) => {
+const UpdateProfileDialog = ({ open, setOpen, croppedImage }) => {
   const [loading, setLoading] = useState(false);
   const { user } = useSelector((store) => store.auth);
   const dispatch = useDispatch();
@@ -39,6 +42,7 @@ const UpdateProfileDialog = ({ open, setOpen }) => {
 
   const fileChangeHandler = (e) => {
     const file = e.target.files?.[0];
+    console.log('Resume file selected:', file?.name, file?.type);
     setInput({ ...input, file });
   };
 
@@ -49,6 +53,26 @@ const UpdateProfileDialog = ({ open, setOpen }) => {
     formData.append('lastname', input.lastname);
     formData.append('email', input.email);
     formData.append('phoneNumber', input.phoneNumber);
+
+    // Add the cropped logo if available
+    if (croppedImage) {
+      console.log(croppedImage,"sjhdjhihsa")
+      if (typeof croppedImage === 'string' && croppedImage.startsWith('data:')) {
+        try {
+          const response = await fetch(croppedImage);
+          const blob = await response.blob();
+          const logoFile = new File([blob], 'organization-logo.jpg', { type: 'image/jpeg' });
+          // console.log('Logo file created:', logoFile.name, logoFile.type);
+          formData.append('file', logoFile); // Match backend's req.file
+        } catch (error) {
+          console.error('Error converting croppedImage to File:', error);
+          toast.error('Failed to process logo image');
+          return;
+        }
+      } else if (croppedImage instanceof File) {
+        formData.append('file', croppedImage);
+      }
+    }
 
     if (user?.role === 'candidate') {
       formData.append('bio', input.bio);
@@ -63,6 +87,7 @@ const UpdateProfileDialog = ({ open, setOpen }) => {
 
     try {
       setLoading(true);
+      console.log('Sending profile update request...');
       const res = await axios.post(
         `${USER_API_END_POINT}/profile/update`,
         formData,
@@ -71,13 +96,15 @@ const UpdateProfileDialog = ({ open, setOpen }) => {
           withCredentials: true,
         }
       );
+      console.log('Update response:', res.data);
       if (res.data.success) {
         dispatch(setUser(res.data.user));
+        console.log('Updated user logo:', res.data.user.profile.profilePhoto);
         toast.success(res.data.message);
         setOpen(false);
       }
     } catch (error) {
-      console.error(error);
+      console.error('Profile update error:', error);
       toast.error(error.response?.data?.message || 'Failed to update profile');
     } finally {
       setLoading(false);
@@ -100,7 +127,23 @@ const UpdateProfileDialog = ({ open, setOpen }) => {
           </DialogTitle>
           <div className="w-10"></div>
         </DialogHeader>
+        <DialogDescription className="text-center text-gray-600">
+          Make changes to your profile or organization logo here. Click update when you're done.
+        </DialogDescription>
         <form onSubmit={submitHandler} className="space-y-6">
+          {/* Organization Logo Section */}
+          <div className="flex flex-col items-center justify-center space-y-4">
+            <Avatar className="h-24 w-24 border-2 border-indigo-500">
+              <AvatarImage
+                src={croppedImage || user?.profile?.organizationLogo || ''}
+                alt="Organization Logo"
+              />
+            </Avatar>
+            <div className="text-sm text-gray-500">
+              {croppedImage ? 'New logo selected' : 'Current organization logo'}
+            </div>
+          </div>
+
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
               <Label htmlFor="firstname" className="text-sm font-medium text-gray-700">
@@ -225,25 +268,41 @@ const UpdateProfileDialog = ({ open, setOpen }) => {
             )}
           </div>
           <DialogFooter className="mt-6">
-            <Button
-              type="submit"
-              disabled={loading}
-              className="bg-indigo-600 hover:bg-indigo-700 w-full"
-            >
-              {loading ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Please wait
-                </>
-              ) : (
-                'Update'
-              )}
-            </Button>
+            <div className="flex space-x-2 w-full justify-end">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setOpen(false)}
+                className="border-gray-300"
+              >
+                Cancel
+              </Button>
+              <Button
+                type="submit"
+                disabled={loading}
+                className="bg-indigo-600 hover:bg-indigo-700"
+              >
+                {loading ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Please wait
+                  </>
+                ) : (
+                  'Update'
+                )}
+              </Button>
+            </div>
           </DialogFooter>
         </form>
       </DialogContent>
     </Dialog>
   );
+};
+
+UpdateProfileDialog.propTypes = {
+  open: PropTypes.bool.isRequired,
+  setOpen: PropTypes.func.isRequired,
+  croppedImage: PropTypes.string,
 };
 
 export default UpdateProfileDialog;

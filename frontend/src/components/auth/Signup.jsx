@@ -465,7 +465,7 @@ const Signup = () => {
                 id="terms"
                 checked={input.agreedToTerms}
                 onCheckedChange={handleTermsChange}
-                disabled={!isOtpVerified}
+                
               />
               <Label htmlFor="terms" className="text-sm text-gray-600">
                 All your information is collected, stored and processed as per our data processing guidelines. By signing up on Unstop, you agree to our{" "}
@@ -502,7 +502,7 @@ const Signup = () => {
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
       <Navbar />
       <div className="flex justify-center items-center min-h-[calc(100vh-64px)] px-4">
-        <div className="w-full max-w-6xl flex bg-white shadow-2xl rounded-2xl overflow-hidden">
+        <div className="w-full max-w-4xl flex bg-white shadow-2xl rounded-2xl overflow-hidden">
           <div className="w-1/2 bg-gradient-to-br from-yellow-400 to-orange-500 p-8 flex flex-col justify-center items-center">
             <img
               src={input.role === "candidate" ? EmployeesImage : RecruitorImage}

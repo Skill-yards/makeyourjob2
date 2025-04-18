@@ -28,8 +28,12 @@ const jobSlice = createSlice({
             state.allAppliedJobs = action.payload;
         },
         setSearchedQuery:(state,action) => {
+            console.log(action.payload,"check payload")
             state.searchedQuery = action.payload;
         }
+        // SetSearchJobDetails:(state,action) => {
+        //     state.searchJobDetails = action.payload;
+        // }
     }
 });
 export const {

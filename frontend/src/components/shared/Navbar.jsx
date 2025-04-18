@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import  { useState } from 'react'
 import { Link, useNavigate, useLocation } from 'react-router-dom'
 import { useDispatch, useSelector } from 'react-redux'
 import axios from 'axios'
@@ -66,11 +66,11 @@ const Navbar = () => {
         <header className="sticky top-0 z-50 w-full bg-white/95 backdrop-blur supports-[backdrop-filter]:bg-white/60 border-b border-gray-100 dark:bg-gray-950/95 dark:border-gray-800">
             <div className="container mx-auto px-4 sm:px-6">
                 <div className="flex h-16 items-center justify-between">
-                    {/* Logo */}
+        
                     <div className="flex items-center">
                         <Link to="/" className="flex items-center space-x-2">
                             <div className='w-30 h-10 mt-2 bg-transparent'>
-                                <img src="../../../public/logo-removebg-preview.png" alt="Logo" className="w-full h-full bg-transparent object-contain" />
+                                <img src="logo-removebg-preview.png" alt="Logo" className="w-full h-full bg-transparent object-contain" />
                             </div>
                         </Link>
                     </div>

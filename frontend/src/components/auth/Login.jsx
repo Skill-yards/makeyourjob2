@@ -279,8 +279,8 @@ const Login = () => {
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
       <Navbar />
-      <div className="flex justify-center items-center min-h-[calc(100vh-64px)] px-4">
-        <div className="w-full max-w-6xl flex bg-white shadow-2xl rounded-2xl overflow-hidden transform hover:scale-105 transition duration-300">
+      <div className="flex justify-center items-center max-h-[100vh] px-4">
+        <div className="w-full max-w-4xl flex bg-white shadow-2xl rounded-2xl overflow-hidden transform  transition duration-300">
           <div className="w-1/2 bg-gradient-to-br from-yellow-400 to-orange-500 p-8 flex flex-col justify-center items-center">
             <img src={personImage} alt="Login Illustration" className="w-3/4 h-auto object-cover rounded-xl shadow-lg" />
             <div className="mt-6 text-center text-white">

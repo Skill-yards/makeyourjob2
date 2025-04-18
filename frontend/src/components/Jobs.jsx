@@ -1,19 +1,18 @@
-import React, { useEffect, useState } from 'react';
+import  { useEffect, useState } from 'react';
 import { useSelector } from 'react-redux';
 import Navbar from './shared/Navbar';
 import FilterCard from './FilterCard';
 import Job from './Job';
 import { motion } from 'framer-motion';
 import Footer from './shared/Footer'
-import { 
-  Briefcase, 
+import {  
   Search, 
-  MapPin, 
+ 
   AlertCircle 
 } from "lucide-react";
 import { 
   Card, 
-  CardContent 
+  CardContent   
 } from "@/components/ui/card";
 import {
   Alert,
@@ -63,8 +62,7 @@ const Jobs = () => {
   };
 
   return (
-    <>
-    <Navbar />
+   <>
     <div className="container mx-auto px-4 py-8">
       <div className="flex flex-col gap-6 md:flex-row md:gap-8 mt-6">
         <div className="md:w-1/4">
@@ -149,7 +147,7 @@ const Jobs = () => {
       </div>
     </div>
     <Footer />
-    </>
+   </>
   );
 };
 

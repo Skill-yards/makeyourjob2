@@ -1,13 +1,21 @@
 import React from 'react';
-import { Mail, Phone, MapPin,  Linkedin, Twitter, Instagram, Gitlab } from 'lucide-react';
+import { Mail, Phone, MapPin, Linkedin, Instagram } from 'lucide-react';
 import { Button } from '../ui/button';
 import { Input } from '../ui/input';
 import { useNavigate } from 'react-router-dom';
 
 const Footer = () => {
   const currentYear = new Date().getFullYear();
-  const navigate=useNavigate()
+  const navigate = useNavigate();
   
+  // Address for Google Maps
+  const address = "D-24, Gailana Rd, behind St. Conrad's School, Nirbhay Nagar, Agra, Uttar Pradesh 282007";
+  const encodedAddress = encodeURIComponent(address);
+  const googleMapsUrl = `https://www.google.com/maps/search/?api=1&query=${encodedAddress}`;
+  
+  // Email for mailto link
+  const email = "info@makeyourjobs.com";
+
   return (
     <footer className="bg-gradient-to-r from-slate-900 to-slate-800 text-white">
       {/* Newsletter Section */}
@@ -43,16 +51,19 @@ const Footer = () => {
             <div className="space-y-3">
               <div className="flex items-center text-sm text-slate-300">
                 <Phone className="h-4 w-4 mr-3 text-indigo-400" /> 
-                <span> +91 7060100562</span>
+                <span>+91 7060100562</span>
               </div>
               <div className="flex items-center text-sm text-slate-300">
-                <Mail className="h-4 w-4 mr-3 text-indigo-400" /> 
-                <span>info@makeyourjobs.com</span>
+                <a href={`mailto:${email}`} className="flex items-center hover:text-indigo-400 transition-colors">
+                  <Mail className="h-4 w-4 mr-3 text-indigo-400" /> 
+                  <span>{email}</span>
+                </a>
               </div>
-              
-              <div className="flex items-center text-sm text-slate-300">
-                <MapPin className="h-4 w-7 mb-5  mb-10 mr-3 text-indigo-400" /> 
-                <span> D-24, Gailana Rd, behind St. Conrad's School, Nirbhay Nagar, Agra, Uttar Pradesh 282007 </span>
+              <div className="flex items-start text-sm text-slate-300">
+                <a href={googleMapsUrl} target="_blank" rel="noopener noreferrer" className="flex items-start hover:text-indigo-400 transition-colors">
+                  <MapPin className="h-4 w-5 mr-3 mb-5  text-indigo-400 mt-1" /> 
+                  <span>{address}</span>
+                </a>
               </div>
             </div>
           </div>
@@ -96,20 +107,13 @@ const Footer = () => {
         <div className="container mx-auto px-4 py-6">
           <div className="flex flex-col md:flex-row justify-between items-center">
             <p className="text-sm text-slate-400 mb-4 md:mb-0">
-              © {currentYear} MakeYourJob.  All rights reserved.
+              © {currentYear} MakeYourJob. All rights reserved.
             </p>
-            
             <div className="flex space-x-5">
-              <a href="#" className="text-slate-400 hover:text-indigo-400 transition-colors" aria-label="GitHub">
-                <Gitlab className="w-5 h-5" />
-              </a>
-              <a href="#" className="text-slate-400 hover:text-indigo-400 transition-colors" aria-label="Twitter">
-                <Twitter className="w-5 h-5" />
-              </a>
-              <a href="https://www.linkedin.com/company/skillyards/posts/?feedView=all" className="text-slate-400 hover:text-indigo-400 transition-colors" aria-label="LinkedIn">
+              <a href="https://www.linkedin.com/company/make-your-jobs/" className="text-slate-400 hover:text-indigo-400 transition-colors" aria-label="LinkedIn">
                 <Linkedin className="w-5 h-5" />
               </a>
-              <a href="https://www.instagram.com/skillyardss/?hl=en" className="text-slate-400 hover:text-indigo-400 transition-colors" aria-label="Instagram">
+              <a href="https://www.instagram.com/makeyourjobss?igsh=MW5tanIzdW0wcnlvaw%3D%3D&utm_source=qr" className="text-slate-400 hover:text-indigo-400 transition-colors" aria-label="Instagram">
                 <Instagram className="w-5 h-5" />
               </a>
             </div>

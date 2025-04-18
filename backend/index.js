@@ -11,7 +11,6 @@ import jobRoute from "./routes/job.route.js";
 import applicationRoute from "./routes/application.route.js";
 import contactRoute from "./routes/contact.route.js"
 
-
 dotenv.config();
 
 // Resolve __dirname in ES module
@@ -29,7 +28,9 @@ const corsOptions = {
     origin: [
         "http://localhost:5173",
         "https://h11d8v8s-5173.inc1.devtunnels.ms/",
-        "http://localhost:4173"
+        "http://localhost:4173",
+        "https://www.makeyourjobs.com",
+        "https://makeyourjobs.com",
     ],
     credentials: true
 };
@@ -49,7 +50,6 @@ app.use("/api/v1/company", companyRoute);
 app.use("/api/v1/job", jobRoute);
 app.use("/api/v1/application", applicationRoute);
 app.use("/api/v1/contact", contactRoute);
-
 
 // Handle 404 for API routes
 app.use("/api", (req, res) => {

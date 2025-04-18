@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import  { useState } from 'react';
 import Navbar from './shared/Navbar';
 import { Avatar, AvatarImage } from './ui/avatar';
 import { Button } from './ui/button';
@@ -22,7 +22,8 @@ const Profile = () => {
       <div className="max-w-5xl mx-auto p-6 space-y-6">
         {/* Profile Card */}
         <Card className="bg-white shadow-lg rounded-xl overflow-hidden border border-gray-200">
-          <div className="bg-gradient-to-r from-indigo-500 to-purple-600 h-24"></div>
+          <div className="bg-gradient-to-r from-indigo-500 to-purple-600 h-24">
+          </div>
           <CardContent className="relative pt-12 pb-8 px-6">
             <div className="absolute -top-16 left-6">
               <Avatar className="h-28 w-28 border-4 border-white shadow-md">

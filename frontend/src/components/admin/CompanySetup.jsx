@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import Navbar from '../shared/Navbar';
 import { Button } from '../ui/button';
 import { ArrowLeft, Loader2, Calendar } from 'lucide-react';
@@ -38,7 +38,7 @@ const CompanySetup = () => {
     gstDocument: null,
     cinDocument: null,
     panDocument: null,
-    registrationDocument: null,
+    // registrationDocument: null,
   });
 
   const [errors, setErrors] = useState({});
@@ -63,7 +63,7 @@ const CompanySetup = () => {
     if (!input.gstDocument) newErrors.gstDocument = "GST document is required.";
     if (!input.cinDocument) newErrors.cinDocument = "CIN document is required.";
     if (!input.panDocument) newErrors.panDocument = "PAN document is required.";
-    if (!input.registrationDocument) newErrors.registrationDocument = "Registration document is required.";
+    // if (!input.registrationDocument) newErrors.registrationDocument = "Registration document is required.";
 
     // Format validations
     if (input.website && !/^https?:\/\/[^\s/$.?#].[^\s]*$/.test(input.website)) {
@@ -142,7 +142,7 @@ const CompanySetup = () => {
     formData.append('gstDocument', input.gstDocument);
     formData.append('cinDocument', input.cinDocument);
     formData.append('panDocument', input.panDocument);
-    formData.append('registrationDocument', input.registrationDocument);
+    // formData.append('registrationDocument', input.registrationDocument);
 
     try {
       setLoading(true);
@@ -184,7 +184,7 @@ const CompanySetup = () => {
         gstDocument: null,
         cinDocument: null,
         panDocument: null,
-        registrationDocument: null,
+        // registrationDocument: null,
       });
     }
   }, [singleCompany]);
@@ -469,19 +469,6 @@ const CompanySetup = () => {
                   />
                   {errors.panDocument && <p className="text-red-500 text-xs mt-1">{errors.panDocument}</p>}
                 </div>
-                <div>
-                  <Label htmlFor="registrationDocument" className="text-sm font-medium text-gray-700">Registration Document *</Label>
-                  <Input
-                    id="registrationDocument"
-                    type="file"
-                    name="registrationDocument"
-                    accept="application/pdf,image/*"
-                    onChange={changeFileHandler}
-                    className={`mt-1 border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 ${errors.registrationDocument ? 'border-red-500' : ''}`}
-                    required={!input.registrationDocument}
-                  />
-                  {errors.registrationDocument && <p className="text-red-500 text-xs mt-1">{errors.registrationDocument}</p>}
-                </div>
               </div>
               <Button
                 type="submit"
@@ -506,3 +493,13 @@ const CompanySetup = () => {
 };
 
 export default CompanySetup;
+
+
+
+
+
+
+
+
+
+

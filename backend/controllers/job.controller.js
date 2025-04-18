@@ -1,38 +1,29 @@
 import { Job } from "../models/job.model.js";
 
-
-
-
-
-/// create modify job post funcations
-
 export const postJob = async (req, res) => {
   try {
     const {
       jobTitle,
       jobDescription,
-      skills,
-      benefits,
-      salaryRange,
       workLocation,
       jobType,
       experienceLevel,
-      workplacePlane,
-      jobCategory,
-      numberOfPositions,
       companyId,
       companyName,
+      workplacePlane,
+      jobCategory,
+      skills,
+      benefits,
+      salaryRange,
+      numberOfPositions,
     } = req.body;
 
     const userId = req.id;
 
-    // Validate required fields
+    console.log(jobDescription, "hellochbsaj");
     const requiredFields = {
       jobTitle,
       jobDescription,
-      skills,
-      "salaryRange.minSalary": salaryRange?.minSalary,
-      "salaryRange.maxSalary": salaryRange?.maxSalary,
       "workLocation.city": workLocation?.city,
       "workLocation.state": workLocation?.state,
       "workLocation.pincode": workLocation?.pincode,
@@ -40,11 +31,12 @@ export const postJob = async (req, res) => {
       "workLocation.streetAddress": workLocation?.streetAddress,
       jobType,
       experienceLevel,
-      workplacePlane,
-      jobCategory,
-      numberOfPositions,
       companyId,
       companyName,
+      workplacePlane,
+      jobCategory,
+      skills,
+      numberOfPositions,
     };
 
     for (const [field, value] of Object.entries(requiredFields)) {
@@ -56,18 +48,27 @@ export const postJob = async (req, res) => {
       }
     }
 
-    // Validate salary range
-    if (salaryRange.minSalary >= salaryRange.maxSalary) {
+    // Validate pincode format
+    if (!/^\d{6}$/.test(workLocation.pincode)) {
       return res.status(400).json({
-        message: "Minimum salary must be less than maximum salary.",
+        message: "Pincode must be a 6-digit number",
         success: false,
       });
     }
 
-    // Validate pincode format
-    if (!/^\d{6}$/.test(workLocation.pincode)) {
+    // Validate experienceLevel format
+    if (!/^\d+(\.\d)?$/.test(experienceLevel)) {
       return res.status(400).json({
-        message: "Pincode must be a 6-digit number.",
+        message: "Experience level must be a number (e.g., 2 or 2.5)",
+        success: false,
+      });
+    }
+
+    // Validate numberOfPositions
+    const positions = parseInt(numberOfPositions);
+    if (isNaN(positions) || positions < 1) {
+      return res.status(400).json({
+        message: "Number of positions must be at least 1",
         success: false,
       });
     }
@@ -75,208 +76,367 @@ export const postJob = async (req, res) => {
     // Parse comma-separated fields
     const parsedSkills = Array.isArray(skills)
       ? skills
-      : skills.split(',').map(skill => skill.trim()).filter(Boolean);
-    const parsedBenefits = benefits
-      ? Array.isArray(benefits)
-        ? benefits
-        : benefits.split(',').map(benefit => benefit.trim()).filter(Boolean)
-      : [];
-
-    // Validate number of positions
-    const positions = parseInt(numberOfPositions);
-    if (isNaN(positions) || positions < 1) {
+      : skills
+          .split(",")
+          .map((skill) => skill.trim())
+          .filter(Boolean);
+    if (parsedSkills.length === 0) {
       return res.status(400).json({
-        message: "Number of positions must be at least 1.",
+        message: "At least one skill is required",
         success: false,
       });
     }
 
+    const parsedBenefits = benefits
+      ? Array.isArray(benefits)
+        ? benefits
+        : benefits
+            .split(",")
+            .map((benefit) => benefit.trim())
+            .filter(Boolean)
+      : [];
+
+    // Validate salaryRange if provided
+    let formattedSalaryRange = {};
+    if (salaryRange && (salaryRange.minSalary || salaryRange.maxSalary)) {
+      const min = parseFloat(salaryRange.minSalary);
+      const max = parseFloat(salaryRange.maxSalary);
+      if (isNaN(min) || isNaN(max) || min < 0 || max < min) {
+        return res.status(400).json({
+          message:
+            "Invalid salary range: min must be less than or equal to max and both non-negative",
+          success: false,
+        });
+      }
+      formattedSalaryRange = {
+        min: min,
+        max: max,
+        currency: "INR", // Default based on component context
+        frequency: "yearly",
+      };
+    }
+
+    // Create job document
     const job = await Job.create({
       jobTitle,
-      jobDescription,
-      skills: parsedSkills,
-      benefits: parsedBenefits,
-      salaryRange: {
-        minSalary: Number(salaryRange.minSalary),
-        maxSalary: Number(salaryRange.maxSalary),
-        currency: salaryRange.currency || "INR",
-        frequency: salaryRange.frequency || "yearly",
+      description: jobDescription,
+      workLocation: {
+        city: workLocation.city,
+        state: workLocation.state,
+        pincode: workLocation.pincode,
+        area: workLocation.area,
+        streetAddress: workLocation.streetAddress,
+        country: "India", // Default based on pincode API
       },
-      workLocation,
-      location: `${workLocation.city}, ${workLocation.state}`, // Backward compatibility
       jobType,
       experienceLevel,
-      workplacePlane,
-      jobCategory,
-      numberOfPositions: positions,
       company: companyId,
       companyName,
+      workplacePlane,
+      jobCategory,
+      skills: parsedSkills,
+      benefits: parsedBenefits,
+      salaryRange: formattedSalaryRange.min ? formattedSalaryRange : undefined,
+      numberOfPositions: positions,
       created_by: userId,
       status: "Open",
     });
 
     return res.status(201).json({
-      message: "New job created successfully.",
+      message: "Job created successfully",
       job,
       success: true,
     });
   } catch (error) {
     console.error("Error posting job:", error);
     if (error.name === "ValidationError") {
-      const messages = Object.values(error.errors).map(err => err.message);
+      const messages = Object.values(error.errors).map((err) => err.message);
       return res.status(400).json({
-        message: "Validation failed.",
+        message: "Validation failed",
         errors: messages,
         success: false,
       });
     }
     return res.status(500).json({
-      message: "Internal server error.",
+      message: "Internal server error",
       success: false,
     });
   }
 };
 
+export const getAllJobs = async (req, res) => {
+  try {
+    const keyword = req.query.keyword || "";
+    const query = {
+      $or: [
+        { title: { $regex: keyword, $options: "i" } },
+        { description: { $regex: keyword, $options: "i" } },
+      ],
+    };
+    const jobs = await Job.find(query)
+      .populate({
+        path: "company",
+      })
+      .sort({ createdAt: -1 });
+    if (!jobs) {
+      return res.status(404).json({
+        message: "Jobs not found.",
+        success: false,
+      });
+    }
+    return res.status(200).json({
+      jobs,
+      success: true,
+    });
+  } catch (error) {
+    console.log(error);
+  }
+};
+
+
+
+
+
+// student
+export const getJobById = async (req, res) => {
+  try {
+    const jobId = req.params.id;
+    const job = await Job.findById(jobId).populate({
+      path: "applications",
+    });
+    if (!job) {
+      return res.status(404).json({
+        message: "Jobs not found.",
+        success: false,
+      });
+    }
+    return res.status(200).json({ job, success: true });
+  } catch (error) {
+    console.log(error);
+  }
+};
+
+// admin kitne job create kra hai abhi tk
+export const getAdminJobs = async (req, res) => {
+  try {
+    const adminId = req.id;
+    const jobs = await Job.find({ created_by: adminId }).populate({
+      path: "company",
+      createdAt: -1,
+    });
+    if (!jobs) {
+      return res.status(404).json({
+        message: "Jobs not found.",
+        success: false,
+      });
+    }
+    return res.status(200).json({
+      jobs,
+      success: true,
+    });
+  } catch (error) {
+    console.log(error);
+  }
+};
 
 export const updateJob = async (req, res) => {
   try {
     const jobId = req.params.id;
+    const userId = req.id; // Assuming authentication middleware sets req.id
+
     const {
       jobTitle,
-      jobDescription,
-      skills,
-      benefits,
-      salaryRange,
+      description,
       workLocation,
       jobType,
       experienceLevel,
+      companyName,
       workplacePlane,
       jobCategory,
+      skills,
+      benefits,
+      salaryRange,
       numberOfPositions,
-      companyId,
-      companyName,
       status,
-      deadline,
     } = req.body;
 
-    // Build update object, ignoring empty/undefined fields
+    // Build fields to update
     const fieldsToUpdate = {};
 
+    // Helper function to add field if defined
     const addField = (key, value) => {
-      if (value !== undefined && value !== "" && value !== null) {
+      if (value !== undefined && value !== "") {
         fieldsToUpdate[key] = value;
       }
     };
 
     // Basic fields
     addField("jobTitle", jobTitle);
-    addField("jobDescription", jobDescription);
+    addField("description", description);
     addField("jobType", jobType);
     addField("experienceLevel", experienceLevel);
+    addField("companyName", companyName);
     addField("workplacePlane", workplacePlane);
     addField("jobCategory", jobCategory);
-    addField("numberOfPositions", numberOfPositions ? Number(numberOfPositions) : undefined);
-    addField("company", companyId);
-    addField("companyName", companyName);
+    addField(
+      "numberOfPositions",
+      numberOfPositions ? Number(numberOfPositions) : undefined
+    );
     addField("status", status);
-    addField("deadline", deadline ? new Date(deadline) : undefined);
+
+    // Validate numberOfPositions
+    if (
+      fieldsToUpdate.numberOfPositions &&
+      (isNaN(fieldsToUpdate.numberOfPositions) ||
+        fieldsToUpdate.numberOfPositions < 1)
+    ) {
+      return res.status(400).json({
+        message: "Number of positions must be a positive number.",
+        success: false,
+      });
+    }
 
     // Array fields
     if (skills !== undefined && skills !== "") {
       fieldsToUpdate.skills = Array.isArray(skills)
         ? skills
-        : skills.split(",").map(skill => skill.trim()).filter(Boolean);
+        : skills
+            .split(",")
+            .map((skill) => skill.trim())
+            .filter(Boolean);
+      if (fieldsToUpdate.skills.length === 0) {
+        return res.status(400).json({
+          message: "At least one skill is required.",
+          success: false,
+        });
+      }
     }
+
     if (benefits !== undefined && benefits !== "") {
       fieldsToUpdate.benefits = Array.isArray(benefits)
         ? benefits
-        : benefits.split(",").map(benefit => benefit.trim()).filter(Boolean);
+        : benefits
+            .split(",")
+            .map((benefit) => benefit.trim())
+            .filter(Boolean);
+    } else if (benefits === "") {
+      fieldsToUpdate.benefits = [];
+    }
+
+    // Nested field: workLocation
+    if (workLocation && Object.keys(workLocation).length > 0) {
+      const { city, state, pincode, area, streetAddress, country } =
+        workLocation;
+      const updatedWorkLocation = {};
+      addField("city", city);
+      addField("state", state);
+      addField("pincode", pincode);
+      addField("area", area);
+      addField("streetAddress", streetAddress);
+      addField("country", country);
+
+      if (Object.keys(updatedWorkLocation).length > 0) {
+        fieldsToUpdate.workLocation = updatedWorkLocation;
+
+        // Validate required workLocation fields
+        if (!updatedWorkLocation.city) {
+          return res.status(400).json({
+            message: "City is required.",
+            success: false,
+          });
+        }
+        if (!updatedWorkLocation.state) {
+          return res.status(400).json({
+            message: "State is required.",
+            success: false,
+          });
+        }
+        if (
+          !updatedWorkLocation.pincode ||
+          !/^\d{6}$/.test(updatedWorkLocation.pincode)
+        ) {
+          return res.status(400).json({
+            message: "Pincode must be a 6-digit number.",
+            success: false,
+          });
+        }
+        if (!updatedWorkLocation.area) {
+          return res.status(400).json({
+            message: "Area is required.",
+            success: false,
+          });
+        }
+        if (!updatedWorkLocation.streetAddress) {
+          return res.status(400).json({
+            message: "Street address is required.",
+            success: false,
+          });
+        }
+        if (!updatedWorkLocation.country) {
+          updatedWorkLocation.country = "India"; // Default
+        }
+      }
     }
 
     // Nested field: salaryRange
-    if (salaryRange && Object.keys(salaryRange).length > 0) {
-      const { minSalary, maxSalary, currency, frequency } = salaryRange;
+    if (salaryRange && (salaryRange.min || salaryRange.max)) {
+      const { min, max, currency, frequency } = salaryRange;
       const updatedSalaryRange = {};
-      if (minSalary !== undefined && minSalary !== "") {
-        updatedSalaryRange.minSalary = Number(minSalary);
-        if (isNaN(updatedSalaryRange.minSalary) || updatedSalaryRange.minSalary < 0) {
+      if (min !== undefined && min !== "") {
+        updatedSalaryRange.min = Number(min);
+        if (isNaN(updatedSalaryRange.min) || updatedSalaryRange.min < 0) {
           return res.status(400).json({
             message: "Invalid minimum salary. It must be a positive number.",
             success: false,
           });
         }
       }
-      if (maxSalary !== undefined && maxSalary !== "") {
-        updatedSalaryRange.maxSalary = Number(maxSalary);
-        if (isNaN(updatedSalaryRange.maxSalary) || updatedSalaryRange.maxSalary < 0) {
+      if (max !== undefined && max !== "") {
+        updatedSalaryRange.max = Number(max);
+        if (isNaN(updatedSalaryRange.max) || updatedSalaryRange.max < 0) {
           return res.status(400).json({
             message: "Invalid maximum salary. It must be a positive number.",
             success: false,
           });
         }
       }
-      if (currency !== undefined && currency !== "") updatedSalaryRange.currency = currency;
-      if (frequency !== undefined && frequency !== "") updatedSalaryRange.frequency = frequency;
+      if (currency !== undefined && currency !== "")
+        updatedSalaryRange.currency = currency;
+      if (frequency !== undefined && frequency !== "")
+        updatedSalaryRange.frequency = frequency;
 
       if (Object.keys(updatedSalaryRange).length > 0) {
         const existingJob = await Job.findById(jobId);
-        if (!existingJob) {
-          return res.status(404).json({
-            message: "Job not found.",
-            success: false,
-          });
-        }
         fieldsToUpdate.salaryRange = {
-          minSalary: updatedSalaryRange.minSalary ?? existingJob.salaryRange.minSalary,
-          maxSalary: updatedSalaryRange.maxSalary ?? existingJob.salaryRange.maxSalary,
-          currency: updatedSalaryRange.currency ?? existingJob.salaryRange.currency,
-          frequency: updatedSalaryRange.frequency ?? existingJob.salaryRange.frequency,
+          min: updatedSalaryRange.min ?? existingJob.salaryRange?.min,
+          max: updatedSalaryRange.max ?? existingJob.salaryRange?.max,
+          currency:
+            updatedSalaryRange.currency ??
+            existingJob.salaryRange?.currency ??
+            "INR",
+          frequency:
+            updatedSalaryRange.frequency ??
+            existingJob.salaryRange?.frequency ??
+            "yearly",
         };
 
-        if (fieldsToUpdate.salaryRange.minSalary >= fieldsToUpdate.salaryRange.maxSalary) {
-          return res.status(400).json({
-            message: "Minimum salary must be less than maximum salary.",
-            success: false,
-          });
+        // Validate min < max
+        if (
+          fieldsToUpdate.salaryRange.min !== undefined &&
+          fieldsToUpdate.salaryRange.max !== undefined
+        ) {
+          if (
+            fieldsToUpdate.salaryRange.min >= fieldsToUpdate.salaryRange.max
+          ) {
+            return res.status(400).json({
+              message: "Minimum salary must be less than maximum salary.",
+              success: false,
+            });
+          }
         }
       }
-    }
-
-    // Nested field: workLocation
-    if (workLocation && Object.keys(workLocation).length > 0) {
-      const { city, state, pincode, area, streetAddress } = workLocation;
-      const updatedWorkLocation = {};
-      if (city !== undefined && city !== "") updatedWorkLocation.city = city;
-      if (state !== undefined && state !== "") updatedWorkLocation.state = state;
-      if (pincode !== undefined && pincode !== "") {
-        updatedWorkLocation.pincode = pincode;
-        if (!/^\d{6}$/.test(pincode)) {
-          return res.status(400).json({
-            message: "Pincode must be a 6-digit number.",
-            success: false,
-          });
-        }
-      }
-      if (area !== undefined && area !== "") updatedWorkLocation.area = area;
-      if (streetAddress !== undefined && streetAddress !== "") updatedWorkLocation.streetAddress = streetAddress;
-
-      if (Object.keys(updatedWorkLocation).length > 0) {
-        const existingJob = await Job.findById(jobId);
-        if (!existingJob) {
-          return res.status(404).json({
-            message: "Job not found.",
-            success: false,
-          });
-        }
-        fieldsToUpdate.workLocation = {
-          city: updatedWorkLocation.city ?? existingJob.workLocation.city,
-          state: updatedWorkLocation.state ?? existingJob.workLocation.state,
-          pincode: updatedWorkLocation.pincode ?? existingJob.workLocation.pincode,
-          area: updatedWorkLocation.area ?? existingJob.workLocation.area,
-          streetAddress: updatedWorkLocation.streetAddress ?? existingJob.workLocation.streetAddress,
-        };
-        fieldsToUpdate.location = `${fieldsToUpdate.workLocation.city}, ${fieldsToUpdate.workLocation.state}`;
-      }
+    } else if (salaryRange && !salaryRange.min && !salaryRange.max) {
+      fieldsToUpdate.salaryRange = null; // Allow clearing salaryRange
     }
 
     if (Object.keys(fieldsToUpdate).length === 0) {
@@ -286,6 +446,7 @@ export const updateJob = async (req, res) => {
       });
     }
 
+    // Update job
     const updatedJob = await Job.findByIdAndUpdate(
       jobId,
       { $set: fieldsToUpdate },
@@ -307,7 +468,7 @@ export const updateJob = async (req, res) => {
   } catch (error) {
     console.error("Error in updateJob:", error);
     if (error.name === "ValidationError") {
-      const messages = Object.values(error.errors).map(err => err.message);
+      const messages = Object.values(error.errors).map((err) => err.message);
       return res.status(400).json({
         message: "Validation failed.",
         errors: messages,
@@ -321,146 +482,93 @@ export const updateJob = async (req, res) => {
   }
 };
 
-
-
-
-// student k liye
-export const getAllJobs = async (req, res) => {
-    try {
-        const keyword = req.query.keyword || "";
-        const query = {
-            $or: [
-                { title: { $regex: keyword, $options: "i" } },
-                { description: { $regex: keyword, $options: "i" } },
-            ]
-        };
-        const jobs = await Job.find(query).populate({
-            path: "company"
-        }).sort({ createdAt: -1 });
-        if (!jobs) {
-            return res.status(404).json({
-                message: "Jobs not found.",
-                success: false
-            })
-        };
-        return res.status(200).json({
-            jobs,
-            success: true
-        })
-    } catch (error) {
-        console.log(error);
-    }
-}
-// student
-export const getJobById = async (req, res) => {
-    try {
-        const jobId = req.params.id;
-        const job = await Job.findById(jobId).populate({
-            path:"applications"
-        });
-        if (!job) {
-            return res.status(404).json({
-                message: "Jobs not found.",
-                success: false
-            })
-        };
-        return res.status(200).json({ job, success: true });
-    } catch (error) {
-        console.log(error);
-    }
-}
-
-
-// admin kitne job create kra hai abhi tk
-export const getAdminJobs = async (req, res) => {
-    try {
-        const adminId = req.id;
-        const jobs = await Job.find({ created_by: adminId }).populate({
-            path:'company',
-            createdAt:-1
-        });
-        if (!jobs) {
-            return res.status(404).json({
-                message: "Jobs not found.",
-                success: false
-            })
-        };
-        return res.status(200).json({
-            jobs,
-            success: true
-        })
-    } catch (error) {
-        console.log(error);
-    }
-}
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 export const adminGetJob = async (req, res) => {
-    try {
-        const jobId = req.params.id;
-        const job = await Job.findById(jobId)
-            .populate({
-                path: 'applications',
-                populate: {
-                    path: 'applicant',  // Populate the applicant details
-                    select: 'fullname email phoneNumber role profile' // Select only necessary fields
-                }
-            })
-            .populate('company') // Optionally populate company details if needed
-            .populate('created_by'); // Optionally populate the job creator's details
+  try {
+    const jobId = req.params.id;
+    const job = await Job.findById(jobId)
+      .populate({
+        path: "applications",
+        populate: {
+          path: "applicant", // Populate the applicant details
+          select: "fullname email phoneNumber role profile", // Select only necessary fields
+        },
+      })
+      .populate("company") // Optionally populate company details if needed
+      .populate("created_by"); // Optionally populate the job creator's details
 
-        // If no job is found, return a 404 error
-        if (!job) {
-            return res.status(404).json({
-                message: "Job not found.",
-                success: false
-            });
-        }
-
-        return res.status(200).json({
-            job,
-            success: true
-        });
-
-    } catch (error) {
-        console.error("Error retrieving job with applications:", error);
-        return res.status(500).json({
-            message: "Internal server error.",
-            success: false
-        });
+    // If no job is found, return a 404 error
+    if (!job) {
+      return res.status(404).json({
+        message: "Job not found.",
+        success: false,
+      });
     }
+
+    return res.status(200).json({
+      job,
+      success: true,
+    });
+  } catch (error) {
+    console.error("Error retrieving job with applications:", error);
+    return res.status(500).json({
+      message: "Internal server error.",
+      success: false,
+    });
+  }
+};
+
+//// create funcation for the search job Query params
+export const SearchJob = async (req, res) => {
+  try {
+    const { jobTitle, city, limit = 10, page = 1 } = req.query;
+    const query = {};
+    if (jobTitle) {
+      const sanitizedTitle = jobTitle.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      query.jobTitle = { $regex: new RegExp(sanitizedTitle, 'i') };
+    }
+    if (city) {
+      const sanitizedCity = city.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      query['workLocation.city'] = { $regex: new RegExp(sanitizedCity, 'i') };
+    }
+    if (Object.keys(query).length === 0) {
+      return res.status(400).json({
+        success: false,
+        message: 'Please provide at least one search parameter (jobTitle or city)',
+      });
+    }
+    const maxLimit = 100;
+    const parsedLimit = Math.max(1, Math.min(maxLimit, parseInt(limit, 10)));
+    const parsedPage = Math.max(1, parseInt(page, 10));
+    const skip = (parsedPage - 1) * parsedLimit;
+    const jobs = await Job.find(query)
+      .populate('company', 'name createdAt')
+      .skip(skip)
+      .lean();
+
+    if (!jobs || jobs.length === 0) {
+      return res.status(404).json({
+        success: false,
+        message: 'No jobs found matching the criteria',
+      });
+    }
+    const totalJobs = await Job.countDocuments(query);
+
+    return res.status(200).json({
+      success: true,
+      jobs,
+      pagination: {
+        totalJobs,
+        totalPages: Math.ceil(totalJobs / parsedLimit),
+        currentPage: parsedPage,
+        limit: parsedLimit,
+      },
+    });
+  } catch (error) {
+    console.error('Error searching for jobs:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'An error occurred while searching for jobs',
+      error: error.message,
+    });
+  }
 };

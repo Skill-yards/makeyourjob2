@@ -191,9 +191,6 @@ export const updateCompany = async (req, res) => {
       if (files.panDocument && files.panDocument.length > 0) {
         updateData.panDocument = await uploadFile(files.panDocument[0], 'pan_documents');
       }
-      if (files.registrationDocument && files.registrationDocument.length > 0) {
-        updateData.registrationDocument = await uploadFile(files.registrationDocument[0], 'registration_documents');
-      }
     }
 
     const updatedCompany = await Company.findByIdAndUpdate(companyId, updateData, { new: true, runValidators: true });
