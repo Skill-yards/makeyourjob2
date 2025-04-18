@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import Navbar from '../shared/Navbar';
 import { Button } from '../ui/button';
-import { ArrowLeft, Loader2, Briefcase, MapPin, Check, ChevronsUpDown, Edit, AlertCircle, X as XIcon, Plus } from 'lucide-react';
+import { ArrowLeft, Loader2, Briefcase, Check, ChevronsUpDown, Edit, AlertCircle, X as XIcon, Plus } from 'lucide-react';
 import { Label } from '../ui/label';
 import { Input } from '../ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
@@ -90,7 +90,7 @@ const jobTypes = [
 const JobSetup = () => {
   const params = useParams();
   useGetJobById(params.id);
-  const { singleJob } = useSelector((store) => store.job);
+  const { singleJob, loading: jobLoading } = useSelector((store) => store.job);
   const { companies } = useSelector((store) => store.company);
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
@@ -137,9 +137,19 @@ const JobSetup = () => {
 
   // Effect to populate form with job data
   useEffect(() => {
+    console.log('Before Company Data:', {
+      singleJobCompany: singleJob.company,
+      singleJobCompanyName: singleJob.companyName,
+      companies: companies
+    });
     if (singleJob) {
-      const company = companies.find(c => c._id === singleJob.company?.$oid) || { name: singleJob.companyName || '' };
-      setInput({
+      // Find the company from companies array or use fallback
+      const company = companies.find(c => c._id === singleJob.company) || {
+        _id: singleJob.company || '',
+        name: singleJob.companyName || ''
+      };
+      setInput(prev => ({
+        ...prev,
         jobTitle: singleJob.jobTitle || '',
         jobDescription: singleJob.description || '',
         workLocation: {
@@ -152,7 +162,7 @@ const JobSetup = () => {
         },
         jobType: singleJob.jobType || '',
         experienceLevel: singleJob.experienceLevel || '',
-        companyId: singleJob.company?.$oid || '',
+        companyId: company._id || '',
         companyName: company.name || singleJob.companyName || '',
         workplacePlane: singleJob.workplacePlane || '',
         jobCategory: singleJob.jobCategory || '',
@@ -161,7 +171,7 @@ const JobSetup = () => {
         salaryRange: singleJob.salaryRange?.min && singleJob.salaryRange?.max ? `${singleJob.salaryRange.min}-${singleJob.salaryRange.max}` : '',
         numberOfPositions: singleJob.numberOfPositions?.toString() || '1',
         status: singleJob.status || ''
-      });
+      }));
       setBenefitBadges(singleJob.benefits || []);
     }
   }, [singleJob, companies]);
@@ -264,12 +274,7 @@ const JobSetup = () => {
   };
 
   const selectChangeHandler = (name, value) => {
-    if (name === 'companyId') {
-      const selectedCompany = companies.find((company) => company.name.toLowerCase() === value);
-      if (selectedCompany) {
-        setInput({ ...input, companyId: selectedCompany._id, companyName: selectedCompany.name });
-      }
-    } else if (name.includes('.')) {
+    if (name.includes('.')) {
       const [parent, child] = name.split('.');
       setInput({
         ...input,
@@ -326,8 +331,8 @@ const JobSetup = () => {
     const requiredFields = [
       'jobTitle', 'jobDescription', 'workLocation.city', 'workLocation.state',
       'workLocation.pincode', 'workLocation.area', 'workLocation.streetAddress',
-      'jobType', 'experienceLevel', 'companyId', 'workplacePlane', 'jobCategory',
-      'skills', 'numberOfPositions', 'status'
+      'jobType', 'experienceLevel', 'companyName', // Changed from companyId to companyName
+      'workplacePlane', 'jobCategory', 'skills', 'numberOfPositions', 'status'
     ];
 
     for (const field of requiredFields) {
@@ -389,7 +394,7 @@ const JobSetup = () => {
       },
       jobType: input.jobType,
       experienceLevel: experience.toString(),
-      company: input.companyId,
+      company: input.companyId || undefined, // Allow undefined if no companyId
       companyName: input.companyName,
       workplacePlane: input.workplacePlane,
       jobCategory: input.jobCategory,
@@ -421,6 +426,15 @@ const JobSetup = () => {
       setLoading(false);
     }
   };
+
+  // Show loading state while job data is being fetched
+  if (jobLoading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-indigo-100 via-purple-50 to-pink-100 flex items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin text-indigo-600" />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-indigo-100 via-purple-50 to-pink-100">
@@ -537,6 +551,7 @@ const JobSetup = () => {
 
                 {/* Skills */}
                 <div>
+                  <Label htmlFor="skills" className="mr-2 h-4 w-4" />
                   <Label htmlFor="skills" className="text-sm font-semibold text-gray-800">Skills (comma-separated)</Label>
                   <Input
                     id="skills"
@@ -635,21 +650,16 @@ const JobSetup = () => {
 
                 {/* Company */}
                 <div>
-                  <Label htmlFor="companyId" className="text-sm font-semibold text-gray-800">Company</Label>
-                  <Select value={input.companyName.toLowerCase()} onValueChange={(value) => selectChangeHandler('companyId', value)}>
-                    <SelectTrigger className="mt-2 h-12 border-gray-200 bg-gray-50 focus:border-indigo-600 focus:ring-indigo-600 rounded-xl shadow-sm">
-                      <SelectValue placeholder="Select a Company" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectGroup>
-                        {companies.map((company) => (
-                          <SelectItem key={company._id} value={company.name.toLowerCase()}>
-                            {company.name}
-                          </SelectItem>
-                        ))}
-                      </SelectGroup>
-                    </SelectContent>
-                  </Select>
+                  <Label htmlFor="companyName" className="text-sm font-semibold text-gray-800">Company</Label>
+                  <Input
+                    id="companyName"
+                    type="text"
+                    name="companyName"
+                    value={input.companyName}
+                    readOnly
+                    className="mt-2 h-12 border-gray-200 bg-gray-100 text-gray-800 rounded-xl shadow-sm cursor-not-allowed"
+                    placeholder="Company name"
+                  />
                 </div>
 
                 {/* Pincode */}

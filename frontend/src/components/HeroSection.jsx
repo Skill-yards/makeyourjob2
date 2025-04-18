@@ -6,31 +6,14 @@ import { Search, Briefcase, ArrowRight } from 'lucide-react';
 import { Button } from './ui/button';
 import { Input } from './ui/input';
 import { Badge } from './ui/badge';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from './ui/select';
-
-const indianStates = [
-  "Andhra Pradesh", "Arunachal Pradesh", "Assam", "Bihar", "Chhattisgarh", "Goa", "Gujarat",
-  "Haryana", "Himachal Pradesh", "Jharkhand", "Karnataka", "Kerala", "Madhya Pradesh", "Maharashtra",
-  "Manipur", "Meghalaya", "Mizoram", "Nagaland", "Odisha", "Punjab", "Rajasthan", "Sikkim",
-  "Tamil Nadu", "Telangana", "Tripura", "Uttar Pradesh", "Uttarakhand", "West Bengal",
-  "Andaman and Nicobar Islands", "Chandigarh", "Dadra and Nagar Haveli and Daman and Diu",
-  "Delhi", "Jammu and Kashmir", "Ladakh", "Lakshadweep", "Puducherry"
-];
 
 const HeroSection = () => {
   const [query, setQuery] = useState('');
-  const [location, setLocation] = useState('');
   const dispatch = useDispatch();
   const navigate = useNavigate();
 
   const searchJobHandler = () => {
-    dispatch(setSearchedQuery({ keyword: query, location }));
+    dispatch(setSearchedQuery(query)); // Pass the query to the Redux action
     navigate('/browse');
   };
 
@@ -70,7 +53,7 @@ const HeroSection = () => {
             </p>
 
             <div className="relative w-full max-w-2xl">
-              <div className="flex flex-col sm:flex-row items-center gap-4 bg-white dark:bg-gray-800 rounded-full shadow-xl border border-gray-100 dark:border-gray-700 p-2 transition-all hover:shadow-purple-100 dark:hover:shadow-purple-900/20">
+              <div className="flex items-center gap-4 bg-white dark:bg-gray-800 rounded-full shadow-xl border border-gray-100 dark:border-gray-700 p-2 transition-all hover:shadow-purple-100 dark:hover:shadow-purple-900/20">
                 <div className="flex items-center flex-1">
                   <Search className="ml-3 h-5 w-5 text-gray-400 flex-shrink-0" />
                   <Input
@@ -82,17 +65,6 @@ const HeroSection = () => {
                     className="flex-1 border-none shadow-none focus-visible:ring-0 focus-visible:ring-offset-0 bg-transparent pl-2"
                   />
                 </div>
-                <Select onValueChange={setLocation} value={location}>
-                  <SelectTrigger className="w-full sm:w-[180px] rounded-full border-none bg-transparent">
-                    <SelectValue placeholder="Select Location" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">All Locations</SelectItem>
-                    {indianStates.map((state) => (
-                      <SelectItem key={state} value={state}>{state}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
                 <Button
                   onClick={searchJobHandler}
                   className="rounded-full bg-purple-700 hover:bg-purple-800 px-6 py-6 transition-all"
