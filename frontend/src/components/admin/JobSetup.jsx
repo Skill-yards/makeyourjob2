@@ -850,17 +850,23 @@ const JobSetup = () => {
 
                 {/* Workplace Plane */}
                 <div>
-                  <Label htmlFor="workplacePlane" className="text-sm font-semibold text-gray-800">Workplace Plane</Label>
-                  <Input
-                    id="workplacePlane"
-                    type="text"
-                    name="workplacePlane"
-                    value={input.workplacePlane}
-                    onChange={changeEventHandler}
-                    className="mt-2 h-12 border-gray-200 bg-gray-50 focus:border-indigo-600 focus:ring-indigo-600 rounded-xl shadow-sm transition-all duration-200"
-                    placeholder="e.g., Office, Remote, Hybrid"
-                  />
+                  <Label htmlFor="workplacePlane" className="text-sm font-semibold text-gray-800">WorkplacePlane *</Label>
+                  <Select value={input.workplacePlane} onValueChange={(value) => selectChangeHandler('workplacePlane', value)}>
+                    <SelectTrigger className="mt-2 h-12 border-gray-200 bg-gray-50 focus:border-indigo-600 focus:ring-indigo-600 rounded-xl shadow-sm">
+                      <SelectValue placeholder="Select status..." />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectGroup>
+                        {['Remote', 'On-site', 'Hybrid'].map((workplacePlane) => (
+                          <SelectItem key={workplacePlane} value={workplacePlane}>
+                            {workplacePlane}
+                          </SelectItem>
+                        ))}
+                      </SelectGroup>
+                    </SelectContent>
+                  </Select>
                 </div>
+              </div>
 
                 {/* Job Category */}
                 <div>
@@ -982,18 +988,16 @@ const JobSetup = () => {
                     </SelectContent>
                   </Select>
                 </div>
-              </div>
-
-              <Button type="submit" className="w-full h-12 bg-indigo-600 text-white hover:bg-indigo-700 rounded-xl shadow-sm transition-all duration-200">
-                {loading ? (
-                  <div className="flex items-center justify-center">
-                    <Loader2 className="h-5 w-5 animate-spin mr-2" />
-                    Updating...
-                  </div>
-                ) : (
-                  "Update Job"
-                )}
-              </Button>
+                  <Button type="submit" className="w-full h-12 bg-indigo-600 text-white hover:bg-indigo-700 rounded-xl shadow-sm transition-all duration-200">
+                    {loading ? (
+                      <div className="flex items-center justify-center">
+                        <Loader2 className="h-5 w-5 animate-spin mr-2" />
+                        Updating...
+                      </div>
+                    ) : (
+                      "Update Job"
+                    )}
+                  </Button>
             </form>
           </CardContent>
         </Card>
