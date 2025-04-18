@@ -157,52 +157,6 @@ export const postJob = async (req, res) => {
   }
 };
 
-
-// export const getAllJobs = async (req, res) => {
-//   try {
-//     const keyword = req.query.keyword || "";
-//     const location = req.query.location || "all";
-
-//     console.log("Keyword:", keyword);
-//     console.log("Location:", location);
-//     const query = {
-//       $or: [
-//         { title: { $regex: keyword, $options: "i" } },
-//         { description: { $regex: keyword, $options: "i" } },
-//       ],
-//     };
-
-//     // Only add location filter if not "all"
-//     if (location !== "all") {
-//       query.location = { $regex: location, $options: "i" };
-//     }
-
-//     const jobs = await Job.find(query)
-//       .populate({
-//         path: "company",
-//       })
-//       .sort({ createdAt: -1 });
-
-//     if (!jobs || jobs.length === 0) {
-//       return res.status(404).json({
-//         message: "No jobs found matching the criteria.",
-//         success: false,
-//       });
-//     }
-
-//     return res.status(200).json({
-//       jobs,
-//       success: true,
-//     });
-//   } catch (error) {
-//     console.error('Error in getAllJobs:', error);
-//     return res.status(500).json({
-//       message: "Server error while fetching jobs.",
-//       success: false,
-//     });
-//   }
-// };
-
 export const SearchJob = async (req, res) => {
   try {
     // Extract and validate query parameters
