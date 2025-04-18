@@ -1,19 +1,37 @@
 import React, { useState } from 'react';
 import { useDispatch } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
-import { setSearchedQuery } from '@/redux/jobSlice';
-import { Search, Briefcase, ArrowRight } from 'lucide-react';
+import { setSearchedQuery, setSearchLocation } from '@/redux/jobSlice';
+import { Search, Briefcase, ArrowRight, MapPin } from 'lucide-react';
 import { Button } from './ui/button';
 import { Input } from './ui/input';
 import { Badge } from './ui/badge';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from './ui/select';
+
+const indianStates = [
+  "Andhra Pradesh", "Arunachal Pradesh", "Assam", "Bihar", "Chhattisgarh", "Goa", "Gujarat",
+  "Haryana", "Himachal Pradesh", "Jharkhand", "Karnataka", "Kerala", "Madhya Pradesh", "Maharashtra",
+  "Manipur", "Meghalaya", "Mizoram", "Nagaland", "Odisha", "Punjab", "Rajasthan", "Sikkim",
+  "Tamil Nadu", "Telangana", "Tripura", "Uttar Pradesh", "Uttarakhand", "West Bengal",
+  "Andaman and Nicobar Islands", "Chandigarh", "Dadra and Nagar Haveli and Daman and Diu",
+  "Delhi", "Jammu and Kashmir", "Ladakh", "Lakshadweep", "Puducherry"
+];
 
 const HeroSection = () => {
   const [query, setQuery] = useState('');
+  const [location, setLocation] = useState(''); // Default to empty string for placeholder
   const dispatch = useDispatch();
   const navigate = useNavigate();
 
   const searchJobHandler = () => {
-    dispatch(setSearchedQuery(query)); // Pass the query to the Redux action
+    dispatch(setSearchedQuery(query));
+    dispatch(setSearchLocation(location || 'all')); // Use 'all' if location is empty
     navigate('/browse');
   };
 
@@ -53,7 +71,7 @@ const HeroSection = () => {
             </p>
 
             <div className="relative w-full max-w-2xl">
-              <div className="flex items-center gap-4 bg-white dark:bg-gray-800 rounded-full shadow-xl border border-gray-100 dark:border-gray-700 p-2 transition-all hover:shadow-purple-100 dark:hover:shadow-purple-900/20">
+              <div className="flex flex-col sm:flex-row items-center gap-4 bg-white dark:bg-gray-800 rounded-xl shadow-xl border border-gray-100 dark:border-gray-700 p-2 transition-all hover:shadow-purple-100 dark:hover:shadow-purple-900/20">
                 <div className="flex items-center flex-1">
                   <Search className="ml-3 h-5 w-5 text-gray-400 flex-shrink-0" />
                   <Input
@@ -64,6 +82,22 @@ const HeroSection = () => {
                     onKeyDown={handleKeyDown}
                     className="flex-1 border-none shadow-none focus-visible:ring-0 focus-visible:ring-offset-0 bg-transparent pl-2"
                   />
+                </div>
+                <div className="flex items-center flex-1">
+                  <MapPin className="ml-3 h-5 w-5 text-gray-400 flex-shrink-0" />
+                  <Select value={location} onValueChange={setLocation}>
+                    <SelectTrigger className="w-full border-none shadow-none focus:ring-0 bg-transparent">
+                      <SelectValue placeholder="Select a state" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">All Locations</SelectItem>
+                      {indianStates.map((state) => (
+                        <SelectItem key={state} value={state}>
+                          {state}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
                 <Button
                   onClick={searchJobHandler}
