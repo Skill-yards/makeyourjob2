@@ -18,6 +18,7 @@ const Profile = () => {
   useGetAppliedJobs();
   const [open, setOpen] = useState(false);
   const { user } = useSelector((store) => store.auth);
+
   const [imageSrc, setImageSrc] = useState(null); // Selected image for cropping
   const [croppedImage, setCroppedImage] = useState(null); // Cropped image
   const [crop, setCrop] = useState({ x: 0, y: 0 });
@@ -65,7 +66,7 @@ const Profile = () => {
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-100 to-gray-200">
       <Navbar />
-      <div className="max-w-5xl mx-auto p-6 space-y-6">
+      <div className=" mx-auto p-6 space-y-6">
         {/* Profile Card */}
         <Card className="bg-white shadow-lg rounded-xl overflow-hidden border border-gray-200">
           <div className="bg-gradient-to-r from-indigo-500 to-purple-600 h-24"></div>

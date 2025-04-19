@@ -45,40 +45,17 @@ import {
   DialogTitle,
 } from "./ui/dialog";
 
-// Sample similar jobs data (replace with API call)
-const mockSimilarJobs = [
-  {
-    _id: "1",
-    jobTitle: "Frontend Developer",
-    companyName: "TechCorp",
-    workLocation: { city: "Bengaluru", state: "Karnataka" },
-    jobType: "Full-time",
-    jobCategory: "Engineering",
-    salaryRange: { min: 8, max: 12, currency: "INR", frequency: "yearly" },
-  },
-  {
-    _id: "2",
-    jobTitle: "Backend Engineer",
-    companyName: "Innovate Inc.",
-    workLocation: { city: "Hyderabad", state: "Telangana" },
-    jobType: "Full-time",
-    jobCategory: "Engineering",
-    salaryRange: { min: 10, max: 15, currency: "INR", frequency: "yearly" },
-  },
-  {
-    _id: "3",
-    jobTitle: "Full Stack Developer",
-    companyName: "GrowEasy",
-    workLocation: { city: "Remote" },
-    jobType: "Contract",
-    jobCategory: "Engineering",
-    salaryRange: { min: 12, max: 18, currency: "INR", frequency: "yearly" },
-  },
-];
 
 const JobDescription = () => {
   const { singleJob } = useSelector((store) => store.job);
-  const { user } = useSelector((store) => store.auth);
+  //console.log(singleJob, "single job check in jobdescription");
+
+  // console.log(singleJob,"this is single job");
+  
+  
+  const  {user}  = useSelector((store) => store.auth);
+  // console.log(user, "user check in jobdescription");
+  
   const [isApplied, setIsApplied] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [isApplying, setIsApplying] = useState(false);
@@ -96,14 +73,29 @@ const JobDescription = () => {
   // Memoize profile completion check
   const profileStatus = useMemo(() => {
     if (!user) return { isComplete: false, missingFields: ["login"] };
-    const { email, phoneNumber, profile } = user;
+  
     const missingFields = [];
-    if (!email) missingFields.push("email");
-    if (!phoneNumber) missingFields.push("phone number");
-    if (!profile?.resume) missingFields.push("resume");
-    if (!profile?.skills?.length) missingFields.push("skills");
-    return { isComplete: missingFields.length === 0, missingFields };
+  
+    if (!user.firstname || !user.firstname.trim()) missingFields.push("first name");
+    if (!user.lastname || !user.lastname.trim()) missingFields.push("last name");
+    if (!user.email) missingFields.push("email");
+    if (!user.phoneNumber) missingFields.push("phone number");
+  
+    const profile = user.profile || {};
+    if (!profile.resume) missingFields.push("resume");
+    if (!profile.skills || profile.skills.length === 0) missingFields.push("skills");
+    if (!profile.profilePhoto) missingFields.push("profile photo");
+    if (!profile.bio || !profile.bio.trim()) missingFields.push("bio");
+  
+    return {
+      isComplete: missingFields.length === 0,
+      missingFields,
+    };
   }, [user]);
+  
+
+ //console.log(user,"user check in profilestatus");
+  
 
   // Handle job application
   const applyJobHandler = async () => {
@@ -174,16 +166,17 @@ const JobDescription = () => {
       try {
         setIsSimilarJobsLoading(true);
         // Replace with actual API call
-        // const res = await axios.get(`${JOB_API_END_POINT}/similar/${jobId}`, {
-        //   params: { category: singleJob?.jobCategory, skills: singleJob?.skills.join(",") },
-        //   withCredentials: true,
-        // });
-        // if (res.data.success) {
-        //   setSimilarJobs(res.data.jobs);
-        // }
+        const res = await axios.get(`${JOB_API_END_POINT}/similar/${jobId}`,{
+          withCredentials: true,
+        });
+        // console.log(res,"this is similar job");
+        
+        if (res.data) {
+          setSimilarJobs(res.data);
+        }
 
         // Using mock data for now
-        setSimilarJobs(mockSimilarJobs.filter((job) => job._id !== jobId));
+       // setSimilarJobs(mockSimilarJobs.filter((job) => job._id !== jobId));
       } catch (error) {
         console.error("Failed to fetch similar jobs:", error);
         setSimilarJobs([]);
@@ -191,7 +184,7 @@ const JobDescription = () => {
         setIsSimilarJobsLoading(false);
       }
     };
-    console.log(similarJobs,"check similar jobs");
+    //console.log(similarJobs,"check similar jobs");
     
 
     if (singleJob?.jobCategory) {
@@ -257,7 +250,7 @@ const JobDescription = () => {
             </div>
           </div>
           <div className="flex gap-4">
-            <Button
+            {/* <Button
               onClick={() => {
                 setShowSuccessDialog(false);
                 navigate("/applications");
@@ -273,7 +266,7 @@ const JobDescription = () => {
               className="flex-1 border-gray-300 hover:bg-gray-50 text-gray-800 rounded-xl"
             >
               Close
-            </Button>
+            </Button> */}
           </div>
         </div>
       </DialogContent>
@@ -328,6 +321,9 @@ const JobDescription = () => {
       </>
     );
   }
+
+
+  //console.log(profileStatus, "profile status");
 
   return (
     <>
@@ -564,13 +560,13 @@ const JobDescription = () => {
                 <CardContent className="p-6">
                   <div className="flex items-center justify-between mb-4">
                     <h3 className="font-bold text-lg text-gray-900">About the Company</h3>
-                    <Link
-                      to={`/company/${singleJob?.company?._id}`}
+                    {/* <Link
+                      to={`/c/${singleJob?.company?._id}`}
                       className="text-indigo-600 hover:text-indigo-800 text-sm font-medium flex items-center"
                     >
                       View Company
                       <ArrowRight className="h-4 w-4 ml-1" />
-                    </Link>
+                    </Link> */}
                   </div>
 
                   <div className="flex items-start gap-4">
@@ -720,56 +716,59 @@ const JobDescription = () => {
 
                     {/* Similar Jobs Section */}
                     <div>
-                      <h4 className="font-medium text-gray-900 mb-3">Similar Jobs</h4>
-                      <div className="space-y-3">
-                        {isSimilarJobsLoading ? (
-                          <>
-                            <Skeleton className="h-24 w-full rounded-xl" />
-                            <Skeleton className="h-24 w-full rounded-xl" />
-                            <Skeleton className="h-24 w-full rounded-xl" />
-                          </>
-                        ) : similarJobs.length > 0 ? (
-                          similarJobs.slice(0, 3).map((job) => (
-                            <Card key={job._id} className="border-0 shadow-sm bg-white rounded-xl">
-                              <CardContent className="p-4">
-                                <div className="flex items-center justify-between">
-                                  <div>
-                                    <h5 className="text-sm font-semibold text-gray-900">{job.jobTitle}</h5>
-                                    <p className="text-xs text-gray-600 mt-1">{job.companyName}</p>
-                                    <div className="flex items-center text-xs text-gray-600 mt-1">
-                                      <MapPin className="h-3 w-3 mr-1" />
-                                      <span>{job.workLocation?.city || "Remote"}</span>
-                                    </div>
-                                    <div className="flex items-center text-xs text-gray-600 mt-1">
-                                      <DollarSign className="h-3 w-3 mr-1" />
-                                      <span>{getSalaryDisplay(job)}</span>
-                                    </div>
-                                  </div>
-                                  <Link
-                                    to={`/jobs/${job._id}`}
-                                    className="text-indigo-600 hover:text-indigo-800 text-xs font-medium flex items-center"
-                                  >
-                                    View Job
-                                    <ArrowRight className="h-3 w-3 ml-1" />
-                                  </Link>
-                                </div>
-                              </CardContent>
-                            </Card>
-                          ))
-                        ) : (
-                          <p className="text-sm text-gray-500">No similar jobs found.</p>
-                        )}
-                      </div>
-                      {similarJobs.length > 3 && (
-                        <Link
-                          to="/jobs"
-                          className="text-indigo-600 hover:text-indigo-800 text-sm font-medium flex items-center mt-3"
-                        >
-                          View More Jobs
-                          <ArrowRight className="h-4 w-4 ml-1" />
-                        </Link>
-                      )}
-                    </div>
+  <h4 className="font-medium text-gray-900 mb-3">Similar Jobs</h4>
+  <div className="space-y-3">
+    {isSimilarJobsLoading ? (
+      <>
+        <Skeleton className="h-24 w-full rounded-xl" />
+        <Skeleton className="h-24 w-full rounded-xl" />
+        <Skeleton className="h-24 w-full rounded-xl" />
+      </>
+    ) : similarJobs.length > 0 ? (
+      similarJobs.slice(0, 3).map((job) => (
+        <Card key={job._id} className="border-0 shadow-sm bg-white rounded-xl">
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <h5 className="text-sm font-semibold text-gray-900">{job.jobTitle}</h5>
+                <p className="text-xs text-gray-600 mt-1">{job.companyName}</p>
+                <div className="flex items-center text-xs text-gray-600 mt-1">
+                  <MapPin className="h-3 w-3 mr-1" />
+                  <span>{job.workLocation?.city || "Remote"}</span>
+                </div>
+                <div className="flex items-center text-xs text-gray-600 mt-1">
+                  <DollarSign className="h-3 w-3 mr-1" />
+                  <span>{getSalaryDisplay(job)}</span>
+                </div>
+                <Badge className="bg-indigo-100 text-indigo-800 px-2 py-0.5 mt-2 rounded-full text-xs">
+                  {job.jobType}
+                </Badge>
+              </div>
+              <Link
+                to={`/jobs/${job._id}`}
+                className="text-indigo-600 hover:text-indigo-800 text-xs font-medium flex items-center"
+              >
+                View Job
+                <ArrowRight className="h-3 w-3 ml-1" />
+              </Link>
+            </div>
+          </CardContent>
+        </Card>
+      ))
+    ) : (
+      <p className="text-sm text-gray-500">No similar jobs found.</p>
+    )}
+  </div>
+  {similarJobs.length > 3 && (
+    <Link
+      to="/jobs"
+      className="text-indigo-600 hover:text-indigo-800 text-sm font-medium flex items-center mt-3"
+    >
+      View More Jobs
+      <ArrowRight className="h-4 w-4 ml-1" />
+    </Link>
+  )}
+</div>
                   </div>
                 </CardContent>
               </Card>

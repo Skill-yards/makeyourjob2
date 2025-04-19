@@ -57,6 +57,9 @@ const AdminSingleWithApply = () => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
 
+  console.log(singleJob,"this is single job");
+  
+
   useEffect(() => {
     const fetchSingleJob = async () => {
       try {
