@@ -304,6 +304,8 @@ export const updateProfile = asyncHandler(async (req, res) => {
     console.log('Profile Photo:', profilePhoto);
 
     // Find user
+  
+    
     const user = await User.findById(userId);
     if (!user) {
         res.status(404);

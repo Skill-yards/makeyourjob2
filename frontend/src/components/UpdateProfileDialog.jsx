@@ -24,6 +24,9 @@ const UpdateProfileDialog = ({ open, setOpen, croppedImage }) => {
   const { user } = useSelector((store) => store.auth);
   const dispatch = useDispatch();
 
+  console.log(user,"check for user");
+  
+
   const [input, setInput] = useState({
     firstname: user?.firstname || '',
     lastname: user?.lastname || '',
@@ -112,6 +115,8 @@ const UpdateProfileDialog = ({ open, setOpen, croppedImage }) => {
         headers: { 'Content-Type': 'multipart/form-data' },
         withCredentials: true,
       });
+      console.log(formData, 'Form Data:', res.data); // Debug log
+      
       if (res.data.success) {
         dispatch(setUser(res.data.user));
         toast.success(res.data.message);

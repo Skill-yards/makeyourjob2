@@ -1,6 +1,7 @@
 import { Job } from "../models/job.model.js";
 
 export const postJob = async (req, res) => {
+  console.log(req.body,"dhadso")
   try {
     const {
       jobTitle,
@@ -19,32 +20,37 @@ export const postJob = async (req, res) => {
     } = req.body;
 
     const userId = req.id; // Assuming req.id is set by authentication middleware
-
+    console.log(companyId,"jfejhe check....")
     // Validate required fields
     const requiredFields = {
-      jobTitle,
-      jobDescription,
-      "workLocation.city": workLocation?.city,
-      "workLocation.state": workLocation?.state,
-      "workLocation.pincode": workLocation?.pincode,
-      "workLocation.area": workLocation?.area,
-      "workLocation.streetAddress": workLocation?.streetAddress,
-      jobType,
-      experienceLevel,
-      companyId,
-      companyName,
-      workplacePlane,
-      jobCategory,
-      skills,
-      numberOfPositions,
+      jobTitle: "Job title is required",
+      jobDescription: "Job description is required",
+      "workLocation.city": workLocation?.city ? undefined : "City is required",
+      "workLocation.state": workLocation?.state ? undefined : "State is required",
+      "workLocation.pincode": workLocation?.pincode ? undefined : "Pincode is required",
+      "workLocation.area": workLocation?.area ? undefined : "Area is required",
+      "workLocation.streetAddress": workLocation?.streetAddress ? undefined : "Street address is required",
+      jobType: "Job type is required",
+      experienceLevel: "Experience level is required",
+      companyId: "Company ID is required",
+      companyName: "Company name is required",
+      workplacePlane: "Workplace plane is required",
+      jobCategory: "Job category is required",
+      skills: "At least one skill is required",
+      numberOfPositions: "Number of positions is required",
     };
 
-    for (const [field, value] of Object.entries(requiredFields)) {
-      if (!value) {
-        return res.status(400).json({
-          message: `Missing required field: ${field}`,
-          success: false,
-        });
+    for (const [field, message] of Object.entries(requiredFields)) {
+      if (message) {
+        const value = field.includes("workLocation")
+          ? workLocation[field.split(".")[1]]
+          : req.body[field];
+        if (!value || (Array.isArray(value) && value.length === 0)) {
+          return res.status(400).json({
+            message,
+            success: false,
+          });
+        }
       }
     }
 
@@ -56,10 +62,11 @@ export const postJob = async (req, res) => {
       });
     }
 
-    // Validate experienceLevel format
-    if (!/^\d+(\.\d)?$/.test(experienceLevel)) {
+    // Validate experienceLevel
+    const experience = parseFloat(experienceLevel);
+    if (isNaN(experience) || experience < 0) {
       return res.status(400).json({
-        message: "Experience level must be a number (e.g., 2 or 2.5)",
+        message: "Experience level must be a non-negative number",
         success: false,
       });
     }
@@ -73,26 +80,26 @@ export const postJob = async (req, res) => {
       });
     }
 
-    // Parse comma-separated fields
-    const parsedSkills = Array.isArray(skills)
-      ? skills
-      : skills.split(",").map((skill) => skill.trim()).filter(Boolean);
-    if (parsedSkills.length === 0) {
+    // Validate skills (ensure it's an array and not empty)
+    if (!Array.isArray(skills) || skills.length === 0) {
       return res.status(400).json({
         message: "At least one skill is required",
         success: false,
       });
     }
 
-    const parsedBenefits = benefits
-      ? Array.isArray(benefits)
-        ? benefits
-        : benefits.split(",").map((benefit) => benefit.trim()).filter(Boolean)
-      : [];
+    // Validate benefits (ensure it's an array)
+    const parsedBenefits = Array.isArray(benefits) ? benefits : [];
+    if (parsedBenefits.length === 0) {
+      return res.status(400).json({
+        message: "At least one benefit is required",
+        success: false,
+      });
+    }
 
     // Validate salaryRange if provided
-    let formattedSalaryRange = {};
-    if (salaryRange && (salaryRange.minSalary || salaryRange.maxSalary)) {
+    let formattedSalaryRange = undefined;
+    if (salaryRange && salaryRange.minSalary !== null && salaryRange.maxSalary !== null) {
       const min = parseFloat(salaryRange.minSalary);
       const max = parseFloat(salaryRange.maxSalary);
       if (isNaN(min) || isNaN(max) || min < 0 || max < min) {
@@ -104,12 +111,33 @@ export const postJob = async (req, res) => {
       formattedSalaryRange = {
         min: min,
         max: max,
-        currency: "INR", // Default based on component context
+        currency: "INR",
         frequency: "yearly",
       };
     }
 
+    // Validate companyId exists in database (assuming Company model exists)
+    // const Company = require("../models/Company"); // Adjust path as needed
+  
+    const companyExists = await Company.findById(companyId);
+    if (!companyExists) {
+      return res.status(400).json({
+        message: "Invalid company ID",
+        success: false,
+      });
+    }
+
+    // Validate workplacePlane (optional, add allowed values if needed)
+    const validWorkplacePlanes = ["Office", "Remote", "Hybrid"];
+    if (!validWorkplacePlanes.includes(workplacePlane)) {
+      return res.status(400).json({
+        message: "Workplace plane must be one of: Office, Remote, Hybrid",
+        success: false,
+      });
+    }
+
     // Create job document
+    // const Job = require("../models/Job"); // Adjust path as needed
     const job = await Job.create({
       jobTitle,
       description: jobDescription,
@@ -119,17 +147,17 @@ export const postJob = async (req, res) => {
         pincode: workLocation.pincode,
         area: workLocation.area,
         streetAddress: workLocation.streetAddress,
-        country: "India", // Default based on pincode API
+        country: "India",
       },
       jobType,
-      experienceLevel,
+      experienceLevel: experience.toString(), // Store as string
       company: companyId,
       companyName,
       workplacePlane,
       jobCategory,
-      skills: parsedSkills,
+      skills,
       benefits: parsedBenefits,
-      salaryRange: formattedSalaryRange.min ? formattedSalaryRange : undefined,
+      salaryRange: formattedSalaryRange,
       numberOfPositions: positions,
       created_by: userId,
       status: "Open",
@@ -147,6 +175,12 @@ export const postJob = async (req, res) => {
       return res.status(400).json({
         message: "Validation failed",
         errors: messages,
+        success: false,
+      });
+    }
+    if (error.name === "CastError") {
+      return res.status(400).json({
+        message: "Invalid ID format",
         success: false,
       });
     }
@@ -317,10 +351,11 @@ export const updateJob = async (req, res) => {
 
     const {
       jobTitle,
-      description,
+      jobDescription,
       workLocation,
       jobType,
       experienceLevel,
+      companyId,
       companyName,
       workplacePlane,
       jobCategory,
@@ -343,9 +378,10 @@ export const updateJob = async (req, res) => {
 
     // Basic fields
     addField('jobTitle', jobTitle);
-    addField('description', description);
+    addField('jobDescription', jobDescription);
     addField('jobType', jobType);
-    addField('experienceLevel', experienceLevel);
+    addField('experienceLevel', experienceLevel ? Number(experienceLevel) : undefined);
+    addField('companyId', companyId);
     addField('companyName', companyName);
     addField('workplacePlane', workplacePlane);
     addField('jobCategory', jobCategory);
@@ -353,18 +389,19 @@ export const updateJob = async (req, res) => {
     addField('status', status);
 
     // Validate numberOfPositions
-    if (fieldsToUpdate.numberOfPositions && (isNaN(fieldsToUpdate.numberOfPositions) || fieldsToUpdate.numberOfPositions < 1)) {
+    if (fieldsToUpdate.numberOfPositions !== undefined && (isNaN(fieldsToUpdate.numberOfPositions) || fieldsToUpdate.numberOfPositions < 1)) {
       return res.status(400).json({
         message: 'Number of positions must be a positive number.',
         success: false,
       });
     }
 
-    // Array fields
-    if (skills !== undefined && skills !== '') {
+    // Handle skills array - could be array or comma-separated string
+    if (skills !== undefined) {
       fieldsToUpdate.skills = Array.isArray(skills)
         ? skills
         : skills.split(',').map((skill) => skill.trim()).filter(Boolean);
+      
       if (fieldsToUpdate.skills.length === 0) {
         return res.status(400).json({
           message: 'At least one skill is required.',
@@ -373,24 +410,25 @@ export const updateJob = async (req, res) => {
       }
     }
 
-    if (benefits !== undefined && benefits !== '') {
-      fieldsToUpdate.benefits = Array.isArray(benefits)
-        ? benefits
-        : benefits.split(',').map((benefit) => benefit.trim()).filter(Boolean);
-    } else if (benefits === '') {
-      fieldsToUpdate.benefits = [];
+    // Handle benefits array - frontend sends as array directly
+    if (benefits !== undefined) {
+      fieldsToUpdate.benefits = Array.isArray(benefits) 
+        ? benefits 
+        : benefits.split(',').map(benefit => benefit.trim()).filter(Boolean);
     }
 
-    // Nested field: workLocation
+    // Handle workLocation object
     if (workLocation && Object.keys(workLocation).length > 0) {
       const { city, state, pincode, area, streetAddress, country } = workLocation;
       const updatedWorkLocation = {};
-      addField('city', city);
-      addField('state', state);
-      addField('pincode', pincode);
-      addField('area', area);
-      addField('streetAddress', streetAddress);
-      addField('country', country);
+      
+      if (city !== undefined) updatedWorkLocation.city = city;
+      if (state !== undefined) updatedWorkLocation.state = state;
+      if (pincode !== undefined) updatedWorkLocation.pincode = pincode;
+      if (area !== undefined) updatedWorkLocation.area = area;
+      if (streetAddress !== undefined) updatedWorkLocation.streetAddress = streetAddress;
+      if (country !== undefined) updatedWorkLocation.country = country;
+      else updatedWorkLocation.country = 'India'; // Default country
 
       if (Object.keys(updatedWorkLocation).length > 0) {
         fieldsToUpdate.workLocation = updatedWorkLocation;
@@ -426,58 +464,91 @@ export const updateJob = async (req, res) => {
             success: false,
           });
         }
-        if (!updatedWorkLocation.country) {
-          updatedWorkLocation.country = 'India'; // Default
-        }
       }
     }
 
-    // Nested field: salaryRange
-    if (salaryRange && (salaryRange.min || salaryRange.max)) {
-      const { min, max, currency, frequency } = salaryRange;
-      const updatedSalaryRange = {};
-      if (min !== undefined && min !== '') {
-        updatedSalaryRange.min = Number(min);
-        if (isNaN(updatedSalaryRange.min) || updatedSalaryRange.min < 0) {
-          return res.status(400).json({
-            message: 'Invalid minimum salary. It must be a positive number.',
-            success: false,
-          });
-        }
-      }
-      if (max !== undefined && max !== '') {
-        updatedSalaryRange.max = Number(max);
-        if (isNaN(updatedSalaryRange.max) || updatedSalaryRange.max < 0) {
-          return res.status(400).json({
-            message: 'Invalid maximum salary. It must be a positive number.',
-            success: false,
-          });
-        }
-      }
-      if (currency !== undefined && currency !== '') updatedSalaryRange.currency = currency;
-      if (frequency !== undefined && frequency !== '') updatedSalaryRange.frequency = frequency;
-
-      if (Object.keys(updatedSalaryRange).length > 0) {
-        const existingJob = await Job.findById(jobId);
-        fieldsToUpdate.salaryRange = {
-          min: updatedSalaryRange.min ?? existingJob.salaryRange?.min,
-          max: updatedSalaryRange.max ?? existingJob.salaryRange?.max,
-          currency: updatedSalaryRange.currency ?? existingJob.salaryRange?.currency ?? 'INR',
-          frequency: updatedSalaryRange.frequency ?? existingJob.salaryRange?.frequency ?? 'yearly',
-        };
-
-        // Validate min < max
-        if (fieldsToUpdate.salaryRange.min !== undefined && fieldsToUpdate.salaryRange.max !== undefined) {
-          if (fieldsToUpdate.salaryRange.min >= fieldsToUpdate.salaryRange.max) {
+    // Handle salaryRange - check if it's a string from frontend or an object
+    if (salaryRange) {
+      // If salaryRange is a string (from frontend format like "5000-10000")
+      if (typeof salaryRange === 'string' && salaryRange.trim() !== '') {
+        const parts = salaryRange.split(/[,|-]/);
+        if (parts.length === 2) {
+          const minSalary = Number(parts[0].trim());
+          const maxSalary = Number(parts[1].trim());
+          
+          if (isNaN(minSalary) || isNaN(maxSalary)) {
+            return res.status(400).json({
+              message: 'Salary range must contain valid numbers.',
+              success: false,
+            });
+          }
+          
+          if (minSalary >= maxSalary) {
             return res.status(400).json({
               message: 'Minimum salary must be less than maximum salary.',
               success: false,
             });
           }
+          
+          fieldsToUpdate.salaryRange = {
+            minSalary,
+            maxSalary,
+            currency: 'INR', // Default
+            frequency: 'yearly' // Default
+          };
+        } else {
+          return res.status(400).json({
+            message: 'Salary range format should be min-max or min,max',
+            success: false,
+          });
         }
+      } 
+      // If salaryRange is an object (already structured format)
+      else if (typeof salaryRange === 'object' && Object.keys(salaryRange).length > 0) {
+        const { minSalary, maxSalary, currency, frequency } = salaryRange;
+        const updatedSalaryRange = {};
+
+        if (minSalary !== undefined && minSalary !== '') {
+          updatedSalaryRange.minSalary = Number(minSalary);
+          if (isNaN(updatedSalaryRange.minSalary) || updatedSalaryRange.minSalary < 0) {
+            return res.status(400).json({
+              message: 'Invalid minimum salary. It must be a positive number.',
+              success: false,
+            });
+          }
+        }
+        
+        if (maxSalary !== undefined && maxSalary !== '') {
+          updatedSalaryRange.maxSalary = Number(maxSalary);
+          if (isNaN(updatedSalaryRange.maxSalary) || updatedSalaryRange.maxSalary < 0) {
+            return res.status(400).json({
+              message: 'Invalid maximum salary. It must be a positive number.',
+              success: false,
+            });
+          }
+        }
+        
+        if (currency !== undefined && currency !== '') updatedSalaryRange.currency = currency;
+        else updatedSalaryRange.currency = 'INR';
+        
+        if (frequency !== undefined && frequency !== '') updatedSalaryRange.frequency = frequency;
+        else updatedSalaryRange.frequency = 'yearly';
+
+        if (updatedSalaryRange.minSalary !== undefined && 
+            updatedSalaryRange.maxSalary !== undefined &&
+            updatedSalaryRange.minSalary >= updatedSalaryRange.maxSalary) {
+          return res.status(400).json({
+            message: 'Minimum salary must be less than maximum salary.',
+            success: false,
+          });
+        }
+
+        fieldsToUpdate.salaryRange = updatedSalaryRange;
       }
-    } else if (salaryRange && !salaryRange.min && !salaryRange.max) {
-      fieldsToUpdate.salaryRange = null; // Allow clearing salaryRange
+      // If empty object is sent, allow clearing salaryRange
+      else if (typeof salaryRange === 'object' && Object.keys(salaryRange).length === 0) {
+        fieldsToUpdate.salaryRange = null;
+      }
     }
 
     if (Object.keys(fieldsToUpdate).length === 0) {
@@ -509,10 +580,13 @@ export const updateJob = async (req, res) => {
   } catch (error) {
     console.error('Error in updateJob:', error);
     if (error.name === 'ValidationError') {
-      const messages = Object.values(error.errors).map((err) => err.message);
+      const errors = Object.values(error.errors).map((err) => ({
+        path: err.path,
+        message: err.message
+      }));
       return res.status(400).json({
         message: 'Validation failed.',
-        errors: messages,
+        errors,
         success: false,
       });
     }
@@ -522,10 +596,6 @@ export const updateJob = async (req, res) => {
     });
   }
 };
-
-
-
-
 
 export const adminGetJob = async (req, res) => {
     try {
@@ -564,3 +634,60 @@ export const adminGetJob = async (req, res) => {
         });
     }
 };
+
+
+// export const SearchJob = async (req, res) => {
+//   try {
+//     const { jobTitle, city, limit = 10, page = 1 } = req.query;
+//     const query = {};
+//     if (jobTitle) {
+//       const sanitizedTitle = jobTitle.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+//       query.jobTitle = { $regex: new RegExp(sanitizedTitle, 'i') };
+//     }
+//     if (city) {
+//       const sanitizedCity = city.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+//       query['workLocation.city'] = { $regex: new RegExp(sanitizedCity, 'i') };
+//     }
+//     if (Object.keys(query).length === 0) {
+//       return res.status(400).json({
+//         success: false,
+//         message: 'Please provide at least one search parameter (jobTitle or city)',
+//       });
+//     }
+//     const maxLimit = 100;
+//     const parsedLimit = Math.max(1, Math.min(maxLimit, parseInt(limit, 10)));
+//     const parsedPage = Math.max(1, parseInt(page, 10));
+//     const skip = (parsedPage - 1) * parsedLimit;
+//     const jobs = await Job.find(query)
+//       .populate('company', 'name createdAt')
+//       // .limit(parsedLimit)
+//       .skip(skip)
+//       .lean();
+
+//     if (!jobs || jobs.length === 0) {
+//       return res.status(404).json({
+//         success: false,
+//         message: 'No jobs found matching the criteria',
+//       });
+//     }
+//     const totalJobs = await Job.countDocuments(query);
+
+//     return res.status(200).json({
+//       success: true,
+//       jobs,
+//       pagination: {
+//         totalJobs,
+//         totalPages: Math.ceil(totalJobs / parsedLimit),
+//         currentPage: parsedPage,
+//         limit: parsedLimit,
+//       },
+//     });
+//   } catch (error) {
+//     console.error('Error searching for jobs:', error);
+//     return res.status(500).json({
+//       success: false,
+//       message: 'An error occurred while searching for jobs',
+//       error: error.message,
+//     });
+//   }
+// };

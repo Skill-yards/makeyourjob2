@@ -12,9 +12,10 @@ const useGetAllJobs = () => {
     const fetchAllJobs = async () => {
       try {
         const res = await axios.get(
-          `${JOB_API_END_POINT}/get?keyword=${searchedQuery}&location=${searchLocation}`,
+          `${JOB_API_END_POINT}/get`,
           { withCredentials: true }
         );
+        console.log(res,"res")
         if (res.data.success) {
           dispatch(setAllJobs(res.data.jobs || [])); // Ensure jobs is always an array
         } else {
