@@ -164,7 +164,7 @@ const CustomCarousel = ({
       )}
 
       {/* Slide indicators */}
-      {showIndicators && items.length > 1 && (
+      {/* {showIndicators && items.length > 1 && (
         <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 flex space-x-2">
           {items.map((_, index) => (
             <button
@@ -181,7 +181,7 @@ const CustomCarousel = ({
             />
           ))}
         </div>
-      )}
+      )} */}
     </div>
   );
 };

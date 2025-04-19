@@ -1,7 +1,7 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { Badge } from "./ui/badge";
 import { Button } from "./ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "./ui/card";
+import { Card, CardContent, CardHeader } from "./ui/card";
 import { useNavigate, useParams, Link } from "react-router-dom";
 import axios from "axios";
 import { APPLICATION_API_END_POINT, JOB_API_END_POINT } from "@/utils/constant";
@@ -29,6 +29,12 @@ import {
   ListChecks,
   ArrowLeft,
   Building,
+  Share2,
+  Heart,
+  BookmarkPlus,
+  ArrowRight,
+  GraduationCap,
+  Star,
 } from "lucide-react";
 import { Skeleton } from "./ui/skeleton";
 import {
@@ -39,6 +45,37 @@ import {
   DialogTitle,
 } from "./ui/dialog";
 
+// Sample similar jobs data (replace with API call)
+const mockSimilarJobs = [
+  {
+    _id: "1",
+    jobTitle: "Frontend Developer",
+    companyName: "TechCorp",
+    workLocation: { city: "Bengaluru", state: "Karnataka" },
+    jobType: "Full-time",
+    jobCategory: "Engineering",
+    salaryRange: { min: 8, max: 12, currency: "INR", frequency: "yearly" },
+  },
+  {
+    _id: "2",
+    jobTitle: "Backend Engineer",
+    companyName: "Innovate Inc.",
+    workLocation: { city: "Hyderabad", state: "Telangana" },
+    jobType: "Full-time",
+    jobCategory: "Engineering",
+    salaryRange: { min: 10, max: 15, currency: "INR", frequency: "yearly" },
+  },
+  {
+    _id: "3",
+    jobTitle: "Full Stack Developer",
+    companyName: "GrowEasy",
+    workLocation: { city: "Remote" },
+    jobType: "Contract",
+    jobCategory: "Engineering",
+    salaryRange: { min: 12, max: 18, currency: "INR", frequency: "yearly" },
+  },
+];
+
 const JobDescription = () => {
   const { singleJob } = useSelector((store) => store.job);
   const { user } = useSelector((store) => store.auth);
@@ -47,14 +84,17 @@ const JobDescription = () => {
   const [isApplying, setIsApplying] = useState(false);
   const [error, setError] = useState(null);
   const [showSuccessDialog, setShowSuccessDialog] = useState(false);
+  const [isSaved, setIsSaved] = useState(false);
+  const [similarJobs, setSimilarJobs] = useState([]);
+  const [isSimilarJobsLoading, setIsSimilarJobsLoading] = useState(false);
 
   const params = useParams();
   const jobId = params.id;
   const dispatch = useDispatch();
   const navigate = useNavigate();
 
-  // Check profile completion
-  const checkProfileCompletion = () => {
+  // Memoize profile completion check
+  const profileStatus = useMemo(() => {
     if (!user) return { isComplete: false, missingFields: ["login"] };
     const { email, phoneNumber, profile } = user;
     const missingFields = [];
@@ -63,7 +103,7 @@ const JobDescription = () => {
     if (!profile?.resume) missingFields.push("resume");
     if (!profile?.skills?.length) missingFields.push("skills");
     return { isComplete: missingFields.length === 0, missingFields };
-  };
+  }, [user]);
 
   // Handle job application
   const applyJobHandler = async () => {
@@ -73,9 +113,8 @@ const JobDescription = () => {
       return;
     }
 
-    const { isComplete, missingFields } = checkProfileCompletion();
-    if (!isComplete) {
-      toast.error(`Complete your profile: ${missingFields.join(", ")} required`);
+    if (!profileStatus.isComplete) {
+      toast.error(`Complete your profile: ${profileStatus.missingFields.join(", ")} required`);
       navigate("/profile");
       return;
     }
@@ -129,44 +168,113 @@ const JobDescription = () => {
     fetchSingleJob();
   }, [jobId, dispatch, user?._id]);
 
+  // Fetch similar jobs
+  useEffect(() => {
+    const fetchSimilarJobs = async () => {
+      try {
+        setIsSimilarJobsLoading(true);
+        // Replace with actual API call
+        // const res = await axios.get(`${JOB_API_END_POINT}/similar/${jobId}`, {
+        //   params: { category: singleJob?.jobCategory, skills: singleJob?.skills.join(",") },
+        //   withCredentials: true,
+        // });
+        // if (res.data.success) {
+        //   setSimilarJobs(res.data.jobs);
+        // }
+
+        // Using mock data for now
+        setSimilarJobs(mockSimilarJobs.filter((job) => job._id !== jobId));
+      } catch (error) {
+        console.error("Failed to fetch similar jobs:", error);
+        setSimilarJobs([]);
+      } finally {
+        setIsSimilarJobsLoading(false);
+      }
+    };
+    console.log(similarJobs,"check similar jobs");
+    
+
+    if (singleJob?.jobCategory) {
+      fetchSimilarJobs();
+    }
+  }, [jobId, singleJob?.jobCategory]);
+
   // Format date
-  const formatDate = (dateString) =>
-    dateString
-      ? new Date(dateString).toLocaleDateString("en-US", {
-          year: "numeric",
-          month: "long",
-          day: "numeric",
-        })
-      : "N/A";
+  const formatDate = (dateString) => {
+    if (!dateString) return "N/A";
+    const date = new Date(dateString);
+    const now = new Date();
+    const diffTime = Math.abs(now - date);
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    if (diffDays <= 1) return "Today";
+    if (diffDays <= 2) return "Yesterday";
+    if (diffDays <= 7) return `${diffDays} days ago`;
+    return new Intl.DateTimeFormat("en-US", {
+      year: "numeric",
+      month: "long",
+      day: "numeric",
+    }).format(date);
+  };
 
   // Format salary
-  const getSalaryDisplay = () =>
-    singleJob?.salaryRange?.min && singleJob?.salaryRange?.max
-      ? `${singleJob.salaryRange.min} - ${singleJob.salaryRange.max} ${singleJob.salaryRange.currency} / ${singleJob.salaryRange.frequency}`
-      : "N/A";
+  const getSalaryDisplay = (job) =>
+    job?.salaryRange?.min && job?.salaryRange?.max
+      ? `${job.salaryRange.min} - ${job.salaryRange.max} ${job.salaryRange.currency} / ${job.salaryRange.frequency}`
+      : "Not disclosed";
 
   // Success dialog
   const SuccessDialog = () => (
     <Dialog open={showSuccessDialog} onOpenChange={setShowSuccessDialog}>
-      <DialogContent className="sm:max-w-md bg-white rounded-2xl shadow-2xl">
-        <DialogHeader>
-          <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-green-100">
-            <CheckCircle2 className="h-8 w-8 text-green-600" />
+      <DialogContent className="sm:max-w-md bg-white rounded-2xl shadow-2xl border-0">
+        <div className="absolute -top-12 left-1/2 transform -translate-x-1/2">
+          <div className="bg-gradient-to-r from-green-500 to-emerald-500 rounded-full w-24 h-24 flex items-center justify-center shadow-lg">
+            <CheckCircle2 className="h-12 w-12 text-white" />
           </div>
-          <DialogTitle className="text-center text-xl font-bold text-gray-800 mt-4">
+        </div>
+        <DialogHeader className="pt-12">
+          <DialogTitle className="text-center text-2xl font-bold text-gray-800 mt-4">
             Application Submitted!
           </DialogTitle>
-          <DialogDescription className="text-center text-gray-600 mt-2">
-            Your application has been submitted. You'll hear from the hiring team soon.
+          <DialogDescription className="text-center text-gray-600 mt-2 max-w-sm mx-auto">
+            Your application has been successfully submitted to {singleJob?.companyName}. You'll hear from the hiring team soon.
           </DialogDescription>
         </DialogHeader>
-        <div className="flex justify-center mt-6">
-          <Button
-            onClick={() => setShowSuccessDialog(false)}
-            className="px-6 py-2 bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 text-white rounded-full shadow-md transition hover:shadow-lg"
-          >
-            Got it!
-          </Button>
+        <div className="space-y-4 mt-6">
+          <div className="bg-gray-50 p-4 rounded-xl border border-gray-100">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center">
+                <div className="bg-white p-2 rounded-lg shadow-sm">
+                  <Briefcase className="h-6 w-6 text-indigo-600" />
+                </div>
+                <div className="ml-3">
+                  <p className="text-sm font-medium text-gray-900">{singleJob?.jobTitle}</p>
+                  <p className="text-xs text-gray-500">{singleJob?.companyName}</p>
+                </div>
+              </div>
+              <Badge className="bg-emerald-100 text-emerald-800 border-0">
+                Applied
+              </Badge>
+            </div>
+          </div>
+          <div className="flex gap-4">
+            <Button
+              onClick={() => {
+                setShowSuccessDialog(false);
+                navigate("/applications");
+              }}
+              className="flex-1 bg-gradient-to-r from-indigo-500 to-violet-500 hover:from-indigo-600 hover:to-violet-600 text-white rounded-xl shadow-md transition hover:shadow-lg border-0"
+            >
+              View Applications
+              <ArrowRight className="ml-2 h-4 w-4" />
+            </Button>
+            <Button
+              onClick={() => setShowSuccessDialog(false)}
+              variant="outline"
+              className="flex-1 border-gray-300 hover:bg-gray-50 text-gray-800 rounded-xl"
+            >
+              Close
+            </Button>
+          </div>
         </div>
       </DialogContent>
     </Dialog>
@@ -175,298 +283,501 @@ const JobDescription = () => {
   // Loading state
   if (isLoading) {
     return (
-      <div className="max-w-7xl mx-auto my-8 px-4 sm:px-6">
-        <Skeleton className="h-12 w-3/4 mb-4 rounded-lg" />
-        <div className="flex gap-2 mb-6">
-          {[...Array(3)].map((_, i) => (
-            <Skeleton key={i} className="h-6 w-24 rounded-full" />
-          ))}
+      <>
+        <Navbar />
+        <div className="max-w-6xl mx-auto my-8 px-4 sm:px-6">
+          <div className="flex items-center mb-6">
+            <Skeleton className="h-10 w-24 rounded-full mr-4" />
+            <Skeleton className="h-8 w-3/4 rounded-lg" />
+          </div>
+          <Skeleton className="h-60 w-full rounded-xl mb-6" />
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <Skeleton className="h-40 w-full rounded-xl" />
+            <Skeleton className="h-40 w-full rounded-xl" />
+          </div>
+          <Skeleton className="h-40 w-full rounded-xl mt-6" />
         </div>
-        <Skeleton className="h-96 w-full rounded-xl" />
-      </div>
+        <Footer />
+      </>
     );
   }
 
   // Error state
   if (error) {
     return (
-      <div className="max-w-7xl mx-auto my-10 px-4 sm:px-6">
-        <Card className="border-destructive shadow-xl rounded-xl">
-          <CardContent className="pt-6 flex items-center gap-3 text-destructive">
-            <AlertCircle className="h-6 w-6" />
-            <p className="font-medium">{error}</p>
-          </CardContent>
-        </Card>
-      </div>
+      <>
+        <Navbar />
+        <div className="max-w-6xl mx-auto my-10 px-4 sm:px-6">
+          <Card className="border-destructive shadow-xl rounded-xl">
+            <CardContent className="pt-6 flex items-center gap-3 text-destructive">
+              <AlertCircle className="h-6 w-6" />
+              <p className="font-medium">{error}</p>
+            </CardContent>
+            <CardContent>
+              <Button
+                onClick={() => navigate("/jobs")}
+                variant="outline"
+                className="text-gray-600 hover:text-gray-800 border-gray-300 rounded-full px-4 py-2 shadow-sm hover:shadow-md transition"
+              >
+                Back to Jobs
+              </Button>
+            </CardContent>
+          </Card>
+        </div>
+        <Footer />
+      </>
     );
   }
-
-  const { missingFields } = checkProfileCompletion();
 
   return (
     <>
       <Navbar />
-      <div className="max-w-7xl mx-auto my-12 px-4 sm:px-6 lg:px-8">
-        <Card className="shadow-2xl border-none bg-white rounded-2xl overflow-hidden">
-          {/* Header */}
-          <CardHeader className="pb-4 border-b bg-gradient-to-r from-violet-50 to-indigo-50">
-            <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-6">
-              <div className="flex items-center justify-between gap-4">
-                <Button
-                  onClick={() => navigate(-1)}
-                  variant="outline"
-                  className="flex items-center gap-2 text-gray-600 hover:text-gray-800 border-gray-300 rounded-full px-4 py-2 shadow-sm hover:shadow-md transition"
-                >
-                  <ArrowLeft className="h-4 w-4" />
-                  Back
-                </Button>
-                <div className="space-y-3">
-                  <CardTitle className="text-2xl sm:text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-violet-800 to-indigo-600">
-                    {singleJob?.jobTitle}
-                  </CardTitle>
-                  <div className="flex flex-wrap gap-2">
-                    <Badge className="bg-blue-100 text-blue-800 px-3 py-1 rounded-full shadow-sm">
-                      <Users className="h-3.5 w-3.5 mr-1" />
-                      {singleJob?.numberOfPositions} Vacancies
-                    </Badge>
-                    <Badge className="bg-amber-100 text-amber-800 px-3 py-1 rounded-full shadow-sm">
-                      <Briefcase className="h-3.5 w-3.5 mr-1" />
-                      {singleJob?.jobType}
-                    </Badge>
-                    <Badge className="bg-emerald-100 text-emerald-800 px-3 py-1 rounded-full shadow-sm">
-                      <DollarSign className="h-3.5 w-3.5 mr-1" />
-                      {getSalaryDisplay()}
-                    </Badge>
-                    <Badge className="bg-indigo-100 text-indigo-800 px-3 py-1 rounded-full shadow-sm">
-                      <Home className="h-3.5 w-3.5 mr-1" />
-                      {singleJob?.workplacePlane}
-                    </Badge>
-                  </div>
-                </div>
-              </div>
-              <div className="flex flex-col gap-3">
-                <Button
-                  onClick={isApplied || isApplying ? null : applyJobHandler}
-                  disabled={isApplied || isApplying || (user && missingFields.length > 0)}
-                  className={`w-full sm:w-40 rounded-full px-6 py-2 text-sm font-semibold shadow-lg transition-all ${
-                    isApplied
-                      ? "bg-slate-200 text-slate-500 cursor-not-allowed border border-slate-300"
-                      : isApplying
-                      ? "bg-gray-300 text-gray-600 cursor-not-allowed"
-                      : user && missingFields.length > 0
-                      ? "bg-gray-300 text-gray-600 cursor-not-allowed"
-                      : "bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-700 hover:to-indigo-700 text-white hover:shadow-xl hover:-translate-y-1"
-                  }`}
-                >
-                  {isApplying ? (
-                    <>
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      Applying...
-                    </>
-                  ) : isApplied ? (
-                    <>
-                      <CheckCircle2 className="mr-2 h-4 w-4" />
-                      Applied
-                    </>
-                  ) : (
-                    "Apply Now"
-                  )}
-                </Button>
-                {user && missingFields.length > 0 && (
-                  <div className="text-sm text-red-600 text-center sm:text-right">
-                    <p>
-                      Please{" "}
-                      <Link to="/profile" className="underline hover:text-red-800 font-medium">
-                        complete your profile
-                      </Link>
-                      :
-                    </p>
-                    <ul className="list-disc pl-4 mt-1">
-                      {missingFields.map((field, index) => (
-                        <li key={index} className="flex items-center gap-1">
-                          {field === "email" && <Mail className="h-3 w-3" />}
-                          {field === "phone number" && <Phone className="h-3 w-3" />}
-                          {field === "resume" && <FileText className="h-3 w-3" />}
-                          {field === "skills" && <ListChecks className="h-3 w-3" />}
-                          {field}
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
+      <div className="bg-gradient-to-b from-indigo-50 to-white">
+        <div className="max-w-6xl mx-auto pt-8 pb-16 px-4 sm:px-6 lg:px-8">
+          {/* Breadcrumb */}
+          <div className="flex items-center gap-2 text-sm text-gray-500 mb-6">
+            <Link to="/" className="hover:text-indigo-600 transition">Home</Link>
+            <span>/</span>
+            <Link to="/jobs" className="hover:text-indigo-600 transition">Jobs</Link>
+            <span>/</span>
+            <span className="text-gray-900 font-medium">{singleJob?.jobTitle}</span>
+          </div>
+
+          {/* Floating action buttons on mobile */}
+          <div className="fixed bottom-4 right-4 sm:hidden z-10 space-y-3">
+            <button
+              onClick={() => setIsSaved(!isSaved)}
+              className="bg-white text-indigo-600 hover:bg-indigo-50 shadow-lg rounded-full p-3 flex items-center justify-center transition w-12 h-12"
+              aria-label={isSaved ? "Unsave job" : "Save job"}
+            >
+              {isSaved ? <Heart className="h-6 w-6 fill-red-500 text-red-500" /> : <BookmarkPlus className="h-6 w-6" />}
+            </button>
+            <button
+              onClick={isApplied || isApplying ? null : applyJobHandler}
+              disabled={isApplied || isApplying || profileStatus.missingFields.length > 0}
+              className={`shadow-lg rounded-full p-3 flex items-center justify-center transition w-12 h-12 ${
+                isApplied
+                  ? "bg-green-100 text-green-600"
+                  : isApplying || profileStatus.missingFields.length > 0
+                  ? "bg-gray-200 text-gray-500"
+                  : "bg-gradient-to-r from-indigo-600 to-violet-600 text-white"
+              }`}
+              aria-label={isApplied ? "Applied" : "Apply for job"}
+            >
+              {isApplying ? (
+                <Loader2 className="h-6 w-6 animate-spin" />
+              ) : isApplied ? (
+                <CheckCircle2 className="h-6 w-6" />
+              ) : (
+                <ArrowRight className="h-6 w-6" />
+              )}
+            </button>
+          </div>
+
+          {/* Back button */}
+          <div className="flex items-center mb-6">
+            <Button
+              onClick={() => navigate(-1)}
+              variant="outline"
+              className="text-gray-600 hover:text-gray-800 border-gray-300 rounded-full px-4 py-2 shadow-sm hover:shadow-md transition mr-4 bg-white"
+              aria-label="Go back to jobs"
+            >
+              <ArrowLeft className="h-4 w-4 mr-2" />
+              Back to Jobs
+            </Button>
+
+            {/* Share and Save buttons - desktop */}
+            <div className="hidden sm:flex ml-auto">
+              <Button
+                variant="outline"
+                className="text-gray-600 hover:text-gray-800 border-gray-300 rounded-full px-4 py-2 shadow-sm hover:shadow-md transition bg-white"
+                onClick={() => navigator.clipboard.writeText(window.location.href) && toast.success("Link copied to clipboard")}
+                aria-label="Share job link"
+              >
+                <Share2 className="h-4 w-4 mr-2" />
+                Share Job
+              </Button>
+              <Button
+                variant="outline"
+                className={`ml-3 rounded-full px-4 py-2 shadow-sm hover:shadow-md transition ${
+                  isSaved
+                    ? "bg-red-50 text-red-600 border-red-200 hover:bg-red-100"
+                    : "text-gray-600 hover:text-gray-800 border-gray-300 bg-white"
+                }`}
+                onClick={() => setIsSaved(!isSaved)}
+                aria-label={isSaved ? "Unsave job" : "Save job"}
+              >
+                {isSaved ? (
+                  <>
+                    <Heart className="h-4 w-4 mr-2 fill-red-500" />
+                    Saved
+                  </>
+                ) : (
+                  <>
+                    <BookmarkPlus className="h-4 w-4 mr-2" />
+                    Save Job
+                  </>
                 )}
-              </div>
+              </Button>
             </div>
-          </CardHeader>
+          </div>
 
-          {/* Content */}
-          <CardContent className="pt-8">
-            <h2 className="text-2xl font-semibold mb-6 text-gray-800 border-b border-gray-200 pb-3">
-              Job Details
-            </h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div className="space-y-4">
-                <div className="flex items-center gap-3 group hover:bg-gray-50 p-3 rounded-lg transition">
-                  <div className="p-2 bg-violet-100 rounded-full group-hover:bg-violet-200">
-                    <Briefcase className="h-5 w-5 text-violet-600" />
-                  </div>
-                  <div>
-                    <h3 className="font-semibold text-gray-700">Job Title</h3>
-                    <p className="text-gray-600">{singleJob?.jobTitle || "N/A"}</p>
-                  </div>
-                </div>
-                <div className="flex items-center gap-3 group hover:bg-gray-50 p-3 rounded-lg transition">
-                  <div className="p-2 bg-blue-100 rounded-full group-hover:bg-blue-200">
-                    <MapPin className="h-5 w-5 text-blue-600" />
-                  </div>
-                  <div>
-                    <h3 className="font-semibold text-gray-700">Location</h3>
-                    <p className="text-gray-600">
-                      {singleJob?.workLocation?.area ? `${singleJob.workLocation.area}, ` : ""}
-                      {singleJob?.workLocation?.city || "N/A"}
-                      {singleJob?.workLocation?.state && `, ${singleJob.workLocation.state}`}
-                      {singleJob?.workLocation?.pincode && ` ${singleJob.workLocation.pincode}`}
-                      {singleJob?.workLocation?.country && `, ${singleJob.workLocation.country}`}
-                    </p>
+          {/* Main Content */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {/* Job Details Column */}
+            <div className="md:col-span-2 space-y-6">
+              {/* Job Header Card */}
+              <Card className="overflow-hidden border-0 shadow-xl bg-white rounded-2xl">
+                <div className="relative">
+                  <div className="h-20 bg-gradient-to-r from-indigo-600 to-violet-600"></div>
+                  <div className="absolute top-8 left-6 w-24 h-24 rounded-2xl bg-white p-1 shadow-lg">
+                    {singleJob?.company?.logo ? (
+                      <img
+                        src={singleJob.company.logo}
+                        alt={`${singleJob.companyName} logo`}
+                        className="w-full h-full object-cover rounded-xl"
+                        onError={(e) => {
+                          e.target.onerror = null;
+                          e.target.src = "https://via.placeholder.com/100?text=Logo";
+                        }}
+                      />
+                    ) : (
+                      <div className="w-full h-full rounded-xl bg-gradient-to-br from-indigo-100 to-violet-100 flex items-center justify-center">
+                        <Building className="h-12 w-12 text-indigo-600" />
+                      </div>
+                    )}
                   </div>
                 </div>
-                <div className="flex items-center gap-3 group hover:bg-gray-50 p-3 rounded-lg transition">
-                  <div className="p-2 bg-emerald-100 rounded-full group-hover:bg-emerald-200">
-                    <DollarSign className="h-5 w-5 text-emerald-600" />
-                  </div>
-                  <div>
-                    <h3 className="font-semibold text-gray-700">Salary</h3>
-                    <p className="text-gray-600">{getSalaryDisplay()}</p>
-                  </div>
-                </div>
-                <div className="flex items-center gap-3 group hover:bg-gray-50 p-3 rounded-lg transition">
-                  <div className="p-2 bg-amber-100 rounded-full group-hover:bg-amber-200">
-                    <Briefcase className="h-5 w-5 text-amber-600" />
-                  </div>
-                  <div>
-                    <h3 className="font-semibold text-gray-700">Job Type</h3>
-                    <p className="text-gray-600">{singleJob?.jobType || "N/A"}</p>
-                  </div>
-                </div>
-                <div className="flex items-center gap-3 group hover:bg-gray-50 p-3 rounded-lg transition">
-                  <div className="p-2 bg-indigo-100 rounded-full group-hover:bg-indigo-200">
-                    <Home className="h-5 w-5 text-indigo-600" />
-                  </div>
-                  <div>
-                    <h3 className="font-semibold text-gray-700">Workplace Type</h3>
-                    <p className="text-gray-600">{singleJob?.workplacePlane || "N/A"}</p>
-                  </div>
-                </div>
-                <div className="flex items-center gap-3 group hover:bg-gray-50 p-3 rounded-lg transition">
-                  <div className="p-2 bg-rose-100 rounded-full group-hover:bg-rose-200">
-                    <Award className="h-5 w-5 text-rose-600" />
-                  </div>
-                  <div>
-                    <h3 className="font-semibold text-gray-700">Experience Level</h3>
-                    <p className="text-gray-600">
-                      {singleJob?.experienceLevel ? `${singleJob.experienceLevel} years` : "N/A"}
-                    </p>
-                  </div>
-                </div>
-              </div>
-              <div className="space-y-4">
-                <div className="flex items-center gap-3 group hover:bg-gray-50 p-3 rounded-lg transition">
-                  <div className="p-2 bg-purple-100 rounded-full group-hover:bg-purple-200">
-                    <Users className="h-5 w-5 text-purple-600" />
-                  </div>
-                  <div>
-                    <h3 className="font-semibold text-gray-700">Vacancies</h3>
-                    <p className="text-gray-600">{singleJob?.numberOfPositions || "N/A"}</p>
-                  </div>
-                </div>
-                <div className="flex items-center gap-3 group hover:bg-gray-50 p-3 rounded-lg transition">
-                  <div className="p-2 bg-teal-100 rounded-full group-hover:bg-teal-200">
-                    <Calendar className="h-5 w-5 text-teal-600" />
-                  </div>
-                  <div>
-                    <h3 className="font-semibold text-gray-700">Posted Date</h3>
-                    <p className="text-gray-600">{formatDate(singleJob?.postedDate)}</p>
-                  </div>
-                </div>
-                <div className="flex items-center gap-3 group hover:bg-gray-50 p-3 rounded-lg transition">
-                  <div className="p-2 bg-orange-100 rounded-full group-hover:bg-orange-200">
-                    <Tag className="h-5 w-5 text-orange-600" />
-                  </div>
-                  <div>
-                    <h3 className="font-semibold text-gray-700">Job Category</h3>
-                    <p className="text-gray-600">{singleJob?.jobCategory || "N/A"}</p>
-                  </div>
-                </div>
-                <div className="flex items-center gap-3 group hover:bg-gray-50 p-3 rounded-lg transition">
-                  <div className="p-2 bg-gray-100 rounded-full group-hover:bg-gray-200">
-                    <Users className="h-5 w-5 text-gray-600" />
-                  </div>
-                  <div>
-                    <h3 className="font-semibold text-gray-700">Total Applicants</h3>
-                    <p className="text-gray-600">{singleJob?.applications?.length || 0}</p>
-                  </div>
-                </div>
-                <div className="flex items-center gap-3 group hover:bg-gray-50 p-3 rounded-lg transition">
-                  <div className="p-2 bg-cyan-100 rounded-full group-hover:bg-cyan-200">
-                    <Building className="h-5 w-5 text-cyan-600" />
-                  </div>
-                  <div>
-                    <h3 className="font-semibold text-gray-700">Company</h3>
-                    <p className="text-gray-600">{singleJob?.companyName || "N/A"}</p>
-                  </div>
-                </div>
-                <div className="flex items-center gap-3 group hover:bg-gray-50 p-3 rounded-lg transition">
-                  <div className="p-2 bg-red-100 rounded-full group-hover:bg-red-200">
-                    <Clock className="h-5 w-5 text-red-600" />
-                  </div>
-                  <div>
-                    <h3 className="font-semibold text-gray-700">Status</h3>
-                    <p className="text-gray-600">{singleJob?.status || "N/A"}</p>
-                  </div>
-                </div>
-              </div>
-            </div>
 
-            {/* Additional Details */}
-            <div className="mt-10 space-y-6">
-              <div className="p-6 bg-slate-50 rounded-xl border border-slate-200 shadow-sm">
-                <h3 className="font-semibold text-xl mb-4 text-gray-800">Job Description</h3>
-                <p className="text-gray-700 leading-relaxed">{singleJob?.description || "N/A"}</p>
-              </div>
-              <div className="p-6 bg-slate-50 rounded-xl border border-slate-200 shadow-sm">
-                <h3 className="font-semibold text-xl mb-4 text-gray-800">Skills</h3>
-                <div className="flex flex-wrap gap-2">
-                  {singleJob?.skills?.length > 0 ? (
-                    singleJob.skills.map((skill, index) => (
-                      <Badge
-                        key={index}
-                        variant="outline"
-                        className="bg-indigo-100 text-indigo-800 px-3 py-1 rounded-full shadow-sm"
-                      >
-                        {skill}
+                <CardHeader className="pb-0 pt-14 pl-6">
+                  <div className="flex flex-col">
+                    <div className="flex items-center gap-2 mb-2">
+                      <Badge className="bg-indigo-100 text-indigo-800 px-3 py-1 rounded-full">
+                        {singleJob?.jobType}
                       </Badge>
-                    ))
-                  ) : (
-                    <span className="text-gray-700">N/A</span>
-                  )}
-                </div>
-              </div>
-              <div className="p-6 bg-slate-50 rounded-xl border border-slate-200 shadow-sm">
-                <h3 className="font-semibold text-xl mb-4 text-gray-800">Benefits</h3>
-                <ul className="list-disc pl-5 text-gray-700">
-                  {singleJob?.benefits?.length > 0 ? (
-                    singleJob.benefits.map((benefit, index) => (
-                      <li key={index} className="mb-2">{benefit}</li>
-                    ))
-                  ) : (
-                    <li>N/A</li>
-                  )}
-                </ul>
-              </div>
+                      <Badge className="bg-amber-100 text-amber-800 px-3 py-1 rounded-full">
+                        {singleJob?.workplacePlane}
+                      </Badge>
+                      <Badge className="bg-emerald-100 text-emerald-800 px-3 py-1 rounded-full">
+                        {formatDate(singleJob?.postedDate)}
+                      </Badge>
+                    </div>
+                    <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">{singleJob?.jobTitle}</h1>
+                    <div className="flex items-center mt-1 text-gray-600">
+                      <Link to={`/company/${singleJob?.company?._id}`} className="font-medium hover:text-indigo-600 transition">
+                        {singleJob?.companyName}
+                      </Link>
+                      <span className="mx-2">•</span>
+                      <div className="flex items-center">
+                        <MapPin className="h-4 w-4 mr-1" />
+                        <span>
+                          {singleJob?.workLocation?.city || "Remote"}
+                          {singleJob?.workLocation?.state && `, ${singleJob.workLocation.state}`}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                </CardHeader>
+
+                <CardContent className="pt-6 pb-8">
+                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 mb-8">
+                    <div className="bg-gray-50 rounded-xl p-4">
+                      <div className="flex items-center mb-2">
+                        <div className="p-2 bg-indigo-100 rounded-md">
+                          <DollarSign className="h-4 w-4 text-indigo-600" />
+                        </div>
+                        <span className="ml-2 text-sm font-medium text-gray-600">Salary</span>
+                      </div>
+                      <p className="text-gray-900 font-semibold">{getSalaryDisplay(singleJob)}</p>
+                    </div>
+                    <div className="bg-gray-50 rounded-xl p-4">
+                      <div className="flex items-center mb-2">
+                        <div className="p-2 bg-amber-100 rounded-md">
+                          <GraduationCap className="h-4 w-4 text-amber-600" />
+                        </div>
+                        <span className="ml-2 text-sm font-medium text-gray-600">Experience</span>
+                      </div>
+                      <p className="text-gray-900 font-semibold">
+                        {singleJob?.experienceLevel ? `${singleJob.experienceLevel} years` : "N/A"}
+                      </p>
+                    </div>
+                    <div className="bg-gray-50 rounded-xl p-4">
+                      <div className="flex items-center mb-2">
+                        <div className="p-2 bg-purple-100 rounded-md">
+                          <Users className="h-4 w-4 text-purple-600" />
+                        </div>
+                        <span className="ml-2 text-sm font-medium text-gray-600">Vacancies</span>
+                      </div>
+                      <p className="text-gray-900 font-semibold">{singleJob?.numberOfPositions || "N/A"}</p>
+                    </div>
+                  </div>
+
+                  <div className="space-y-6">
+                    <div>
+                      <h3 className="font-bold text-lg text-gray-900 mb-3">Job Description</h3>
+                      <div className="bg-gray-50 rounded-xl p-5 border border-gray-100">
+                        <p className="text-gray-700 leading-relaxed">{singleJob?.jobDescription || "N/A"}</p>
+                      </div>
+                    </div>
+
+                    <div>
+                      <h3 className="font-bold text-lg text-gray-900 mb-3">Skills Required</h3>
+                      <div className="flex flex-wrap gap-2">
+                        {singleJob?.skills?.length > 0 ? (
+                          singleJob.skills.map((skill, index) => (
+                            <Badge
+                              key={index}
+                              className="bg-indigo-100 text-indigo-800 border-0 px-3 py-1.5 rounded-lg text-sm"
+                            >
+                              {skill}
+                            </Badge>
+                          ))
+                        ) : (
+                          <span className="text-gray-500">No specific skills mentioned</span>
+                        )}
+                      </div>
+                    </div>
+
+                    <div>
+                      <h3 className="font-bold text-lg text-gray-900 mb-3">Benefits & Perks</h3>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        {singleJob?.benefits?.length > 0 ? (
+                          singleJob.benefits.map((benefit, index) => (
+                            <div key={index} className="flex items-center gap-3 bg-gray-50 p-3 rounded-lg border border-gray-100">
+                              <div className="p-1.5 bg-green-100 rounded-md">
+                                <CheckCircle2 className="h-4 w-4 text-green-600" />
+                              </div>
+                              <span className="text-gray-800">{benefit}</span>
+                            </div>
+                          ))
+                        ) : (
+                          <span className="text-gray-500">No benefits specified</span>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Company Information Card */}
+              <Card className="overflow-hidden border-0 shadow-xl bg-white rounded-2xl">
+                <CardContent className="p-6">
+                  <div className="flex items-center justify-between mb-4">
+                    <h3 className="font-bold text-lg text-gray-900">About the Company</h3>
+                    <Link
+                      to={`/company/${singleJob?.company?._id}`}
+                      className="text-indigo-600 hover:text-indigo-800 text-sm font-medium flex items-center"
+                    >
+                      View Company
+                      <ArrowRight className="h-4 w-4 ml-1" />
+                    </Link>
+                  </div>
+
+                  <div className="flex items-start gap-4">
+                    <div className="w-16 h-16 rounded-lg bg-gray-100 flex-shrink-0 flex items-center justify-center overflow-hidden">
+                      {singleJob?.company?.logo ? (
+                        <img
+                          src={singleJob.company.logo}
+                          alt={`${singleJob.companyName} logo`}
+                          className="w-full h-full object-cover"
+                        />
+                      ) : (
+                        <Building className="h-8 w-8 text-gray-500" />
+                      )}
+                    </div>
+
+                    <div>
+                      <h4 className="font-bold text-gray-900">{singleJob?.companyName}</h4>
+                      <p className="text-gray-500 text-sm mt-1">
+                        {singleJob?.company?.industry || "Technology"} • {singleJob?.company?.employeeCount || "Unknown"} employees
+                      </p>
+                      <div className="flex items-center mt-2">
+                        <div className="flex items-center text-amber-500">
+                          <Star className="h-4 w-4 fill-current" />
+                          <Star className="h-4 w-4 fill-current" />
+                          <Star className="h-4 w-4 fill-current" />
+                          <Star className="h-4 w-4 fill-current" />
+                          <Star className="h-4 w-4 text-gray-300" />
+                        </div>
+                        <span className="text-gray-500 text-sm ml-2">4.0 • 25 reviews</span>
+                      </div>
+                      <p className="text-gray-700 mt-3">
+                        {singleJob?.company?.description || "No company description available."}
+                      </p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
             </div>
-          </CardContent>
-        </Card>
-        <SuccessDialog />
+
+            {/* Application Sidebar */}
+            <div className="space-y-6">
+              {/* Job Actions Card */}
+              <Card className="overflow-hidden border-0 shadow-xl bg-white rounded-2xl sticky top-6">
+                <CardContent className="p-6">
+                  <h3 className="font-bold text-lg text-gray-900 mb-4">Apply for this position</h3>
+
+                  <div className="space-y-4">
+                    {/* Apply button for desktop */}
+                    <Button
+                      onClick={isApplied || isApplying ? null : applyJobHandler}
+                      disabled={isApplied || isApplying || profileStatus.missingFields.length > 0}
+                      className={`w-full py-6 rounded-xl text-base font-semibold shadow-lg transition ${
+                        isApplied
+                          ? "bg-green-100 text-green-700 border border-green-200"
+                          : isApplying
+                          ? "bg-gray-200 text-gray-600"
+                          : profileStatus.missingFields.length > 0
+                          ? "bg-gray-200 text-gray-600"
+                          : "bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-700 hover:to-violet-700 text-white"
+                      }`}
+                      aria-label={isApplied ? "Application submitted" : "Apply now"}
+                    >
+                      {isApplying ? (
+                        <>
+                          <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+                          Applying...
+                        </>
+                      ) : isApplied ? (
+                        <>
+                          <CheckCircle2 className="mr-2 h-5 w-5" />
+                          Application Submitted
+                        </>
+                      ) : (
+                        "Apply Now"
+                      )}
+                    </Button>
+
+                    {profileStatus.missingFields.length > 0 && (
+                      <div className="bg-red-50 border border-red-200 rounded-xl p-4">
+                        <div className="flex items-start">
+                          <AlertCircle className="h-5 w-5 text-red-600 mt-0.5" />
+                          <div className="ml-3">
+                            <h4 className="text-sm font-medium text-red-800">Complete your profile</h4>
+                            <p className="text-xs text-red-700 mt-1">
+                              Please add the following required information:
+                            </p>
+                            <ul className="mt-2 space-y-1">
+                              {profileStatus.missingFields.map((field, index) => (
+                                <li key={index} className="flex items-center text-xs text-red-700">
+                                  {field === "email" && <Mail className="h-3 w-3 mr-1" />}
+                                  {field === "phone number" && <Phone className="h-3 w-3 mr-1" />}
+                                  {field === "resume" && <FileText className="h-3 w-3 mr-1" />}
+                                  {field === "skills" && <ListChecks className="h-3 w-3 mr-1" />}
+                                  {field}
+                                </li>
+                              ))}
+                            </ul>
+                            <Link
+                              to="/profile"
+                              className="text-xs font-medium text-red-800 hover:text-red-900 underline mt-2 inline-block"
+                            >
+                              Complete Profile →
+                            </Link>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Job overview for quick reference */}
+                    <div className="bg-gray-50 rounded-xl p-5 border border-gray-100">
+                      <h4 className="font-medium text-gray-900 mb-3">Job Overview</h4>
+                      <div className="space-y-3 text-sm">
+                        <div className="flex justify-between">
+                          <span className="text-gray-600">Posted:</span>
+                          <span className="font-medium text-gray-900">{formatDate(singleJob?.postedDate)}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-gray-600">Job Type:</span>
+                          <span className="font-medium text-gray-900">{singleJob?.jobType}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-gray-600">Location:</span>
+                          <span className="font-medium text-gray-900">{singleJob?.workLocation?.city || "Remote"}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-gray-600">Category:</span>
+                          <span className="font-medium text-gray-900">{singleJob?.jobCategory}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-gray-600">Applications:</span>
+                          <span className="font-medium text-gray-900">{singleJob?.applications?.length || 0}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-gray-600">Status:</span>
+                          <Badge
+                            className={`${
+                              singleJob?.status === "Open"
+                                ? "bg-green-100 text-green-800"
+                                : "bg-amber-100 text-amber-800"
+                            }`}
+                          >
+                            {singleJob?.status}
+                          </Badge>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Similar Jobs Section */}
+                    <div>
+                      <h4 className="font-medium text-gray-900 mb-3">Similar Jobs</h4>
+                      <div className="space-y-3">
+                        {isSimilarJobsLoading ? (
+                          <>
+                            <Skeleton className="h-24 w-full rounded-xl" />
+                            <Skeleton className="h-24 w-full rounded-xl" />
+                            <Skeleton className="h-24 w-full rounded-xl" />
+                          </>
+                        ) : similarJobs.length > 0 ? (
+                          similarJobs.slice(0, 3).map((job) => (
+                            <Card key={job._id} className="border-0 shadow-sm bg-white rounded-xl">
+                              <CardContent className="p-4">
+                                <div className="flex items-center justify-between">
+                                  <div>
+                                    <h5 className="text-sm font-semibold text-gray-900">{job.jobTitle}</h5>
+                                    <p className="text-xs text-gray-600 mt-1">{job.companyName}</p>
+                                    <div className="flex items-center text-xs text-gray-600 mt-1">
+                                      <MapPin className="h-3 w-3 mr-1" />
+                                      <span>{job.workLocation?.city || "Remote"}</span>
+                                    </div>
+                                    <div className="flex items-center text-xs text-gray-600 mt-1">
+                                      <DollarSign className="h-3 w-3 mr-1" />
+                                      <span>{getSalaryDisplay(job)}</span>
+                                    </div>
+                                  </div>
+                                  <Link
+                                    to={`/jobs/${job._id}`}
+                                    className="text-indigo-600 hover:text-indigo-800 text-xs font-medium flex items-center"
+                                  >
+                                    View Job
+                                    <ArrowRight className="h-3 w-3 ml-1" />
+                                  </Link>
+                                </div>
+                              </CardContent>
+                            </Card>
+                          ))
+                        ) : (
+                          <p className="text-sm text-gray-500">No similar jobs found.</p>
+                        )}
+                      </div>
+                      {similarJobs.length > 3 && (
+                        <Link
+                          to="/jobs"
+                          className="text-indigo-600 hover:text-indigo-800 text-sm font-medium flex items-center mt-3"
+                        >
+                          View More Jobs
+                          <ArrowRight className="h-4 w-4 ml-1" />
+                        </Link>
+                      )}
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+          </div>
+        </div>
       </div>
+      <SuccessDialog />
       <Footer />
     </>
   );
