@@ -23,18 +23,43 @@ import {
 
 const Jobs = () => {
   const { allJobs, searchedQuery } = useSelector(store => store.job);
-  const [filterJobs, setFilterJobs] = useState(allJobs);
+  const [filterJobs, setFilterJobs] = useState([]);
+  const [error, setError] = useState(null);
+
+  console.log(allJobs);
+  
   
   useEffect(() => {
-    if (searchedQuery) {
-      const filteredJobs = allJobs.filter((job) => {
-        return job.title.toLowerCase().includes(searchedQuery.toLowerCase()) ||
-          job.description.toLowerCase().includes(searchedQuery.toLowerCase()) ||
-          job.location.toLowerCase().includes(searchedQuery.toLowerCase());
-      });
-      setFilterJobs(filteredJobs);
-    } else {
-      setFilterJobs(allJobs);
+    try {
+      // Make sure allJobs is an array
+      const jobsArray = Array.isArray(allJobs) ? allJobs : [];
+      
+      if (searchedQuery && searchedQuery.trim() !== '') {
+        const query = searchedQuery.toLowerCase();
+        
+        const filteredJobs = jobsArray.filter((job) => {
+          // Check if job properties exist before calling toLowerCase()
+          const title = job?.title?.toLowerCase() || '';
+          const description = job?.description?.toLowerCase() || '';
+          const location = job?.location?.toLowerCase() || '';
+          
+          return title.includes(query) || 
+                 description.includes(query) || 
+                 location.includes(query);
+        });
+        
+        setFilterJobs(filteredJobs);
+      } else {
+        setFilterJobs(jobsArray);
+      }
+      
+      // Clear any previous errors
+      setError(null);
+    } catch (err) {
+      console.error("Error filtering jobs:", err);
+      setError("An error occurred while filtering jobs. Please try again.");
+      // Set empty array for filtered jobs to prevent further errors
+      setFilterJobs([]);
     }
   }, [allJobs, searchedQuery]);
 
@@ -87,7 +112,16 @@ const Jobs = () => {
             </CardContent>
           </Card>
           
-          {filterJobs.length <= 0 ? (
+          {/* Display error message if an error occurred */}
+          {error && (
+            <Alert variant="destructive" className="mb-6">
+              <AlertCircle className="h-4 w-4" />
+              <AlertTitle>Error</AlertTitle>
+              <AlertDescription>{error}</AlertDescription>
+            </Alert>
+          )}
+          
+          {(!error && filterJobs.length <= 0) ? (
             <motion.div 
               className="flex flex-col items-center justify-center p-12 text-center"
               initial="hidden"
@@ -139,7 +173,7 @@ const Jobs = () => {
               variants={containerVariants}
             >
               {filterJobs.map((job) => (
-                <motion.div key={job.id} variants={itemVariants}>
+                <motion.div key={job?.id || `job-${Math.random()}`} variants={itemVariants}>
                   <Job job={job} />
                 </motion.div>
               ))}

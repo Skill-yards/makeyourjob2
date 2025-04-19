@@ -31,6 +31,7 @@ const corsOptions = {
         "http://localhost:4173",
         "https://www.makeyourjobs.com",
         "https://makeyourjobs.com",
+        "https://4bg6xfk4-5173.inc1.devtunnels.ms"
     ],
     credentials: true
 };

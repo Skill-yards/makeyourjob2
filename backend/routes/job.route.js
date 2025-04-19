@@ -10,6 +10,6 @@ router.route("/getadminjobs").get(isAuthenticated, getAdminJobs);
 router.route("/get/:id").get(getJobById);
 router.route("/admin-get/:id").get(isAuthenticated, adminGetJob)
 router.route("/update/:id").put(isAuthenticated, updateJob);
-router.route("/search").get(isAuthenticated,SearchJob );
+router.route("/search").get(SearchJob);
 export default router;
 

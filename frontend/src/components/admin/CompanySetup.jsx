@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useRef, useMemo } from 'react';
+import  { useEffect, useState, useRef } from 'react';
 import Navbar from '../shared/Navbar';
 import { Button } from '../ui/button';
 import { ArrowLeft, Loader2, Calendar } from 'lucide-react';
@@ -12,8 +12,6 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { toast } from 'sonner';
 import { useSelector } from 'react-redux';
 import useGetCompanyById from '@/hooks/useGetCompanyById';
-import * as Yup from 'yup';
-import clsx from 'clsx';
 
 const CompanySetup = () => {
   const params = useParams();
@@ -41,83 +39,77 @@ const CompanySetup = () => {
     panDocument: null,
   });
   const [errors, setErrors] = useState({});
-  const inputRefs = useRef({});
+  const inputRefs = useRef({}); // Store references to input fields for auto-focus and scrolling
 
-  // Validation schema using Yup
-  const validationSchema = useMemo(
-    () =>
-      Yup.object().shape({
-        name: Yup.string().required('Company name is required.'),
-        description: Yup.string().required('Description is required.'),
-        website: Yup.string()
-          .url('Please enter a valid website URL (e.g., https://example.com).')
-          .required('Website is required.'),
-        location: Yup.string().required('Location is required.'),
-        gstNumber: Yup.string()
-          .matches(/^\d{2}[A-Z]{5}\d{4}[A-Z][1-9A-Z]Z[0-9A-Z]$/, 'Invalid GST number format (e.g., 22AAAAA0000A1Z5).')
-          .required('GST number is required.'),
-        cinNumber: Yup.string()
-          .matches(/^[LU]\d{5}[A-Z]{2}\d{4}[A-Z]{3}\d{6}$/, 'Invalid CIN number format (e.g., L17110MH1990PLC054828).')
-          .required('CIN number is required.'),
-        panNumber: Yup.string()
-          .matches(/^[A-Z]{5}\d{4}[A-Z]$/, 'Invalid PAN number format (e.g., ABCDE1234F).')
-          .required('PAN number is required.'),
-        foundedYear: Yup.number()
-          .min(1800, `Year must be between 1800 and ${new Date().getFullYear()}.`)
-          .max(new Date().getFullYear(), `Year must be between 1800 and ${new Date().getFullYear()}.`)
-          .required('Founded year is required.'),
-        employeeCount: Yup.string().required('Employee count is required.'),
-        industry: Yup.string().required('Industry is required.'),
-        contactEmail: Yup.string()
-          .email('Please enter a valid email address.')
-          .required('Contact email is required.'),
-        contactPhone: Yup.string()
-          .matches(/^\+?[1-9]\d{1,14}$/, 'Please enter a valid phone number (e.g., +1234567890).')
-          .required('Contact phone is required.'),
-        file: Yup.mixed().when([], {
-          is: () => !singleCompany?.logo,
-          then: Yup.mixed().required('Company logo is required.'),
-        }),
-        gstDocument: Yup.mixed().when([], {
-          is: () => !singleCompany?.gstDocument,
-          then: Yup.mixed().required('GST document is required.'),
-        }),
-        cinDocument: Yup.mixed().when([], {
-          is: () => !singleCompany?.cinDocument,
-          then: Yup.mixed().required('CIN document is required.'),
-        }),
-        panDocument: Yup.mixed().when([], {
-          is: () => !singleCompany?.panDocument,
-          then: Yup.mixed().required('PAN document is required.'),
-        }),
-      }),
-    [singleCompany]
-  );
+  const validateField = (name, value) => {
+    const newErrors = {};
 
-  const validateField = async (name, value) => {
-    try {
-      await validationSchema.validateAt(name, { [name]: value });
-      return {};
-    } catch (err) {
-      return { [name]: err.message };
+    // Required field validations
+    if (name === 'name' && !value) newErrors.name = 'Company name is required.';
+    if (name === 'description' && !value) newErrors.description = 'Description is required.';
+    if (name === 'website' && !value) newErrors.website = 'Website is required.';
+    if (name === 'location' && !value) newErrors.location = 'Location is required.';
+    if (name === 'gstNumber' && !value) newErrors.gstNumber = 'GST number is required.';
+    if (name === 'cinNumber' && !value) newErrors.cinNumber = 'CIN number is required.';
+    if (name === 'panNumber' && !value) newErrors.panNumber = 'PAN number is required.';
+    if (name === 'foundedYear' && !value) newErrors.foundedYear = 'Founded year is required.';
+    if (name === 'employeeCount' && !value) newErrors.employeeCount = 'Employee count is required.';
+    if (name === 'industry' && !value) newErrors.industry = 'Industry is required.';
+    if (name === 'contactEmail' && !value) newErrors.contactEmail = 'Contact email is required.';
+    if (name === 'contactPhone' && !value) newErrors.contactPhone = 'Contact phone is required.';
+    if (name === 'file' && !value && !singleCompany?.logo) newErrors.file = 'Company logo is required.';
+    if (name === 'gstDocument' && !value && !singleCompany?.gstDocument) newErrors.gstDocument = 'GST document is required.';
+    if (name === 'cinDocument' && !value && !singleCompany?.cinDocument) newErrors.cinDocument = 'CIN document is required.';
+    if (name === 'panDocument' && !value && !singleCompany?.panDocument) newErrors.panDocument = 'PAN document is required.';
+
+    // Format validations
+    if (name === 'website' && value && !/^https?:\/\/[^\s/$.?#].[^\s]*$/.test(value)) {
+      newErrors.website = 'Please enter a valid website URL (e.g., https://example.com).';
     }
+    if (name === 'gstNumber' && value && !/^\d{2}[A-Z]{5}\d{4}[A-Z][1-9A-Z]Z[0-9A-Z]$/.test(value)) {
+      newErrors.gstNumber = 'Invalid GST number format (e.g., 22AAAAA0000A1Z5).';
+    }
+    if (name === 'cinNumber' && value && !/^[LU]\d{5}[A-Z]{2}\d{4}[A-Z]{3}\d{6}$/.test(value)) {
+      newErrors.cinNumber = 'Invalid CIN number format (e.g., L17110MH1990PLC054828).';
+    }
+    if (name === 'panNumber' && value && !/^[A-Z]{5}\d{4}[A-Z]$/.test(value)) {
+      newErrors.panNumber = 'Invalid PAN number format (e.g., ABCDE1234F).';
+    }
+    if (name === 'foundedYear' && value) {
+      const year = Number(value);
+      if (year < 1800 || year > new Date().getFullYear())
+        newErrors.foundedYear = `Year must be between 1800 and ${new Date().getFullYear()}.`;
+    }
+    if (name === 'contactEmail' && value && !/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/.test(value)) {
+      newErrors.contactEmail = 'Please enter a valid email address.';
+    }
+    if (name === 'contactPhone' && value && !/^\+?[1-9]\d{1,14}$/.test(value)) {
+      newErrors.contactPhone = 'Please enter a valid phone number (e.g., +1234567890).';
+    }
+
+    return newErrors;
   };
 
-  const validateAllInputs = async () => {
-    try {
-      await validationSchema.validate(input, { abortEarly: false });
-      setErrors({});
-      return true;
-    } catch (err) {
-      const newErrors = err.inner.reduce((acc, error) => ({ ...acc, [error.path]: error.message }), {});
-      setErrors(newErrors);
+  const validateAllInputs = () => {
+    const newErrors = {};
+
+    Object.keys(input).forEach((key) => {
+      const fieldErrors = validateField(key, input[key]);
+      Object.assign(newErrors, fieldErrors);
+    });
+
+    setErrors(newErrors);
+
+    // Auto-focus and scroll to the first field with an error
+    if (Object.keys(newErrors).length > 0) {
       const firstErrorField = Object.keys(newErrors)[0];
       if (inputRefs.current[firstErrorField]) {
         inputRefs.current[firstErrorField].focus();
         inputRefs.current[firstErrorField].scrollIntoView({ behavior: 'smooth', block: 'center' });
       }
-      return false;
     }
+
+    return Object.keys(newErrors).length === 0;
   };
 
   const changeEventHandler = (e) => {
@@ -126,57 +118,52 @@ const CompanySetup = () => {
     setErrors({ ...errors, [name]: '' });
   };
 
-  const handleBlur = async (e) => {
+  const handleBlur = (e) => {
     const { name, value } = e.target;
-    const fieldErrors = await validateField(name, value);
+    const fieldErrors = validateField(name, value);
     setErrors((prev) => ({ ...prev, ...fieldErrors }));
+
+    // If there's an error, scroll to and focus the field
     if (fieldErrors[name] && inputRefs.current[name]) {
       inputRefs.current[name].focus();
       inputRefs.current[name].scrollIntoView({ behavior: 'smooth', block: 'center' });
     }
   };
 
-  const changeFileHandler = async (e) => {
+  const changeFileHandler = (e) => {
     const { name } = e.target;
     const file = e.target.files?.[0];
-    if (file) {
-      // Validate file size (max 5MB)
-      if (file.size > 5 * 1024 * 1024) {
-        setErrors((prev) => ({ ...prev, [name]: 'File size must be less than 5MB.' }));
-        return;
-      }
-      // Validate file type
-      const validTypes = name === 'file' ? ['image/jpeg', 'image/png'] : ['application/pdf', 'image/jpeg', 'image/png'];
-      if (!validTypes.includes(file.type)) {
-        setErrors((prev) => ({ ...prev, [name]: 'Invalid file type. Please upload an image or PDF.' }));
-        return;
-      }
-    }
     setInput({ ...input, [name]: file });
-    const fieldErrors = await validateField(name, file);
+    const fieldErrors = validateField(name, file);
     setErrors((prev) => ({ ...prev, ...fieldErrors }));
+
+    // If there's an error, scroll to and focus the field
     if (fieldErrors[name] && inputRefs.current[name]) {
       inputRefs.current[name].focus();
       inputRefs.current[name].scrollIntoView({ behavior: 'smooth', block: 'center' });
     }
   };
 
-  const handleSelectChange = async (name, value) => {
+  const handleSelectChange = (name, value) => {
     setInput({ ...input, [name]: value });
-    const fieldErrors = await validateField(name, value);
+    const fieldErrors = validateField(name, value);
     setErrors((prev) => ({ ...prev, ...fieldErrors }));
+
+    // If there's an error, scroll to and focus the field
     if (fieldErrors[name] && inputRefs.current[name]) {
       inputRefs.current[name].focus();
       inputRefs.current[name].scrollIntoView({ behavior: 'smooth', block: 'center' });
     }
   };
 
-  const handleYearSelect = async (year) => {
+  const handleYearSelect = (year) => {
     const yearStr = year.toString();
     setInput({ ...input, foundedYear: yearStr });
-    const fieldErrors = await validateField('foundedYear', yearStr);
+    const fieldErrors = validateField('foundedYear', yearStr);
     setErrors((prev) => ({ ...prev, ...fieldErrors }));
     setShowCalendar(false);
+
+    // If there's an error, scroll to and focus the field
     if (fieldErrors.foundedYear && inputRefs.current.foundedYear) {
       inputRefs.current.foundedYear.focus();
       inputRefs.current.foundedYear.scrollIntoView({ behavior: 'smooth', block: 'center' });
@@ -185,7 +172,7 @@ const CompanySetup = () => {
 
   const submitHandler = async (e) => {
     e.preventDefault();
-    if (!(await validateAllInputs())) {
+    if (!validateAllInputs()) {
       toast.error('Please correct the errors in the form before submitting.');
       return;
     }
@@ -211,6 +198,8 @@ const CompanySetup = () => {
       const errorDetails = error.response?.data?.errors || [];
       setErrors(errorDetails.reduce((acc, err) => ({ ...acc, [err.path]: err.message }), {}));
       toast.error(errorMsg);
+
+      // Scroll to and focus the first server-side error field
       if (errorDetails.length > 0) {
         const firstErrorField = errorDetails[0].path;
         if (inputRefs.current[firstErrorField]) {
@@ -246,12 +235,11 @@ const CompanySetup = () => {
     }
   }, [singleCompany]);
 
-  // Memoized years array
-  const years = useMemo(() => {
-    const currentYear = new Date().getFullYear();
-    return Array.from({ length: currentYear - 1800 + 1 }, (_, i) => currentYear - i);
-  }, []);
+  // Generate years for calendar dropdown (1800 to current year)
+  const currentYear = new Date().getFullYear();
+  const years = Array.from({ length: currentYear - 1800 + 1 }, (_, i) => currentYear - i);
 
+  // Helper to render file links
   const renderFileLink = (field, label) => {
     const file = input[field];
     const existingUrl = singleCompany?.[field];
@@ -311,7 +299,7 @@ const CompanySetup = () => {
                     onChange={changeEventHandler}
                     onBlur={handleBlur}
                     ref={(el) => (inputRefs.current.name = el)}
-                    className={clsx('mt-1', errors.name && 'border-red-500 focus:ring-red-500 focus:border-red-500')}
+                    className={`mt-1 ${errors.name ? 'border-red-500 focus:ring-red-500 focus:border-red-500' : ''}`}
                     placeholder="e.g., TechCorp"
                     required
                   />
@@ -329,7 +317,7 @@ const CompanySetup = () => {
                     onChange={changeEventHandler}
                     onBlur={handleBlur}
                     ref={(el) => (inputRefs.current.website = el)}
-                    className={clsx('mt-1', errors.website && 'border-red-500 focus:ring-red-500 focus:border-red-500')}
+                    className={`mt-1 ${errors.website ? 'border-red-500 focus:ring-red-500 focus:border-red-500' : ''}`}
                     placeholder="e.g., https://techcorp.com"
                     required
                   />
@@ -347,7 +335,7 @@ const CompanySetup = () => {
                     onChange={changeEventHandler}
                     onBlur={handleBlur}
                     ref={(el) => (inputRefs.current.description = el)}
-                    className={clsx('mt-1', errors.description && 'border-red-500 focus:ring-red-500 focus:border-red-500')}
+                    className={`mt-1 ${errors.description ? 'border-red-500 focus:ring-red-500 focus:border-red-500' : ''}`}
                     placeholder="e.g., A leading tech company..."
                     required
                   />
@@ -365,7 +353,7 @@ const CompanySetup = () => {
                     onChange={changeEventHandler}
                     onBlur={handleBlur}
                     ref={(el) => (inputRefs.current.location = el)}
-                    className={clsx('mt-1', errors.location && 'border-red-500 focus:ring-red-500 focus:border-red-500')}
+                    className={`mt-1 ${errors.location ? 'border-red-500 focus:ring-red-500 focus:border-red-500' : ''}`}
                     placeholder="e.g., San Francisco, CA"
                     required
                   />
@@ -383,7 +371,7 @@ const CompanySetup = () => {
                     onChange={changeEventHandler}
                     onBlur={handleBlur}
                     ref={(el) => (inputRefs.current.gstNumber = el)}
-                    className={clsx('mt-1', errors.gstNumber && 'border-red-500 focus:ring-red-500 focus:border-red-500')}
+                    className={`mt-1 ${errors.gstNumber ? 'border-red-500 focus:ring-red-500 focus:border-red-500' : ''}`}
                     placeholder="e.g., 22AAAAA0000A1Z5"
                     required
                   />
@@ -401,7 +389,7 @@ const CompanySetup = () => {
                     onChange={changeEventHandler}
                     onBlur={handleBlur}
                     ref={(el) => (inputRefs.current.cinNumber = el)}
-                    className={clsx('mt-1', errors.cinNumber && 'border-red-500 focus:ring-red-500 focus:border-red-500')}
+                    className={`mt-1 ${errors.cinNumber ? 'border-red-500 focus:ring-red-500 focus:border-red-500' : ''}`}
                     placeholder="e.g., L17110MH1990PLC054828"
                     required
                   />
@@ -419,7 +407,7 @@ const CompanySetup = () => {
                     onChange={changeEventHandler}
                     onBlur={handleBlur}
                     ref={(el) => (inputRefs.current.panNumber = el)}
-                    className={clsx('mt-1', errors.panNumber && 'border-red-500 focus:ring-red-500 focus:border-red-500')}
+                    className={`mt-1 ${errors.panNumber ? 'border-red-500 focus:ring-red-500 focus:border-red-500' : ''}`}
                     placeholder="e.g., ABCDE1234F"
                     required
                   />
@@ -438,7 +426,7 @@ const CompanySetup = () => {
                       onChange={changeEventHandler}
                       onBlur={handleBlur}
                       ref={(el) => (inputRefs.current.foundedYear = el)}
-                      className={clsx('mt-1 pr-10', errors.foundedYear && 'border-red-500 focus:ring-red-500 focus:border-red-500')}
+                      className={`mt-1 pr-10 ${errors.foundedYear ? 'border-red-500 focus:ring-red-500 focus:border-red-500' : ''}`}
                       placeholder="e.g., 1990"
                       readOnly
                       required
@@ -477,7 +465,7 @@ const CompanySetup = () => {
                   >
                     <SelectTrigger
                       ref={(el) => (inputRefs.current.employeeCount = el)}
-                      className={clsx('mt-1', errors.employeeCount && 'border-red-500 focus:ring-red-500 focus:border-red-500')}
+                      className={`mt-1 ${errors.employeeCount ? 'border-red-500 focus:ring-red-500 focus:border-red-500' : ''}`}
                     >
                       <SelectValue placeholder="Select range" />
                     </SelectTrigger>
@@ -503,7 +491,7 @@ const CompanySetup = () => {
                   >
                     <SelectTrigger
                       ref={(el) => (inputRefs.current.industry = el)}
-                      className={clsx('mt-1', errors.industry && 'border-red-500 focus:ring-red-500 focus:border-red-500')}
+                      className={`mt-1 ${errors.industry ? 'border-red-500 focus:ring-red-500 focus:border-red-500' : ''}`}
                     >
                       <SelectValue placeholder="Select industry" />
                     </SelectTrigger>
@@ -531,7 +519,7 @@ const CompanySetup = () => {
                     onChange={changeEventHandler}
                     onBlur={handleBlur}
                     ref={(el) => (inputRefs.current.contactEmail = el)}
-                    className={clsx('mt-1', errors.contactEmail && 'border-red-500 focus:ring-red-500 focus:border-red-500')}
+                    className={`mt-1 ${errors.contactEmail ? 'border-red-500 focus:ring-red-500 focus:border-red-500' : ''}`}
                     placeholder="e.g., contact@techcorp.com"
                     required
                   />
@@ -549,7 +537,7 @@ const CompanySetup = () => {
                     onChange={changeEventHandler}
                     onBlur={handleBlur}
                     ref={(el) => (inputRefs.current.contactPhone = el)}
-                    className={clsx('mt-1', errors.contactPhone && 'border-red-500 focus:ring-red-500 focus:border-red-500')}
+                    className={`mt-1 ${errors.contactPhone ? 'border-red-500 focus:ring-red-500 focus:border-red-500' : ''}`}
                     placeholder="e.g., +1234567890"
                     required
                   />
@@ -566,7 +554,7 @@ const CompanySetup = () => {
                     accept="image/*"
                     onChange={changeFileHandler}
                     ref={(el) => (inputRefs.current.file = el)}
-                    className={clsx('mt-1', errors.file && 'border-red-500 focus:ring-red-500 focus:border-red-500')}
+                    className={`mt-1 ${errors.file ? 'border-red-500 focus:ring-red-500 focus:border-red-500' : ''}`}
                     required={!singleCompany?.logo}
                   />
                   {renderFileLink('logo', 'Company Logo') && (
@@ -587,7 +575,7 @@ const CompanySetup = () => {
                     accept="application/pdf,image/*"
                     onChange={changeFileHandler}
                     ref={(el) => (inputRefs.current.gstDocument = el)}
-                    className={clsx('mt-1', errors.gstDocument && 'border-red-500 focus:ring-red-500 focus:border-red-500')}
+                    className={`mt-1 ${errors.gstDocument ? 'border-red-500 focus:ring-red-500 focus:border-red-500' : ''}`}
                     required={!singleCompany?.gstDocument}
                   />
                   {renderFileLink('gstDocument', 'GST Document') && (
@@ -608,7 +596,7 @@ const CompanySetup = () => {
                     accept="application/pdf,image/*"
                     onChange={changeFileHandler}
                     ref={(el) => (inputRefs.current.cinDocument = el)}
-                    className={clsx('mt-1', errors.cinDocument && 'border-red-500 focus:ring-red-500 focus:border-red-500')}
+                    className={`mt-1 ${errors.cinDocument ? 'border-red-500 focus:ring-red-500 focus:border-red-500' : ''}`}
                     required={!singleCompany?.cinDocument}
                   />
                   {renderFileLink('cinDocument', 'CIN Document') && (
@@ -629,7 +617,7 @@ const CompanySetup = () => {
                     accept="application/pdf,image/*"
                     onChange={changeFileHandler}
                     ref={(el) => (inputRefs.current.panDocument = el)}
-                    className={clsx('mt-1', errors.panDocument && 'border-red-500 focus:ring-red-500 focus:border-red-500')}
+                    className={`mt-1 ${errors.panDocument ? 'border-red-500 focus:ring-red-500 focus:border-red-500' : ''}`}
                     required={!singleCompany?.panDocument}
                   />
                   {renderFileLink('panDocument', 'PAN Document') && (

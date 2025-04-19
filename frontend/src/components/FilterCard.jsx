@@ -54,6 +54,8 @@ const FilterCard = () => {
     dispatch(setSearchedQuery(queryString));
   }, [selectedValues, dispatch]);
 
+  console.log(selectedValues, "selectedValues");
+
   return (
     <Card className="w-full shadow-md bg-white">
       <CardHeader className="pb-2">
