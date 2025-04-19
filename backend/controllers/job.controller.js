@@ -1,7 +1,7 @@
 import { Job } from "../models/job.model.js";
-
+import { Company } from "../models/company.model.js";
 export const postJob = async (req, res) => {
-  console.log(req.body,"dhadso")
+  console.log(req.body, 'dhadso');
   try {
     const {
       jobTitle,
@@ -20,30 +20,31 @@ export const postJob = async (req, res) => {
     } = req.body;
 
     const userId = req.id; // Assuming req.id is set by authentication middleware
-    console.log(companyId,"jfejhe check....")
+    console.log(companyId, 'jfejhe check....');
+
     // Validate required fields
     const requiredFields = {
-      jobTitle: "Job title is required",
-      jobDescription: "Job description is required",
-      "workLocation.city": workLocation?.city ? undefined : "City is required",
-      "workLocation.state": workLocation?.state ? undefined : "State is required",
-      "workLocation.pincode": workLocation?.pincode ? undefined : "Pincode is required",
-      "workLocation.area": workLocation?.area ? undefined : "Area is required",
-      "workLocation.streetAddress": workLocation?.streetAddress ? undefined : "Street address is required",
-      jobType: "Job type is required",
-      experienceLevel: "Experience level is required",
-      companyId: "Company ID is required",
-      companyName: "Company name is required",
-      workplacePlane: "Workplace plane is required",
-      jobCategory: "Job category is required",
-      skills: "At least one skill is required",
-      numberOfPositions: "Number of positions is required",
+      jobTitle: 'Job title is required',
+      jobDescription: 'Job description is required',
+      'workLocation.city': workLocation?.city ? undefined : 'City is required',
+      'workLocation.state': workLocation?.state ? undefined : 'State is required',
+      'workLocation.pincode': workLocation?.pincode ? undefined : 'Pincode is required',
+      'workLocation.area': workLocation?.area ? undefined : 'Area is required',
+      'workLocation.streetAddress': workLocation?.streetAddress ? undefined : 'Street address is required',
+      jobType: 'Job type is required',
+      experienceLevel: 'Experience level is required',
+      companyId: 'Company ID is required',
+      companyName: 'Company name is required',
+      workplacePlane: 'Workplace plane is required',
+      jobCategory: 'Job category is required',
+      skills: 'At least one skill is required',
+      numberOfPositions: 'Number of positions is required',
     };
 
     for (const [field, message] of Object.entries(requiredFields)) {
       if (message) {
-        const value = field.includes("workLocation")
-          ? workLocation[field.split(".")[1]]
+        const value = field.includes('workLocation')
+          ? workLocation[field.split('.')[1]]
           : req.body[field];
         if (!value || (Array.isArray(value) && value.length === 0)) {
           return res.status(400).json({
@@ -57,7 +58,7 @@ export const postJob = async (req, res) => {
     // Validate pincode format
     if (!/^\d{6}$/.test(workLocation.pincode)) {
       return res.status(400).json({
-        message: "Pincode must be a 6-digit number",
+        message: 'Pincode must be a 6-digit number',
         success: false,
       });
     }
@@ -66,7 +67,7 @@ export const postJob = async (req, res) => {
     const experience = parseFloat(experienceLevel);
     if (isNaN(experience) || experience < 0) {
       return res.status(400).json({
-        message: "Experience level must be a non-negative number",
+        message: 'Experience level must be a non-negative number',
         success: false,
       });
     }
@@ -75,7 +76,7 @@ export const postJob = async (req, res) => {
     const positions = parseInt(numberOfPositions);
     if (isNaN(positions) || positions < 1) {
       return res.status(400).json({
-        message: "Number of positions must be at least 1",
+        message: 'Number of positions must be at least 1',
         success: false,
       });
     }
@@ -83,7 +84,7 @@ export const postJob = async (req, res) => {
     // Validate skills (ensure it's an array and not empty)
     if (!Array.isArray(skills) || skills.length === 0) {
       return res.status(400).json({
-        message: "At least one skill is required",
+        message: 'At least one skill is required',
         success: false,
       });
     }
@@ -92,7 +93,7 @@ export const postJob = async (req, res) => {
     const parsedBenefits = Array.isArray(benefits) ? benefits : [];
     if (parsedBenefits.length === 0) {
       return res.status(400).json({
-        message: "At least one benefit is required",
+        message: 'At least one benefit is required',
         success: false,
       });
     }
@@ -104,40 +105,37 @@ export const postJob = async (req, res) => {
       const max = parseFloat(salaryRange.maxSalary);
       if (isNaN(min) || isNaN(max) || min < 0 || max < min) {
         return res.status(400).json({
-          message: "Invalid salary range: min must be less than or equal to max and both non-negative",
+          message: 'Invalid salary range: min must be less than or equal to max and both non-negative',
           success: false,
         });
       }
       formattedSalaryRange = {
-        min: min,
-        max: max,
-        currency: "INR",
-        frequency: "yearly",
+        min,
+        max,
+        currency: 'INR',
+        frequency: 'yearly',
       };
     }
 
-    // Validate companyId exists in database (assuming Company model exists)
-    // const Company = require("../models/Company"); // Adjust path as needed
-  
+    // Validate companyId exists in database
     const companyExists = await Company.findById(companyId);
     if (!companyExists) {
       return res.status(400).json({
-        message: "Invalid company ID",
+        message: 'Invalid company ID',
         success: false,
       });
     }
 
-    // Validate workplacePlane (optional, add allowed values if needed)
-    const validWorkplacePlanes = ["Office", "Remote", "Hybrid"];
+    // Validate workplacePlane
+    const validWorkplacePlanes = ['Office', 'Remote', 'Hybrid'];
     if (!validWorkplacePlanes.includes(workplacePlane)) {
       return res.status(400).json({
-        message: "Workplace plane must be one of: Office, Remote, Hybrid",
+        message: 'Workplace plane must be one of: Office, Remote, Hybrid',
         success: false,
       });
     }
 
     // Create job document
-    // const Job = require("../models/Job"); // Adjust path as needed
     const job = await Job.create({
       jobTitle,
       description: jobDescription,
@@ -147,11 +145,11 @@ export const postJob = async (req, res) => {
         pincode: workLocation.pincode,
         area: workLocation.area,
         streetAddress: workLocation.streetAddress,
-        country: "India",
+        country: 'India',
       },
       jobType,
-      experienceLevel: experience.toString(), // Store as string
-      company: companyId,
+      experienceLevel: experience.toString(),
+      company: companyId, // Changed to match schema
       companyName,
       workplacePlane,
       jobCategory,
@@ -160,36 +158,37 @@ export const postJob = async (req, res) => {
       salaryRange: formattedSalaryRange,
       numberOfPositions: positions,
       created_by: userId,
-      status: "Open",
+      status: 'Open',
     });
 
     return res.status(201).json({
-      message: "Job created successfully",
+      message: 'Job created successfully',
       job,
       success: true,
     });
   } catch (error) {
-    console.error("Error posting job:", error);
-    if (error.name === "ValidationError") {
+    console.error('Error posting job:', error);
+    if (error.name === 'ValidationError') {
       const messages = Object.values(error.errors).map((err) => err.message);
       return res.status(400).json({
-        message: "Validation failed",
+        message: 'Validation failed',
         errors: messages,
         success: false,
       });
     }
-    if (error.name === "CastError") {
+    if (error.name === 'CastError') {
       return res.status(400).json({
-        message: "Invalid ID format",
+        message: 'Invalid ID format',
         success: false,
       });
     }
     return res.status(500).json({
-      message: "Internal server error",
+      message: 'Internal server error',
       success: false,
     });
   }
 };
+
 
 export const SearchJob = async (req, res) => {
   try {
@@ -211,7 +210,7 @@ export const SearchJob = async (req, res) => {
       query.jobTitle = { $regex: jobTitle, $options: "i" }; // Case-insensitive search
     }
     if (city && city !== "all") {
-      query["workLocation.state"] = { $regex: city, $options: "i" }; // Filter by state
+      query["workLocation.city"] = { $regex: city, $options: "i" }; // Filter by state
     }
 
     // Execute query with pagination, population, and sorting
