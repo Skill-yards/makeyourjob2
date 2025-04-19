@@ -2,18 +2,18 @@ import { useEffect, useState } from 'react';
 import { Badge } from './../ui/badge';
 import { Button } from './../ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from './../ui/card';
-import { useNavigate, useParams } from 'react-router-dom';
+import { Link, useNavigate, useParams } from 'react-router-dom';
 import axios from 'axios';
 import { APPLICATION_API_END_POINT, JOB_API_END_POINT } from '@/utils/constant';
 import { setSingleJob } from '@/redux/jobSlice';
 import { useDispatch, useSelector } from 'react-redux';
 import { toast } from 'sonner';
-import { 
-  Loader2, 
-  MapPin, 
-  Briefcase, 
-  DollarSign, 
-  Users, 
+import {
+  Loader2,
+  MapPin,
+  Briefcase,
+  DollarSign,
+  Users,
   Calendar,
   AlertCircle,
   CheckCircle2,
@@ -63,8 +63,9 @@ const AdminSingleWithApply = () => {
         setIsLoading(true);
         setError(null);
         const res = await axios.get(`${JOB_API_END_POINT}/admin-get/${jobId}`, { withCredentials: true });
-        
+
         if (res.data.success) {
+          console.log(res.data.job);
           dispatch(setSingleJob(res.data.job));
           setIsApplied(res.data.job.applications.some(app => app.applicant === user?._id));
         } else {
@@ -105,6 +106,17 @@ const AdminSingleWithApply = () => {
       toast.success('Link copied to clipboard');
     }
   };
+  const getStatusBgClass = (status) => {
+    switch (status?.toLowerCase()) {
+      case 'accepted':
+        return 'bg-green-500';
+      case 'rejected':
+        return 'bg-red-500';
+      case 'pending':
+      default:
+        return 'bg-yellow-500';
+    }
+  };
 
   const SuccessDialog = () => (
     <Dialog open={showSuccessDialog} onOpenChange={setShowSuccessDialog}>
@@ -121,7 +133,7 @@ const AdminSingleWithApply = () => {
           </DialogDescription>
         </DialogHeader>
         <div className="flex justify-center mt-4">
-          <Button 
+          <Button
             onClick={() => setShowSuccessDialog(false)}
             className="px-8 bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600"
           >
@@ -178,19 +190,19 @@ const AdminSingleWithApply = () => {
   const today = new Date();
   const diffTime = Math.abs(today - postedDate);
   const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-  const formattedPostedDate = diffDays <= 1 
-    ? 'Today' 
-    : diffDays < 7 
-      ? `${diffDays} days ago` 
+  const formattedPostedDate = diffDays <= 1
+    ? 'Today'
+    : diffDays < 7
+      ? `${diffDays} days ago`
       : postedDate.toLocaleDateString('en-US', {
-          year: 'numeric',
-          month: 'long',
-          day: 'numeric'
-        });
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric'
+      });
 
   return (
     <div className="max-w-7xl mx-auto my-6 px-4 sm:px-6 lg:px-8">
-      <Navbar/>
+      <Navbar />
       {/* Mobile Back Button */}
       <div className="mb-4 lg:hidden">
         <Button variant="ghost" onClick={() => navigate(-1)} className="hover:bg-slate-100">
@@ -209,8 +221,8 @@ const AdminSingleWithApply = () => {
                 <div className="flex items-center gap-4 w-full">
                   {singleJob.company?.logo ? (
                     <div className="h-16 w-16 p-1 rounded-lg border border-slate-200 bg-white flex items-center justify-center shadow-sm">
-                      <img 
-                        src={singleJob.company.logo} 
+                      <img
+                        src={singleJob.company.logo}
                         alt={`${singleJob.companyName} logo`}
                         className="h-14 w-14 object-contain"
                       />
@@ -258,7 +270,7 @@ const AdminSingleWithApply = () => {
                   Posted {formattedPostedDate}
                 </Badge>
               </div>
-{/* 
+              {/* 
               <div className="flex gap-2 mt-2">
                 <Button
                   onClick={handleApply}
@@ -300,7 +312,7 @@ const AdminSingleWithApply = () => {
                 Applicants ({singleJob.applications?.length || 0})
               </TabsTrigger>
             </TabsList>
-            
+
             {/* Details Tab */}
             <TabsContent value="details" className="space-y-6 mt-2">
               {/* Job Description */}
@@ -350,7 +362,7 @@ const AdminSingleWithApply = () => {
                 </Card>
               )}
             </TabsContent>
-            
+
             {/* Company Tab */}
             <TabsContent value="company" className="space-y-6 mt-2">
               <Card className="shadow-sm border-slate-200">
@@ -367,7 +379,7 @@ const AdminSingleWithApply = () => {
                       <p className="text-slate-600">{singleJob.companyName}</p>
                     </div>
                   </div>
-                  
+
                   <div className="flex items-start gap-3">
                     <div className="p-2 bg-slate-100 rounded-full">
                       <MapPin className="h-5 w-5 text-slate-600" />
@@ -379,7 +391,7 @@ const AdminSingleWithApply = () => {
                       </p>
                     </div>
                   </div>
-                  
+
                   <div className="flex items-start gap-3">
                     <div className="p-2 bg-slate-100 rounded-full">
                       <Globe className="h-5 w-5 text-slate-600" />
@@ -387,10 +399,10 @@ const AdminSingleWithApply = () => {
                     <div>
                       <h3 className="font-medium text-slate-800">Website</h3>
                       {singleJob.company?.website ? (
-                        <a 
-                          href={singleJob.company.website} 
-                          target="_blank" 
-                          rel="noopener noreferrer" 
+                        <a
+                          href={singleJob.company.website}
+                          target="_blank"
+                          rel="noopener noreferrer"
                           className="text-indigo-600 hover:underline"
                         >
                           {singleJob.company.website.replace(/^https?:\/\/(www\.)?/i, '')}
@@ -425,7 +437,7 @@ const AdminSingleWithApply = () => {
                 </CardContent>
               </Card>
             </TabsContent>
-            
+
             {/* Applicants Tab */}
             <TabsContent value="applicants" className="space-y-6 mt-2">
               <Card className="shadow-sm border-slate-200">
@@ -441,21 +453,26 @@ const AdminSingleWithApply = () => {
                         <div key={application._id} className="p-4 bg-slate-50 rounded-lg border border-slate-200 hover:bg-slate-100 transition-colors">
                           <div className="flex items-center gap-4">
                             <Avatar className="h-12 w-12 border-2 border-white">
-                              <AvatarImage src={application.applicant?.profile?.avatar} alt={application.applicant?.fullname} />
+                              <AvatarImage src={application.applicant?.profile?.profilePhoto} alt={application.applicant?.fullname} />
                               <AvatarFallback className="bg-indigo-100 text-indigo-600">{application.applicant?.fullname?.charAt(0)}</AvatarFallback>
                             </Avatar>
                             <div className="flex-1">
                               <div className="flex justify-between items-start">
                                 <div>
-                                  <p className="font-medium text-slate-800">{application.applicant?.fullname}</p>
                                   <p className="text-sm text-slate-600">{application.applicant?.email}</p>
                                 </div>
                                 <div className="flex gap-1">
-                                  <Button variant="outline" size="sm" className="h-8 rounded-full">
-                                    View Profile
-                                  </Button>
-                                  <Button variant="outline" size="sm" className="h-8 rounded-full">
-                                    Contact
+                                  <Link to={`/admin/jobs/${jobId}/applicants/${application._id}`}>
+                                    <Button variant="outline" size="sm" className="h-8 rounded-full">
+                                      View Profile
+                                    </Button>
+                                  </Link>
+                                  <Button
+                                    variant="outline"
+                                    size="sm"
+                                    className={`h-8 rounded-full text-white ${getStatusBgClass(application.status)}`}
+                                  >
+                                    {application.status}
                                   </Button>
                                 </div>
                               </div>
@@ -503,7 +520,7 @@ const AdminSingleWithApply = () => {
                     <p className="text-slate-800">{singleJob.jobType}</p>
                   </div>
                 </div>
-                
+
                 <div className="flex items-start gap-3">
                   <div className="p-2 bg-emerald-50 rounded-full">
                     <MapPin className="h-5 w-5 text-emerald-600" />
@@ -516,7 +533,7 @@ const AdminSingleWithApply = () => {
                     </p>
                   </div>
                 </div>
-                
+
                 <div className="flex items-start gap-3">
                   <div className="p-2 bg-violet-50 rounded-full">
                     <DollarSign className="h-5 w-5 text-violet-600" />
@@ -530,7 +547,7 @@ const AdminSingleWithApply = () => {
                     </p>
                   </div>
                 </div>
-                
+
                 <div className="flex items-start gap-3">
                   <div className="p-2 bg-amber-50 rounded-full">
                     <Award className="h-5 w-5 text-amber-600" />
@@ -540,7 +557,7 @@ const AdminSingleWithApply = () => {
                     <p className="text-slate-800">{singleJob.experienceLevel} years</p>
                   </div>
                 </div>
-                
+
                 <div className="flex items-start gap-3">
                   <div className="p-2 bg-rose-50 rounded-full">
                     <Tag className="h-5 w-5 text-rose-600" />
@@ -550,7 +567,7 @@ const AdminSingleWithApply = () => {
                     <p className="text-slate-800">{singleJob.jobCategory}</p>
                   </div>
                 </div>
-                
+
                 <div className="flex items-start gap-3">
                   <div className="p-2 bg-teal-50 rounded-full">
                     <Users className="h-5 w-5 text-teal-600" />
@@ -560,7 +577,7 @@ const AdminSingleWithApply = () => {
                     <p className="text-slate-800">{singleJob.numberOfPositions}</p>
                   </div>
                 </div>
-                
+
                 <div className="flex items-start gap-3">
                   <div className="p-2 bg-indigo-50 rounded-full">
                     <Calendar className="h-5 w-5 text-indigo-600" />
@@ -571,9 +588,9 @@ const AdminSingleWithApply = () => {
                   </div>
                 </div>
               </div>
-              
+
               <hr className="border-slate-200" />
-              
+
               {/* <div className="space-y-3">
                 <Button 
                   onClick={handleApply}
@@ -609,7 +626,7 @@ const AdminSingleWithApply = () => {
               </div> */}
             </CardContent>
           </Card>
-          
+
           {/* Similar Jobs Suggestion */}
           <Card className="shadow-md border-slate-200 bg-white">
             <CardHeader className="pb-2">

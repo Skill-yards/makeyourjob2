@@ -19,7 +19,6 @@ const ContactUs = lazy(() => import('./components/Contact'));
 const TermsAndConditions = lazy(() => import('./components/Terms'));
 const AdminSingleWithApply = lazy(() => import('./components/admin/AdminSingleJobWithApply'));
 const CompanyJobApplicants = lazy(() => import('./components/admin/CompanyJobApplicants'));
-// const CompanyJobList = lazy(() => import('./components/admin/CompanyJobList'));
 const JobSetup = lazy(() => import('./components/admin/JobSetup'));
 const AdminProfile = lazy(() => import('./components/admin/AdminProfile'));
 
@@ -31,6 +30,7 @@ const CompanySetup = lazy(() => import('./components/admin/CompanySetup'));
 const AdminJobs = lazy(() => import('./components/admin/AdminJobs'));
 const PostJob = lazy(() => import('./components/admin/PostJob'));
 const Applicants = lazy(() => import('./components/admin/Applicants'));
+const SingleApplicants = lazy(() => import('./components/admin/SingleApplicants'));
 
 import Layout from "./utils/Layout";
 
@@ -118,6 +118,10 @@ const appRouter = createBrowserRouter([
     path:"/admin/jobs/:id/applicants",
     element:<ProtectedRoute><Applicants/></ProtectedRoute> 
   },
+  {
+    path:"/admin/jobs/:id/applicants/:applicantId",
+    element:<ProtectedRoute><SingleApplicants/></ProtectedRoute> 
+  },
 ])
 
 function App() {
@@ -127,7 +131,7 @@ function App() {
     
      <Suspense fallback={<div className="flex justify-center items-center text-3xl  h-screen"><div className='w-30 h-10 mt-2 bg-transparent'>
       <img src="/logo-removebg-preview.png"  alt="Logo" className="w-full h-full bg-transparent object-contain"></img>
-      </div>....
+      </div>
       </div>}>
       <RouterProvider router={appRouter} />
      

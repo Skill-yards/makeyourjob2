@@ -1,7 +1,7 @@
 import { Application } from "../models/application.model.js";
 import { Job } from "../models/job.model.js";
 import { sendEmail } from "../utils/send.email.service.js";
-
+import {User} from "../models/user.model.js"
 export const applyJob = async (req, res) => {
     try {
         const userId = req.id;
@@ -109,6 +109,32 @@ export const getApplicants = async (req,res) => {
         console.log(error);
     }
 }
+
+export const getApplication = async (req, res) => {
+    try {
+      const { applicantId } = req.params;
+      console.log(applicantId, "applicantId");
+      const application = await Application.findById(applicantId).populate('applicant');
+      if (!application) {
+        return res.status(404).json({
+          success: false,
+          message: 'Application not found',
+        });
+      }
+      return res.status(200).json({
+        success: true,
+        application,
+      });
+    } catch (error) {
+      console.error('Error fetching application:', error);
+      return res.status(500).json({
+        success: false,
+        message: 'Internal server error',
+      });
+    }
+  };
+
+
 export const updateStatus = async (req,res) => {
     try {
         const {status} = req.body;
