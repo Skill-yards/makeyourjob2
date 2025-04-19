@@ -1,5 +1,7 @@
 import { Job } from "../models/job.model.js";
 import { Company } from "../models/company.model.js";
+
+import mongoose from "mongoose";
 export const postJob = async (req, res) => {
   console.log(req.body, 'dhadso');
   try {
@@ -634,59 +636,66 @@ export const adminGetJob = async (req, res) => {
     }
 };
 
+ 
 
-// export const SearchJob = async (req, res) => {
-//   try {
-//     const { jobTitle, city, limit = 10, page = 1 } = req.query;
-//     const query = {};
-//     if (jobTitle) {
-//       const sanitizedTitle = jobTitle.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-//       query.jobTitle = { $regex: new RegExp(sanitizedTitle, 'i') };
-//     }
-//     if (city) {
-//       const sanitizedCity = city.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-//       query['workLocation.city'] = { $regex: new RegExp(sanitizedCity, 'i') };
-//     }
-//     if (Object.keys(query).length === 0) {
-//       return res.status(400).json({
-//         success: false,
-//         message: 'Please provide at least one search parameter (jobTitle or city)',
-//       });
-//     }
-//     const maxLimit = 100;
-//     const parsedLimit = Math.max(1, Math.min(maxLimit, parseInt(limit, 10)));
-//     const parsedPage = Math.max(1, parseInt(page, 10));
-//     const skip = (parsedPage - 1) * parsedLimit;
-//     const jobs = await Job.find(query)
-//       .populate('company', 'name createdAt')
-//       // .limit(parsedLimit)
-//       .skip(skip)
-//       .lean();
 
-//     if (!jobs || jobs.length === 0) {
-//       return res.status(404).json({
-//         success: false,
-//         message: 'No jobs found matching the criteria',
-//       });
-//     }
-//     const totalJobs = await Job.countDocuments(query);
+export const getSimilarJobs = async (req, res) => {
+  try {
+    const jobId = req.params.id;
 
-//     return res.status(200).json({
-//       success: true,
-//       jobs,
-//       pagination: {
-//         totalJobs,
-//         totalPages: Math.ceil(totalJobs / parsedLimit),
-//         currentPage: parsedPage,
-//         limit: parsedLimit,
-//       },
-//     });
-//   } catch (error) {
-//     console.error('Error searching for jobs:', error);
-//     return res.status(500).json({
-//       success: false,
-//       message: 'An error occurred while searching for jobs',
-//       error: error.message,
-//     });
-//   }
-// };
+    // Ensure jobId is a valid ObjectId
+    if (!mongoose.Types.ObjectId.isValid(jobId)) {
+      return res.status(400).json({ message: "Invalid job ID" });
+    }
+
+    const referenceJob = await Job.findById(jobId);
+    if (!referenceJob) {
+      return res.status(404).json({ message: "Job not found" });
+    }
+
+    // Building the similarity query
+    const query = {
+      _id: { $ne: new mongoose.Types.ObjectId(jobId) }, // Exclude the current job
+      status: "Open",
+      $or: [
+        { jobCategory: referenceJob.jobCategory },
+        { skills: { $in: referenceJob.skills || [] } },
+        { "workLocation.city": referenceJob.workLocation.city },
+        { jobType: referenceJob.jobType },
+      ],
+    };
+
+    // Handle experienceLevel comparison (convert string to float)
+    const experienceLevel = parseFloat(referenceJob.experienceLevel);
+    if (!isNaN(experienceLevel)) {
+      query.experienceLevel = {
+        $gte: (experienceLevel - 1).toFixed(1),
+        $lte: (experienceLevel + 1).toFixed(1),
+      };
+    }
+
+    // Handle salaryRange if both min and max are present
+    if (referenceJob.salaryRange?.min && referenceJob.salaryRange?.max) {
+      query["salaryRange.min"] = { $gte: referenceJob.salaryRange.min * 0.8 };
+      query["salaryRange.max"] = { $lte: referenceJob.salaryRange.max * 1.2 };
+    }
+
+    // Fetch matching jobs
+    const similarJobs = await Job.find(query)
+      .limit(10)
+      .select("jobTitle companyName workLocation jobCategory skills salaryRange jobType")
+      .lean();
+
+    // Sort by most matching skills
+    const sortedJobs = similarJobs.sort((a, b) => {
+      const aSkillsMatch = a.skills?.filter(skill => referenceJob.skills.includes(skill)).length || 0;
+      const bSkillsMatch = b.skills?.filter(skill => referenceJob.skills.includes(skill)).length || 0;
+      return bSkillsMatch - aSkillsMatch;
+    });
+
+    return res.json(sortedJobs);
+  } catch (error) {
+    console.error("Error in getSimilarJobs:", error);
+    return res.status(500).json({ message: "Server error" });
+  }
+};
