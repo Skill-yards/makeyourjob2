@@ -44,8 +44,8 @@ const updateProfileUpload = upload.fields([
   { name: "file", maxCount: 1 },
 ]);
 
-// Multer configuration for register (single file)
-const registerUpload = upload.single("file");
+// Multer configuration for register (handles only profilePhoto)
+const registerUpload = upload.single("profilePhoto");
 
 const router = express.Router();
 

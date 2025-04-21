@@ -250,7 +250,7 @@ const HeroSection = () => {
                                         value={jobType}
                                         onChange={(e) => setJobType(e.target.value)}
                                         onKeyDown={handleKeyDown}
-                                        className="flex-1 border-none shadow-none focus-visible:ring-0 focus-visible:ring-offset-0 bg-transparent pl-2 text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 text-lg"
+                                        className="flex-1 border-none shadow-none focus-visible:ring-0 focus-visible:ring-offset-0 bg-transparent pl-2 text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 text-sm"
                                         disabled={isLoading}
                                     />
                                 </div>
@@ -265,7 +265,7 @@ const HeroSection = () => {
                                         onFocus={handleCityInputFocus}
                                         onBlur={() => setTimeout(handleClickOutside, 200)}
                                         onKeyDown={handleKeyDown}
-                                        className="flex-1 border-none shadow-none focus-visible:ring-0 focus-visible:ring-offset-0 bg-transparent pl-2 text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 text-lg"
+                                        className="flex-1 border-none shadow-none focus-visible:ring-0 focus-visible:ring-offset-0 bg-transparent pl-2 text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 text-sm"
                                         disabled={isLoading}
                                     />
                                     {showCityDropdown && citySearch && (

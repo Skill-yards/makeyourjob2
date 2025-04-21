@@ -219,9 +219,16 @@ const Signup = () => {
     formData.append("role", input.role);
     formData.append("gender", input.gender);
     formData.append("isOtpVerified", "true");
-    if (input.file) formData.append("file", input.file);
+    if (input.file) {
+      // Use "profilePhoto" for recruiter role, otherwise use "file"
+      formData.append("profilePhoto", input.file);
+    }
     formData.append("organization", input.organization || "");
     formData.append("jobRole", input.jobRole || "");
+    console.log("Form Data before API request:");
+    for (const [key, value] of formData.entries()) {
+      console.log(`${key}:`, value);
+    }
 
     try {
       dispatch(setLoading(true));
@@ -465,7 +472,7 @@ const Signup = () => {
                 id="terms"
                 checked={input.agreedToTerms}
                 onCheckedChange={handleTermsChange}
-                
+
               />
               <Label htmlFor="terms" className="text-sm text-gray-600">
                 All your information is collected, stored and processed as per our data processing guidelines. By signing up on Unstop, you agree to our{" "}

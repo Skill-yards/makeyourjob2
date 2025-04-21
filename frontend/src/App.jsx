@@ -33,6 +33,7 @@ const Applicants = lazy(() => import('./components/admin/Applicants'));
 const SingleApplicants = lazy(() => import('./components/admin/SingleApplicants'));
 
 import Layout from "./utils/Layout";
+import ResumeBuilder from './components/resumeBuilder/ResumeBuilder';
 
 const appRouter = createBrowserRouter([
   {
@@ -74,6 +75,10 @@ const appRouter = createBrowserRouter([
   {
     path: "/profile",
     element: <ProtectedRoute><Layout><Profile /></Layout></ProtectedRoute>
+  },
+  {
+    path: "/resume-builder/*",
+    element: <ResumeBuilder />
   },
 
 

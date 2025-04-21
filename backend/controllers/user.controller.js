@@ -172,8 +172,12 @@ export const register = asyncHandler(async (req, res) => {
         organization,
         jobRole,
     } = req.body;
-    const file = req.file;
 
+
+    const file = req.file;
+    console.log("Received files:", req.files);
+  console.log("File:", file);
+  console.log("Request body:", req.body);
     const requiredFields = ["email", "firstname", "role", "gender", "phoneNumber", "password"];
     if (!requiredFields.every((field) => req.body[field]) || !isOtpVerified) {
         res.status(400);
