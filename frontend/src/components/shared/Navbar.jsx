@@ -7,7 +7,7 @@ import { setUser } from '@/redux/authSlice'
 import { toast } from 'sonner'
 
 // Lucide Icons
-import { LogOut, User2, Briefcase, Menu, X, Home, Search, Building, ChevronDown } from 'lucide-react'
+import { LogOut, User2, Briefcase, Menu, X, Home, Search,  ChevronDown } from 'lucide-react'
 
 // UI Components
 import { Button } from '../ui/button'
@@ -70,7 +70,7 @@ const Navbar = () => {
                     <div className="flex items-center">
                         <Link to="/" className="flex items-center space-x-2">
                             <div className='w-30 h-10 mt-2 bg-transparent'>
-                                <img src="logo-removebg-preview.png" alt="Logo" className="w-full h-full bg-transparent object-contain" />
+                                <img src="/logo-removebg-preview.png" alt="Logo" className="w-full h-full bg-transparent object-contain" />
                             </div>
                         </Link>
                     </div>

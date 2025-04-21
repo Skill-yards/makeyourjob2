@@ -27,10 +27,11 @@ app.use(cookieParser());
 const corsOptions = {
     origin: [
         "http://localhost:5173",
-        "https://h11d8v8s-5173.inc1.devtunnels.ms/",
+        "https://h11d8v8s-5173.inc1.devtunnels.ms",
         "http://localhost:4173",
         "https://www.makeyourjobs.com",
         "https://makeyourjobs.com",
+        "https://4bg6xfk4-5173.inc1.devtunnels.ms"
     ],
     credentials: true
 };

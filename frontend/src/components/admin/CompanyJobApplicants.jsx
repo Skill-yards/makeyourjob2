@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { Badge } from '../ui/badge';
 import { Button } from '../ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
-import { useNavigate, useParams } from 'react-router-dom';
+import {  useNavigate, useParams } from 'react-router-dom';
 import axios from 'axios';
 import { COMPANY_API_END_POINT } from '@/utils/constant';
 import { setSingleCompany } from '@/redux/companySlice';
@@ -227,6 +227,14 @@ const CompanyJobApplicants = () => {
                 <div>
                   <h3 className="font-semibold text-gray-700">GST Number</h3>
                   <p className="text-gray-600 mt-1">{singleCompany?.gstNumber || 'N/A'}</p>
+                  <a
+                      href={singleCompany.cinDocument}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-blue-600 mt-1 hover:underline block"
+                    >
+                    View Certificate
+                  </a>
                 </div>
               </div>
               <div className="flex items-center gap-3 group">
@@ -236,6 +244,14 @@ const CompanyJobApplicants = () => {
                 <div>
                   <h3 className="font-semibold text-gray-700">CIN Number</h3>
                   <p className="text-gray-600 mt-1">{singleCompany?.cinNumber || 'N/A'}</p>
+                  <a
+                      href={singleCompany.cinDocument}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-blue-600 mt-1 hover:underline block"
+                    >
+                    View Certificate
+                  </a>
                 </div>
               </div>
               <div className="flex items-center gap-3 group">
@@ -245,6 +261,14 @@ const CompanyJobApplicants = () => {
                 <div>
                   <h3 className="font-semibold text-gray-700">PAN Number</h3>
                   <p className="text-gray-600 mt-1">{singleCompany?.panNumber || 'N/A'}</p>
+                  <a
+                      href={singleCompany.panDocument}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-blue-600 mt-1 hover:underline block"
+                    >
+                    View Certificate
+                  </a>
                 </div>
               </div>
             </div>

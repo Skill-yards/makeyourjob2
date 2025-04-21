@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import  { useEffect, useState, useRef } from 'react';
 import Navbar from '../shared/Navbar';
 import { Button } from '../ui/button';
 import { ArrowLeft, Loader2, Calendar } from 'lucide-react';
@@ -20,7 +20,6 @@ const CompanySetup = () => {
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
   const [showCalendar, setShowCalendar] = useState(false);
-
   const [input, setInput] = useState({
     name: '',
     description: '',
@@ -38,111 +37,150 @@ const CompanySetup = () => {
     gstDocument: null,
     cinDocument: null,
     panDocument: null,
-    // registrationDocument: null,
   });
-
   const [errors, setErrors] = useState({});
+  const inputRefs = useRef({}); // Store references to input fields for auto-focus and scrolling
 
-  const validateInput = () => {
+  const validateField = (name, value) => {
     const newErrors = {};
 
     // Required field validations
-    if (!input.name) newErrors.name = "Company name is required.";
-    if (!input.description) newErrors.description = "Description is required.";
-    if (!input.website) newErrors.website = "Website is required.";
-    if (!input.location) newErrors.location = "Location is required.";
-    if (!input.gstNumber) newErrors.gstNumber = "GST number is required.";
-    if (!input.cinNumber) newErrors.cinNumber = "CIN number is required.";
-    if (!input.panNumber) newErrors.panNumber = "PAN number is required.";
-    if (!input.foundedYear) newErrors.foundedYear = "Founded year is required.";
-    if (!input.employeeCount) newErrors.employeeCount = "Employee count is required.";
-    if (!input.industry) newErrors.industry = "Industry is required.";
-    if (!input.contactEmail) newErrors.contactEmail = "Contact email is required.";
-    if (!input.contactPhone) newErrors.contactPhone = "Contact phone is required.";
-    if (!input.file) newErrors.file = "Company logo is required.";
-    if (!input.gstDocument) newErrors.gstDocument = "GST document is required.";
-    if (!input.cinDocument) newErrors.cinDocument = "CIN document is required.";
-    if (!input.panDocument) newErrors.panDocument = "PAN document is required.";
-    // if (!input.registrationDocument) newErrors.registrationDocument = "Registration document is required.";
+    if (name === 'name' && !value) newErrors.name = 'Company name is required.';
+    if (name === 'description' && !value) newErrors.description = 'Description is required.';
+    if (name === 'website' && !value) newErrors.website = 'Website is required.';
+    if (name === 'location' && !value) newErrors.location = 'Location is required.';
+    if (name === 'gstNumber' && !value) newErrors.gstNumber = 'GST number is required.';
+    if (name === 'cinNumber' && !value) newErrors.cinNumber = 'CIN number is required.';
+    if (name === 'panNumber' && !value) newErrors.panNumber = 'PAN number is required.';
+    if (name === 'foundedYear' && !value) newErrors.foundedYear = 'Founded year is required.';
+    if (name === 'employeeCount' && !value) newErrors.employeeCount = 'Employee count is required.';
+    if (name === 'industry' && !value) newErrors.industry = 'Industry is required.';
+    if (name === 'contactEmail' && !value) newErrors.contactEmail = 'Contact email is required.';
+    if (name === 'contactPhone' && !value) newErrors.contactPhone = 'Contact phone is required.';
+    if (name === 'file' && !value && !singleCompany?.logo) newErrors.file = 'Company logo is required.';
+    if (name === 'gstDocument' && !value && !singleCompany?.gstDocument) newErrors.gstDocument = 'GST document is required.';
+    if (name === 'cinDocument' && !value && !singleCompany?.cinDocument) newErrors.cinDocument = 'CIN document is required.';
+    if (name === 'panDocument' && !value && !singleCompany?.panDocument) newErrors.panDocument = 'PAN document is required.';
 
     // Format validations
-    if (input.website && !/^https?:\/\/[^\s/$.?#].[^\s]*$/.test(input.website)) {
-      newErrors.website = "Invalid website URL.";
+    if (name === 'website' && value && !/^https?:\/\/[^\s/$.?#].[^\s]*$/.test(value)) {
+      newErrors.website = 'Please enter a valid website URL (e.g., https://example.com).';
     }
-    
-    // GST Number: 15-character format (2 digits, 5 letters, 4 digits, 1 letter, 1 letter/digit, 'Z', 1 letter/digit)
-    if (input.gstNumber && !/^\d{2}[A-Z]{5}\d{4}[A-Z][1-9A-Z]Z[0-9A-Z]$/.test(input.gstNumber)) {
-      newErrors.gstNumber = "Invalid GST number.";
+    if (name === 'gstNumber' && value && !/^\d{2}[A-Z]{5}\d{4}[A-Z][1-9A-Z]Z[0-9A-Z]$/.test(value)) {
+      newErrors.gstNumber = 'Invalid GST number format (e.g., 22AAAAA0000A1Z5).';
     }
-    
-    // CIN Number: 21-character format (L/U, 5 digits, 2 letters, 4 digits, 3 letters, 6 digits)
-    if (input.cinNumber && !/^[LU]\d{5}[A-Z]{2}\d{4}[A-Z]{3}\d{6}$/.test(input.cinNumber)) {
-      newErrors.cinNumber = "Invalid CIN number.";
+    if (name === 'cinNumber' && value && !/^[LU]\d{5}[A-Z]{2}\d{4}[A-Z]{3}\d{6}$/.test(value)) {
+      newErrors.cinNumber = 'Invalid CIN number format (e.g., L17110MH1990PLC054828).';
     }
-    
-    // PAN Number: 10-character format (5 letters, 4 digits, 1 letter)
-    if (input.panNumber && !/^[A-Z]{5}\d{4}[A-Z]$/.test(input.panNumber)) {
-      newErrors.panNumber = "Invalid PAN number.";
+    if (name === 'panNumber' && value && !/^[A-Z]{5}\d{4}[A-Z]$/.test(value)) {
+      newErrors.panNumber = 'Invalid PAN number format (e.g., ABCDE1234F).';
     }
-    if (input.foundedYear) {
-      const year = Number(input.foundedYear);
-      if (year < 1800 || year > new Date().getFullYear()) newErrors.foundedYear = `Year must be between 1800 and ${new Date().getFullYear()}.`;
+    if (name === 'foundedYear' && value) {
+      const year = Number(value);
+      if (year < 1800 || year > new Date().getFullYear())
+        newErrors.foundedYear = `Year must be between 1800 and ${new Date().getFullYear()}.`;
     }
-    if (input.contactEmail && !/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/.test(input.contactEmail)) newErrors.contactEmail = "Invalid email format.";
-    if (input.contactPhone && !/^\+?[1-9]\d{1,14}$/.test(input.contactPhone)) newErrors.contactPhone = "Invalid phone number format.";
+    if (name === 'contactEmail' && value && !/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/.test(value)) {
+      newErrors.contactEmail = 'Please enter a valid email address.';
+    }
+    if (name === 'contactPhone' && value && !/^\+?[1-9]\d{1,14}$/.test(value)) {
+      newErrors.contactPhone = 'Please enter a valid phone number (e.g., +1234567890).';
+    }
+
+    return newErrors;
+  };
+
+  const validateAllInputs = () => {
+    const newErrors = {};
+
+    Object.keys(input).forEach((key) => {
+      const fieldErrors = validateField(key, input[key]);
+      Object.assign(newErrors, fieldErrors);
+    });
 
     setErrors(newErrors);
+
+    // Auto-focus and scroll to the first field with an error
+    if (Object.keys(newErrors).length > 0) {
+      const firstErrorField = Object.keys(newErrors)[0];
+      if (inputRefs.current[firstErrorField]) {
+        inputRefs.current[firstErrorField].focus();
+        inputRefs.current[firstErrorField].scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }
+    }
+
     return Object.keys(newErrors).length === 0;
   };
 
   const changeEventHandler = (e) => {
-    setInput({ ...input, [e.target.name]: e.target.value });
-    setErrors({ ...errors, [e.target.name]: '' });
+    const { name, value } = e.target;
+    setInput({ ...input, [name]: value });
+    setErrors({ ...errors, [name]: '' });
+  };
+
+  const handleBlur = (e) => {
+    const { name, value } = e.target;
+    const fieldErrors = validateField(name, value);
+    setErrors((prev) => ({ ...prev, ...fieldErrors }));
+
+    // If there's an error, scroll to and focus the field
+    if (fieldErrors[name] && inputRefs.current[name]) {
+      inputRefs.current[name].focus();
+      inputRefs.current[name].scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
   };
 
   const changeFileHandler = (e) => {
     const { name } = e.target;
     const file = e.target.files?.[0];
     setInput({ ...input, [name]: file });
-    setErrors({ ...errors, [name]: '' });
+    const fieldErrors = validateField(name, file);
+    setErrors((prev) => ({ ...prev, ...fieldErrors }));
+
+    // If there's an error, scroll to and focus the field
+    if (fieldErrors[name] && inputRefs.current[name]) {
+      inputRefs.current[name].focus();
+      inputRefs.current[name].scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
   };
 
   const handleSelectChange = (name, value) => {
     setInput({ ...input, [name]: value });
-    setErrors({ ...errors, [name]: '' });
+    const fieldErrors = validateField(name, value);
+    setErrors((prev) => ({ ...prev, ...fieldErrors }));
+
+    // If there's an error, scroll to and focus the field
+    if (fieldErrors[name] && inputRefs.current[name]) {
+      inputRefs.current[name].focus();
+      inputRefs.current[name].scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
   };
 
   const handleYearSelect = (year) => {
-    setInput({ ...input, foundedYear: year.toString() });
-    setErrors({ ...errors, foundedYear: '' });
+    const yearStr = year.toString();
+    setInput({ ...input, foundedYear: yearStr });
+    const fieldErrors = validateField('foundedYear', yearStr);
+    setErrors((prev) => ({ ...prev, ...fieldErrors }));
     setShowCalendar(false);
+
+    // If there's an error, scroll to and focus the field
+    if (fieldErrors.foundedYear && inputRefs.current.foundedYear) {
+      inputRefs.current.foundedYear.focus();
+      inputRefs.current.foundedYear.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
   };
 
   const submitHandler = async (e) => {
     e.preventDefault();
-    if (!validateInput()) {
-      toast.error("Please fill all required fields correctly.");
+    if (!validateAllInputs()) {
+      toast.error('Please correct the errors in the form before submitting.');
       return;
     }
 
     const formData = new FormData();
-    formData.append('name', input.name);
-    formData.append('description', input.description);
-    formData.append('website', input.website);
-    formData.append('location', input.location);
-    formData.append('gstNumber', input.gstNumber);
-    formData.append('cinNumber', input.cinNumber);
-    formData.append('panNumber', input.panNumber);
-    formData.append('foundedYear', input.foundedYear);
-    formData.append('employeeCount', input.employeeCount);
-    formData.append('industry', input.industry);
-    formData.append('contactEmail', input.contactEmail);
-    formData.append('contactPhone', input.contactPhone);
-    formData.append('file', input.file);
-    formData.append('gstDocument', input.gstDocument);
-    formData.append('cinDocument', input.cinDocument);
-    formData.append('panDocument', input.panDocument);
-    // formData.append('registrationDocument', input.registrationDocument);
+    Object.keys(input).forEach((key) => {
+      if (input[key]) formData.append(key, input[key]);
+    });
 
     try {
       setLoading(true);
@@ -156,10 +194,19 @@ const CompanySetup = () => {
       }
     } catch (error) {
       console.error('Error updating company:', error);
-      const errorMsg = error.response?.data?.message || 'Failed to update company. Please try again.';
+      const errorMsg = error.response?.data?.message || 'Failed to update company. Please try again later.';
       const errorDetails = error.response?.data?.errors || [];
       setErrors(errorDetails.reduce((acc, err) => ({ ...acc, [err.path]: err.message }), {}));
       toast.error(errorMsg);
+
+      // Scroll to and focus the first server-side error field
+      if (errorDetails.length > 0) {
+        const firstErrorField = errorDetails[0].path;
+        if (inputRefs.current[firstErrorField]) {
+          inputRefs.current[firstErrorField].focus();
+          inputRefs.current[firstErrorField].scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+      }
     } finally {
       setLoading(false);
     }
@@ -184,7 +231,6 @@ const CompanySetup = () => {
         gstDocument: null,
         cinDocument: null,
         panDocument: null,
-        // registrationDocument: null,
       });
     }
   }, [singleCompany]);
@@ -192,6 +238,32 @@ const CompanySetup = () => {
   // Generate years for calendar dropdown (1800 to current year)
   const currentYear = new Date().getFullYear();
   const years = Array.from({ length: currentYear - 1800 + 1 }, (_, i) => currentYear - i);
+
+  // Helper to render file links
+  const renderFileLink = (field, label) => {
+    const file = input[field];
+    const existingUrl = singleCompany?.[field];
+    if (file) {
+      return (
+        <a
+          href={URL.createObjectURL(file)}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="text-indigo-600 hover:underline"
+        >
+          {file.name}
+        </a>
+      );
+    }
+    if (existingUrl) {
+      return (
+        <a href={existingUrl} target="_blank" rel="noopener noreferrer" className="text-indigo-600 hover:underline">
+          View {label}
+        </a>
+      );
+    }
+    return null;
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-white to-purple-50">
@@ -216,105 +288,135 @@ const CompanySetup = () => {
             <form onSubmit={submitHandler} className="space-y-6">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
-                  <Label htmlFor="name" className="text-sm font-medium text-gray-700">Company Name *</Label>
+                  <Label htmlFor="name" className="text-sm font-medium text-gray-700">
+                    Company Name *
+                  </Label>
                   <Input
                     id="name"
                     type="text"
                     name="name"
                     value={input.name}
                     onChange={changeEventHandler}
-                    className={`mt-1 border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 ${errors.name ? 'border-red-500' : ''}`}
+                    onBlur={handleBlur}
+                    ref={(el) => (inputRefs.current.name = el)}
+                    className={`mt-1 ${errors.name ? 'border-red-500 focus:ring-red-500 focus:border-red-500' : ''}`}
                     placeholder="e.g., TechCorp"
                     required
                   />
                   {errors.name && <p className="text-red-500 text-xs mt-1">{errors.name}</p>}
                 </div>
                 <div>
-                  <Label htmlFor="website" className="text-sm font-medium text-gray-700">Website *</Label>
+                  <Label htmlFor="website" className="text-sm font-medium text-gray-700">
+                    Website *
+                  </Label>
                   <Input
                     id="website"
                     type="text"
                     name="website"
                     value={input.website}
                     onChange={changeEventHandler}
-                    className={`mt-1 border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 ${errors.website ? 'border-red-500' : ''}`}
+                    onBlur={handleBlur}
+                    ref={(el) => (inputRefs.current.website = el)}
+                    className={`mt-1 ${errors.website ? 'border-red-500 focus:ring-red-500 focus:border-red-500' : ''}`}
                     placeholder="e.g., https://techcorp.com"
                     required
                   />
                   {errors.website && <p className="text-red-500 text-xs mt-1">{errors.website}</p>}
                 </div>
                 <div className="md:col-span-2">
-                  <Label htmlFor="description" className="text-sm font-medium text-gray-700">Description *</Label>
+                  <Label htmlFor="description" className="text-sm font-medium text-gray-700">
+                    Description *
+                  </Label>
                   <Input
                     id="description"
                     type="text"
                     name="description"
                     value={input.description}
                     onChange={changeEventHandler}
-                    className={`mt-1 border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 ${errors.description ? 'border-red-500' : ''}`}
+                    onBlur={handleBlur}
+                    ref={(el) => (inputRefs.current.description = el)}
+                    className={`mt-1 ${errors.description ? 'border-red-500 focus:ring-red-500 focus:border-red-500' : ''}`}
                     placeholder="e.g., A leading tech company..."
                     required
                   />
                   {errors.description && <p className="text-red-500 text-xs mt-1">{errors.description}</p>}
                 </div>
                 <div>
-                  <Label htmlFor="location" className="text-sm font-medium text-gray-700">Location *</Label>
+                  <Label htmlFor="location" className="text-sm font-medium text-gray-700">
+                    Location *
+                  </Label>
                   <Input
                     id="location"
                     type="text"
                     name="location"
                     value={input.location}
                     onChange={changeEventHandler}
-                    className={`mt-1 border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 ${errors.location ? 'border-red-500' : ''}`}
+                    onBlur={handleBlur}
+                    ref={(el) => (inputRefs.current.location = el)}
+                    className={`mt-1 ${errors.location ? 'border-red-500 focus:ring-red-500 focus:border-red-500' : ''}`}
                     placeholder="e.g., San Francisco, CA"
                     required
                   />
                   {errors.location && <p className="text-red-500 text-xs mt-1">{errors.location}</p>}
                 </div>
                 <div>
-                  <Label htmlFor="gstNumber" className="text-sm font-medium text-gray-700">GST Number *</Label>
+                  <Label htmlFor="gstNumber" className="text-sm font-medium text-gray-700">
+                    GST Number *
+                  </Label>
                   <Input
                     id="gstNumber"
                     type="text"
                     name="gstNumber"
                     value={input.gstNumber}
                     onChange={changeEventHandler}
-                    className={`mt-1 border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 ${errors.gstNumber ? 'border-red-500' : ''}`}
+                    onBlur={handleBlur}
+                    ref={(el) => (inputRefs.current.gstNumber = el)}
+                    className={`mt-1 ${errors.gstNumber ? 'border-red-500 focus:ring-red-500 focus:border-red-500' : ''}`}
                     placeholder="e.g., 22AAAAA0000A1Z5"
                     required
                   />
                   {errors.gstNumber && <p className="text-red-500 text-xs mt-1">{errors.gstNumber}</p>}
                 </div>
                 <div>
-                  <Label htmlFor="cinNumber" className="text-sm font-medium text-gray-700">CIN Number *</Label>
+                  <Label htmlFor="cinNumber" className="text-sm font-medium text-gray-700">
+                    CIN Number *
+                  </Label>
                   <Input
                     id="cinNumber"
                     type="text"
                     name="cinNumber"
                     value={input.cinNumber}
                     onChange={changeEventHandler}
-                    className={`mt-1 border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 ${errors.cinNumber ? 'border-red-500' : ''}`}
+                    onBlur={handleBlur}
+                    ref={(el) => (inputRefs.current.cinNumber = el)}
+                    className={`mt-1 ${errors.cinNumber ? 'border-red-500 focus:ring-red-500 focus:border-red-500' : ''}`}
                     placeholder="e.g., L17110MH1990PLC054828"
                     required
                   />
                   {errors.cinNumber && <p className="text-red-500 text-xs mt-1">{errors.cinNumber}</p>}
                 </div>
                 <div>
-                  <Label htmlFor="panNumber" className="text-sm font-medium text-gray-700">PAN Number *</Label>
+                  <Label htmlFor="panNumber" className="text-sm font-medium text-gray-700">
+                    PAN Number *
+                  </Label>
                   <Input
                     id="panNumber"
                     type="text"
                     name="panNumber"
                     value={input.panNumber}
                     onChange={changeEventHandler}
-                    className={`mt-1 border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 ${errors.panNumber ? 'border-red-500' : ''}`}
+                    onBlur={handleBlur}
+                    ref={(el) => (inputRefs.current.panNumber = el)}
+                    className={`mt-1 ${errors.panNumber ? 'border-red-500 focus:ring-red-500 focus:border-red-500' : ''}`}
                     placeholder="e.g., ABCDE1234F"
                     required
                   />
                   {errors.panNumber && <p className="text-red-500 text-xs mt-1">{errors.panNumber}</p>}
                 </div>
                 <div className="relative">
-                  <Label htmlFor="foundedYear" className="text-sm font-medium text-gray-700">Founded Year *</Label>
+                  <Label htmlFor="foundedYear" className="text-sm font-medium text-gray-700">
+                    Founded Year *
+                  </Label>
                   <div className="relative">
                     <Input
                       id="foundedYear"
@@ -322,7 +424,9 @@ const CompanySetup = () => {
                       name="foundedYear"
                       value={input.foundedYear}
                       onChange={changeEventHandler}
-                      className={`mt-1 border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 pr-10 ${errors.foundedYear ? 'border-red-500' : ''}`}
+                      onBlur={handleBlur}
+                      ref={(el) => (inputRefs.current.foundedYear = el)}
+                      className={`mt-1 pr-10 ${errors.foundedYear ? 'border-red-500 focus:ring-red-500 focus:border-red-500' : ''}`}
                       placeholder="e.g., 1990"
                       readOnly
                       required
@@ -351,13 +455,18 @@ const CompanySetup = () => {
                   {errors.foundedYear && <p className="text-red-500 text-xs mt-1">{errors.foundedYear}</p>}
                 </div>
                 <div>
-                  <Label htmlFor="employeeCount" className="text-sm font-medium text-gray-700">Employee Count *</Label>
+                  <Label htmlFor="employeeCount" className="text-sm font-medium text-gray-700">
+                    Employee Count *
+                  </Label>
                   <Select
                     value={input.employeeCount}
                     onValueChange={(value) => handleSelectChange('employeeCount', value)}
                     required
                   >
-                    <SelectTrigger className={`mt-1 border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 ${errors.employeeCount ? 'border-red-500' : ''}`}>
+                    <SelectTrigger
+                      ref={(el) => (inputRefs.current.employeeCount = el)}
+                      className={`mt-1 ${errors.employeeCount ? 'border-red-500 focus:ring-red-500 focus:border-red-500' : ''}`}
+                    >
                       <SelectValue placeholder="Select range" />
                     </SelectTrigger>
                     <SelectContent>
@@ -372,101 +481,150 @@ const CompanySetup = () => {
                   {errors.employeeCount && <p className="text-red-500 text-xs mt-1">{errors.employeeCount}</p>}
                 </div>
                 <div>
-                  <Label htmlFor="industry" className="text-sm font-medium text-gray-700">Industry *</Label>
+                  <Label htmlFor="industry" className="text-sm font-medium text-gray-700">
+                    Industry *
+                  </Label>
                   <Select
                     value={input.industry}
                     onValueChange={(value) => handleSelectChange('industry', value)}
                     required
                   >
-                    <SelectTrigger className={`mt-1 border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 ${errors.industry ? 'border-red-500' : ''}`}>
+                    <SelectTrigger
+                      ref={(el) => (inputRefs.current.industry = el)}
+                      className={`mt-1 ${errors.industry ? 'border-red-500 focus:ring-red-500 focus:border-red-500' : ''}`}
+                    >
                       <SelectValue placeholder="Select industry" />
                     </SelectTrigger>
                     <SelectContent>
-                      {['Engineering', 'Marketing', 'Sales', 'Finance', 'Human Resources', 'Design', 'Product Management', 'Customer Support', 'IT', 'Operations', 'Other'].map((category) => (
-                        <SelectItem key={category} value={category}>{category}</SelectItem>
-                      ))}
+                      {['Engineering', 'Marketing', 'Sales', 'Finance', 'Human Resources', 'Design', 'Product Management', 'Customer Support', 'IT', 'Operations', 'Other'].map(
+                        (category) => (
+                          <SelectItem key={category} value={category}>
+                            {category}
+                          </SelectItem>
+                        )
+                      )}
                     </SelectContent>
                   </Select>
                   {errors.industry && <p className="text-red-500 text-xs mt-1">{errors.industry}</p>}
                 </div>
                 <div>
-                  <Label htmlFor="contactEmail" className="text-sm font-medium text-gray-700">Contact Email *</Label>
+                  <Label htmlFor="contactEmail" className="text-sm font-medium text-gray-700">
+                    Contact Email *
+                  </Label>
                   <Input
                     id="contactEmail"
                     type="email"
                     name="contactEmail"
                     value={input.contactEmail}
                     onChange={changeEventHandler}
-                    className={`mt-1 border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 ${errors.contactEmail ? 'border-red-500' : ''}`}
+                    onBlur={handleBlur}
+                    ref={(el) => (inputRefs.current.contactEmail = el)}
+                    className={`mt-1 ${errors.contactEmail ? 'border-red-500 focus:ring-red-500 focus:border-red-500' : ''}`}
                     placeholder="e.g., contact@techcorp.com"
                     required
                   />
                   {errors.contactEmail && <p className="text-red-500 text-xs mt-1">{errors.contactEmail}</p>}
                 </div>
                 <div>
-                  <Label htmlFor="contactPhone" className="text-sm font-medium text-gray-700">Contact Phone *</Label>
+                  <Label htmlFor="contactPhone" className="text-sm font-medium text-gray-700">
+                    Contact Phone *
+                  </Label>
                   <Input
                     id="contactPhone"
                     type="text"
                     name="contactPhone"
                     value={input.contactPhone}
                     onChange={changeEventHandler}
-                    className={`mt-1 border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 ${errors.contactPhone ? 'border-red-500' : ''}`}
+                    onBlur={handleBlur}
+                    ref={(el) => (inputRefs.current.contactPhone = el)}
+                    className={`mt-1 ${errors.contactPhone ? 'border-red-500 focus:ring-red-500 focus:border-red-500' : ''}`}
                     placeholder="e.g., +1234567890"
                     required
                   />
                   {errors.contactPhone && <p className="text-red-500 text-xs mt-1">{errors.contactPhone}</p>}
                 </div>
                 <div>
-                  <Label htmlFor="file" className="text-sm font-medium text-gray-700">Company Logo *</Label>
+                  <Label htmlFor="file" className="text-sm font-medium text-gray-700">
+                    Company Logo *
+                  </Label>
                   <Input
                     id="file"
                     type="file"
                     name="file"
                     accept="image/*"
                     onChange={changeFileHandler}
-                    className={`mt-1 border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 ${errors.file ? 'border-red-500' : ''}`}
-                    required={!input.file}
+                    ref={(el) => (inputRefs.current.file = el)}
+                    className={`mt-1 ${errors.file ? 'border-red-500 focus:ring-red-500 focus:border-red-500' : ''}`}
+                    required={!singleCompany?.logo}
                   />
+                  {renderFileLink('logo', 'Company Logo') && (
+                    <p className="text-sm mt-1">
+                      Current file: {renderFileLink('logo', 'Company Logo')}
+                    </p>
+                  )}
                   {errors.file && <p className="text-red-500 text-xs mt-1">{errors.file}</p>}
                 </div>
                 <div>
-                  <Label htmlFor="gstDocument" className="text-sm font-medium text-gray-700">GST Document *</Label>
+                  <Label htmlFor="gstDocument" className="text-sm font-medium text-gray-700">
+                    GST Document *
+                  </Label>
                   <Input
                     id="gstDocument"
                     type="file"
                     name="gstDocument"
                     accept="application/pdf,image/*"
                     onChange={changeFileHandler}
-                    className={`mt-1 border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 ${errors.gstDocument ? 'border-red-500' : ''}`}
-                    required={!input.gstDocument}
+                    ref={(el) => (inputRefs.current.gstDocument = el)}
+                    className={`mt-1 ${errors.gstDocument ? 'border-red-500 focus:ring-red-500 focus:border-red-500' : ''}`}
+                    required={!singleCompany?.gstDocument}
                   />
+                  {renderFileLink('gstDocument', 'GST Document') && (
+                    <p className="text-sm mt-1">
+                      Current file: {renderFileLink('gstDocument', 'GST Document')}
+                    </p>
+                  )}
                   {errors.gstDocument && <p className="text-red-500 text-xs mt-1">{errors.gstDocument}</p>}
                 </div>
                 <div>
-                  <Label htmlFor="cinDocument" className="text-sm font-medium text-gray-700">CIN Document *</Label>
+                  <Label htmlFor="cinDocument" className="text-sm font-medium text-gray-700">
+                    CIN Document *
+                  </Label>
                   <Input
                     id="cinDocument"
                     type="file"
                     name="cinDocument"
                     accept="application/pdf,image/*"
                     onChange={changeFileHandler}
-                    className={`mt-1 border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 ${errors.cinDocument ? 'border-red-500' : ''}`}
-                    required={!input.cinDocument}
+                    ref={(el) => (inputRefs.current.cinDocument = el)}
+                    className={`mt-1 ${errors.cinDocument ? 'border-red-500 focus:ring-red-500 focus:border-red-500' : ''}`}
+                    required={!singleCompany?.cinDocument}
                   />
+                  {renderFileLink('cinDocument', 'CIN Document') && (
+                    <p className="text-sm mt-1">
+                      Current file: {renderFileLink('cinDocument', 'CIN Document')}
+                    </p>
+                  )}
                   {errors.cinDocument && <p className="text-red-500 text-xs mt-1">{errors.cinDocument}</p>}
                 </div>
                 <div>
-                  <Label htmlFor="panDocument" className="text-sm font-medium text-gray-700">PAN Document *</Label>
+                  <Label htmlFor="panDocument" className="text-sm font-medium text-gray-700">
+                    PAN Document *
+                  </Label>
                   <Input
                     id="panDocument"
                     type="file"
                     name="panDocument"
                     accept="application/pdf,image/*"
                     onChange={changeFileHandler}
-                    className={`mt-1 border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 ${errors.panDocument ? 'border-red-500' : ''}`}
-                    required={!input.panDocument}
+                    ref={(el) => (inputRefs.current.panDocument = el)}
+                    className={`mt-1 ${errors.panDocument ? 'border-red-500 focus:ring-red-500 focus:border-red-500' : ''}`}
+                    required={!singleCompany?.panDocument}
                   />
+                  {renderFileLink('panDocument', 'PAN Document') && (
+                    <p className="text-sm mt-1">
+                      Current file: {renderFileLink('panDocument', 'PAN Document')}
+                    </p>
+                  )}
                   {errors.panDocument && <p className="text-red-500 text-xs mt-1">{errors.panDocument}</p>}
                 </div>
               </div>

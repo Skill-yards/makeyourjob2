@@ -139,9 +139,6 @@ const AdminProfile = () => {
                 <h1 className="text-3xl font-bold text-gray-900 tracking-tight">
                   {user?.firstname} {user?.lastname}
                 </h1>
-                <p className="text-gray-600 mt-2 italic">
-                  {user?.profile?.bio || "No bio available"}
-                </p>
               </div>
               <Button
                 onClick={() => setOpen(true)}

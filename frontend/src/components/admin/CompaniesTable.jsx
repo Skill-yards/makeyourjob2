@@ -28,6 +28,19 @@ const CompaniesTable = () => {
     });
   };
 
+  const getStatusStyles = (status) => {
+    switch (status) {
+      case 'active':
+        return 'text-green-500 font-semibold';
+      case 'inactive':
+        return 'text-red-500 font-semibold';
+      case 'pending':
+        return 'text-yellow-500 font-semibold';
+      default:
+        return 'text-gray-500 font-semibold';
+    }
+  };
+
   return (
     <div className="mt-6">
       {filteredCompany ? (
@@ -46,6 +59,12 @@ const CompaniesTable = () => {
               <div className="flex items-center gap-2 text-gray-700">
                 <MapPin className="h-5 w-5 text-indigo-500" />
                 <span>{filteredCompany.location || 'N/A'}</span>
+              </div>
+              <div>
+                <span className="text-xl mr-4">Status:</span>
+                <span className={getStatusStyles(filteredCompany.status)}>
+                  {filteredCompany.status.charAt(0).toUpperCase() + filteredCompany.status.slice(1) || 'N/A'}
+                </span>
               </div>
               <div className="flex items-center gap-2 text-gray-700">
                 <Globe className="h-5 w-5 text-indigo-500" />

@@ -1,22 +1,21 @@
 import { Application } from "../models/application.model.js";
 import { Job } from "../models/job.model.js";
+import { sendEmail } from "../utils/send.email.service.js";
 
 export const applyJob = async (req, res) => {
     try {
         const userId = req.id;
         const jobId = req.params.id;
+        const { email } = req.body; 
         if (!jobId) {
             return res.status(400).json({
                 message: "Job id is required.",
                 success: false
             })
         };
-        // check if the user has already applied for the job
-        const existingApplication = await Application.findOne({ job: jobId, applicant: userId });
-
-        if (existingApplication) {
+        if (!email) {
             return res.status(400).json({
-                message: "You have already applied for this jobs",
+                message: "User email is required.",
                 success: false
             });
         }
@@ -29,12 +28,24 @@ export const applyJob = async (req, res) => {
                 success: false
             })
         }
+        await sendEmail({
+            to: email,
+            subject: `Application Submitted for ${job.jobTitle}`,
+            otp: `Thank you for applying for the "${job.jobTitle}" position at Skillyards. Your application has been successfully submitted. The hiring team will review your profile and get back to you soon. If you didn’t apply for this job, please contact us immediately.`
+        });
+        const existingApplication = await Application.findOne({ job: jobId, applicant: userId });
+
+        if (existingApplication) {
+            return res.status(400).json({
+                message: "You have already applied for this jobs",
+                success: false
+            });
+        }
         // create a new application
         const newApplication = await Application.create({
             job:jobId,
             applicant:userId,
         });
-
         job.applications.push(newApplication._id);
         await job.save();
         return res.status(201).json({
@@ -45,6 +56,9 @@ export const applyJob = async (req, res) => {
         console.log(error);
     }
 };
+
+
+
 export const getAppliedJobs = async (req,res) => {
     try {
         const userId = req.id;

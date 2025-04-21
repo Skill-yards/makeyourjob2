@@ -1,25 +1,22 @@
-import React, { useEffect, useState } from 'react';
+import  { useEffect, useState } from 'react';
 import { Table, TableBody, TableCaption, TableCell, TableHead, TableHeader, TableRow } from '../ui/table';
 import { Avatar, AvatarImage } from '../ui/avatar';
 import { Popover, PopoverContent, PopoverTrigger } from '../ui/popover';
 import { Edit2, Eye, MoreHorizontal } from 'lucide-react';
 import { useSelector } from 'react-redux';
-import { Link, useNavigate } from 'react-router-dom';
-import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
+import { useNavigate } from 'react-router-dom';
+// import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
 
 const AdminJobsTable = () => {
     const { allAdminJobs, searchJobByText } = useSelector((store) => store.job);
     const [filterJobs, setFilterJobs] = useState(allAdminJobs);
-    const navigate = useNavigate(); 
-
-    
+    const navigate = useNavigate();
 
     useEffect(() => {
         const filteredJobs = allAdminJobs.filter((job) => {
             if (!searchJobByText) return true;
             const searchText = searchJobByText.toLowerCase();
             return (
-                job?.title?.toLowerCase().includes(searchText) ||
                 job?.jobTitle?.toLowerCase().includes(searchText) ||
                 job?.companyName?.toLowerCase().includes(searchText)
             );
@@ -40,11 +37,17 @@ const AdminJobsTable = () => {
     };
 
     const getSalaryDisplay = (job) => {
-        if (job.salaryRangeDiversity?.min && job.salaryRangeDiversity?.max) {
-            return `${job.salaryRangeDiversity.min} - ${job.salaryRangeDiversity.max} ${job.salaryRangeDiversity.currency} (${job.salaryRangeDiversity.frequency})`;
+        if (job.salaryRange?.min && job.salaryRange?.max) {
+            return `${job.salaryRange.min} - ${job.salaryRange.max} ${job.salaryRange.currency} (${job.salaryRange.frequency})`;
         }
-       
-        return job.salary || 'N/A';
+        return 'N/A';
+    };
+
+    const getLocationDisplay = (job) => {
+        if (job.workLocation) {
+            return `${job.workLocation.city}, ${job.workLocation.state}, ${job.workLocation.country}`;
+        }
+        return 'N/A';
     };
 
     return (
@@ -79,17 +82,17 @@ const AdminJobsTable = () => {
                                             <AvatarImage src={job.company.logo} alt={job.companyName} />
                                         </Avatar>
                                     )}
-                                    <span className="text-gray-800">{job.companyName || job.company?.name || 'N/A'}</span>
+                                    <span className="text-gray-800">{job.companyName || 'N/A'}</span>
                                 </div>
                             </TableCell>
                             <TableCell>
-                                <span className="text-blue-600 hover:underline">{job.title || job.jobTitle || 'N/A'}</span>
+                                <span className="text-blue-600 hover:underline">{job.jobTitle || 'N/A'}</span>
                             </TableCell>
                             <TableCell>{getSalaryDisplay(job)}</TableCell>
-                            <TableCell>{job.experienceLevel || 'N/A'}</TableCell>
-                            <TableCell>{job.workLocation?.city || job.location || 'N/A'}</TableCell>
+                            <TableCell>{job.experienceLevel || 'N/A'} years</TableCell>
+                            <TableCell>{getLocationDisplay(job)}</TableCell>
                             <TableCell>{job.jobType || 'N/A'}</TableCell>
-                            <TableCell>{job.vacancies || job.position || 'N/A'}</TableCell>
+                            <TableCell>{job.numberOfPositions || 'N/A'}</TableCell>
                             <TableCell>{job.applications?.length || 0}</TableCell>
                             <TableCell>{formatDate(job.createdAt)}</TableCell>
                             <TableCell className="text-right">

@@ -21,9 +21,23 @@ import {
   ChevronsUpDown,
   Edit,
   AlertCircle,
-  X as XIcon
+  X as XIcon,
+  Plus
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+
+// Predefined common benefits
+const commonBenefits = [
+  "Health Insurance",
+  "Provident Fund",
+  "Cell Phone Insurance",
+  "Paid Sick Time",
+  "Work From Home",
+  "Food Provided",
+  "Life Insurance",
+  "Internet Reimbursement",
+  "Commuter Assistance"
+];
 
 const indianStates = [
   "Andhra Pradesh", "Arunachal Pradesh", "Assam", "Bihar", "Chhattisgarh", "Goa", "Gujarat",
@@ -34,7 +48,6 @@ const indianStates = [
   "Delhi", "Jammu and Kashmir", "Ladakh", "Lakshadweep", "Puducherry"
 ];
 
-// Sample job titles array
 const jobTitles = [
   "HR Executive",
   "HR Manager",
@@ -58,7 +71,6 @@ const jobTitles = [
   "Project Manager"
 ];
 
-// Sample job categories
 const jobCategories = [
   "Engineering",
   "Marketing",
@@ -102,13 +114,12 @@ const PostJob = () => {
     skills: '',
     benefits: '',
     salaryRange: '',
-    numberOfPositions: '1', // Default to 1 position
+    numberOfPositions: '1',
   });
 
-  // State for badges
   const [benefitBadges, setBenefitBadges] = useState([]);
-
-  // State for UI controls
+  const [showCustomBenefitInput, setShowCustomBenefitInput] = useState(false);
+  const [customBenefitInput, setCustomBenefitInput] = useState('');
   const [loading, setLoading] = useState(false);
   const [stateOpen, setStateOpen] = useState(false);
   const [jobTitleOpen, setJobTitleOpen] = useState(false);
@@ -119,24 +130,27 @@ const PostJob = () => {
   const [isCustomCategory, setIsCustomCategory] = useState(false);
   const [fetchingAreas, setFetchingAreas] = useState(false);
   const [pincodeError, setPincodeError] = useState('');
-  const [benefitInput, setBenefitInput] = useState('');
+  const [validationErrors, setValidationErrors] = useState({});
 
   const navigate = useNavigate();
   const { companies } = useSelector((store) => store.company);
 
-  // Effect to update badges when benefits input changes
   useEffect(() => {
-    // Skip initial render or when directly editing
-    if (benefitInput !== input.benefits && input.benefits) {
-      // Split benefits by comma and create badges
-      const newBadges = input.benefits
+    setInput({
+      ...input,
+      benefits: benefitBadges.join(', ')
+    });
+  }, [benefitBadges]);
+
+  useEffect(() => {
+    if (input.benefits && !benefitBadges.length) {
+      const initialBenefits = input.benefits
         .split(',')
         .map(benefit => benefit.trim())
         .filter(benefit => benefit !== '');
-
-      setBenefitBadges(newBadges);
+      setBenefitBadges(initialBenefits);
     }
-  }, [input.benefits]);
+  }, []);
 
   const fetchPincodeDetails = async (pincode) => {
     if (!pincode || pincode.length !== 6 || !/^\d+$/.test(pincode)) {
@@ -148,17 +162,11 @@ const PostJob = () => {
     try {
       setFetchingAreas(true);
       setPincodeError('');
-
       const response = await axios.get(`https://api.postalpincode.in/pincode/${pincode}`);
-
       if (response.data && response.data[0]) {
         const result = response.data[0];
-
         if (result.Status === 'Success') {
-          // Extract unique area names from post office data
           const areas = result.PostOffice.map(office => office.Name);
-
-          // If areas are found, also automatically set city and state from first post office
           if (areas.length > 0 && result.PostOffice[0]) {
             const firstOffice = result.PostOffice[0];
             setInput(prev => ({
@@ -170,7 +178,6 @@ const PostJob = () => {
               }
             }));
           }
-
           setAvailableAreas(areas);
         } else {
           setPincodeError('No locations found for this pincode');
@@ -182,14 +189,13 @@ const PostJob = () => {
       }
     } catch (error) {
       console.error('Error fetching pincode details:', error);
-      setPincodeError('Error fetching location details. Please try again.');
+      setPincodeError('Error fetching(Sender) fetching location details. Please try again.');
       setAvailableAreas([]);
     } finally {
       setFetchingAreas(false);
     }
   };
 
-  // Debounce function to prevent too many API calls
   const debounce = (func, delay) => {
     let timeoutId;
     return (...args) => {
@@ -202,19 +208,16 @@ const PostJob = () => {
     };
   };
 
-  // Create debounced version of fetchPincodeDetails
   const debouncedFetchPincodeDetails = React.useCallback(
     debounce(fetchPincodeDetails, 800),
     []
   );
 
   useEffect(() => {
-    // When pincode changes and is valid length, fetch areas
     const pincode = input.workLocation.pincode;
     if (pincode && pincode.length === 6) {
       debouncedFetchPincodeDetails(pincode);
     } else if (pincode && pincode.length > 0 && pincode.length < 6) {
-      // When pincode is being typed but not complete
       setPincodeError('');
       setAvailableAreas([]);
     }
@@ -231,64 +234,36 @@ const PostJob = () => {
     } else {
       setInput({ ...input, [name]: value });
     }
+    // Clear validation error for this field
+    setValidationErrors(prev => ({ ...prev, [name]: '' }));
   };
 
-  const handleBenefitInputChange = (e) => {
-    const value = e.target.value;
-    setBenefitInput(value);
-
-    // If the user types a comma, create a new badge
-    if (value.endsWith(',')) {
-      const benefitText = value.slice(0, -1).trim();
-
-      if (benefitText && !benefitBadges.includes(benefitText)) {
-        const newBadges = [...benefitBadges, benefitText];
-        setBenefitBadges(newBadges);
-        setBenefitInput('');
-
-        // Update the input.benefits with the comma-separated string
-        setInput({
-          ...input,
-          benefits: newBadges.join(', ')
-        });
-      } else {
-        setBenefitInput('');
-      }
+  const toggleBenefit = (benefit) => {
+    if (benefitBadges.includes(benefit)) {
+      setBenefitBadges(benefitBadges.filter(b => b !== benefit));
     } else {
-      // Otherwise just update the temporary input
-      setBenefitInput(value);
+      setBenefitBadges([...benefitBadges, benefit]);
+    }
+    setValidationErrors(prev => ({ ...prev, benefits: '' }));
+  };
+
+  const handleAddCustomBenefit = () => {
+    if (customBenefitInput.trim()) {
+      const newBenefit = customBenefitInput.trim();
+      if (!benefitBadges.includes(newBenefit)) {
+        setBenefitBadges([...benefitBadges, newBenefit]);
+      }
+      setCustomBenefitInput('');
+      setShowCustomBenefitInput(false);
+      setValidationErrors(prev => ({ ...prev, benefits: '' }));
     }
   };
 
-  const handleBenefitKeyDown = (e) => {
-    // Add badge on Enter key
+  const handleCustomBenefitKeyDown = (e) => {
     if (e.key === 'Enter') {
       e.preventDefault();
-      const benefitText = benefitInput.trim();
-
-      if (benefitText && !benefitBadges.includes(benefitText)) {
-        const newBadges = [...benefitBadges, benefitText];
-        setBenefitBadges(newBadges);
-        setBenefitInput('');
-
-        // Update the input.benefits with the comma-separated string
-        setInput({
-          ...input,
-          benefits: newBadges.join(', ')
-        });
-      }
+      handleAddCustomBenefit();
     }
-  };
-
-  const removeBenefitBadge = (indexToRemove) => {
-    const newBadges = benefitBadges.filter((_, index) => index !== indexToRemove);
-    setBenefitBadges(newBadges);
-
-    // Update the input.benefits with the comma-separated string
-    setInput({
-      ...input,
-      benefits: newBadges.join(', ')
-    });
   };
 
   const selectChangeHandler = (name, value) => {
@@ -306,87 +281,137 @@ const PostJob = () => {
     } else {
       setInput({ ...input, [name]: value });
     }
+    setValidationErrors(prev => ({ ...prev, [name]: '' }));
   };
 
   const handlePincodeChange = (e) => {
     const pincode = e.target.value.trim();
-    // Only allow numeric values and max 6 digits
     if (pincode === '' || (/^\d*$/.test(pincode) && pincode.length <= 6)) {
       setInput({
         ...input,
         workLocation: {
           ...input.workLocation,
           pincode: pincode,
-          // Reset area when pincode changes
           area: ''
         },
       });
+      setValidationErrors(prev => ({ ...prev, 'workLocation.pincode': '' }));
     }
+  };
+
+  const validateForm = () => {
+    const errors = {};
+    const requiredFields = [
+      { field: 'jobTitle', message: 'Job title is required' },
+      { field: 'jobDescription', message: 'Job description is required' },
+      { field: 'workLocation.city', message: 'City is required' },
+      { field: 'workLocation.state', message: 'State is required' },
+      { field: 'workLocation.pincode', message: 'Pincode is required' },
+      { field: 'workLocation.area', message: 'Area is required' },
+      { field: 'workLocation.streetAddress', message: 'Street address is required' },
+      { field: 'jobType', message: 'Job type is required' },
+      { field: 'experienceLevel', message: 'Experience level is required' },
+      { field: 'companyId', message: 'Company is required' },
+      { field: 'workplacePlane', message: 'Workplace plane is required' },
+      { field: 'jobCategory', message: 'Job category is required' },
+      { field: 'skills', message: 'At least one skill is required' },
+      { field: 'numberOfPositions', message: 'Number of positions is required' },
+    ];
+
+    requiredFields.forEach(({ field, message }) => {
+      if (field.includes('.')) {
+        const [parent, child] = field.split('.');
+        if (!input[parent][child]?.trim()) {
+          errors[field] = message;
+        }
+      } else if (!input[field]?.trim()) {
+        errors[field] = message;
+      }
+    });
+
+    // Validate pincode format
+    if (input.workLocation.pincode && !/^\d{6}$/.test(input.workLocation.pincode)) {
+      errors['workLocation.pincode'] = 'Pincode must be 6 digits';
+    }
+
+    // Validate experience level
+    if (input.experienceLevel) {
+      const experience = parseFloat(input.experienceLevel);
+      if (isNaN(experience) || experience < 0) {
+        errors.experienceLevel = 'Experience level must be a non-negative number';
+      }
+    }
+
+    // Validate number of positions
+    if (input.numberOfPositions) {
+      const positions = parseInt(input.numberOfPositions);
+      if (isNaN(positions) || positions < 1) {
+        errors.numberOfPositions = 'Number of positions must be at least 1';
+      }
+    }
+
+    // Validate salary range format
+    if (input.salaryRange) {
+      const salaryParts = input.salaryRange.split(/[,|-]/).map(part => part.trim());
+      if (salaryParts.length !== 2) {
+        errors.salaryRange = 'Salary range must be in format: min-max or min,max';
+      } else {
+        const [min, max] = salaryParts.map(val => parseFloat(val));
+        if (isNaN(min) || isNaN(max)) {
+          errors.salaryRange = 'Salary range must contain valid numbers';
+        } else if (min < 0 || max < 0) {
+          errors.salaryRange = 'Salary values cannot be negative';
+        } else if (min > max) {
+          errors.salaryRange = 'Minimum salary cannot be greater than maximum';
+        }
+      }
+    }
+
+    // Validate skills format
+    if (input.skills) {
+      const skillsArray = input.skills.split(',').map(skill => skill.trim()).filter(Boolean);
+      if (skillsArray.length === 0) {
+        errors.skills = 'At least one skill is required';
+      }
+    }
+
+    // Validate benefits
+    if (benefitBadges.length === 0) {
+      errors.benefits = 'At least one benefit is required';
+    }
+
+    return errors;
   };
 
   const submitHandler = async (e) => {
     e.preventDefault();
 
-    const requiredFields = [
-      'jobTitle', 'jobDescription', 'workLocation.city', 'workLocation.state',
-      'workLocation.pincode', 'workLocation.area', 'workLocation.streetAddress',
-      'jobType', 'experienceLevel', 'companyId', 'workplacePlane', 'jobCategory',
-      'skills', 'numberOfPositions'
-    ];
+    const errors = validateForm();
+    setValidationErrors(errors);
 
-    for (const field of requiredFields) {
-      const [parent, child] = field.split('.');
-      if (child) {
-        if (!input[parent][child]) {
-          toast.error(`Please fill in ${field.replace('.', ' ')}`);
-          return;
-        }
-      } else if (!input[field]) {
-        toast.error(`Please fill in ${field}`);
-        return;
-      }
+    if (Object.keys(errors).length > 0) {
+      const firstError = Object.values(errors)[0];
+      toast.error(firstError);
+      return;
     }
 
-    // Validate salary range (optional field)
+    // Prepare payload
+    const formattedSkills = input.skills.split(',').map(skill => skill.trim()).filter(Boolean);
+    const formattedBenefits = benefitBadges.filter(Boolean);
     let formattedSalaryRange = { minSalary: null, maxSalary: null };
+
     if (input.salaryRange) {
-      const salaryParts = input.salaryRange.split(/[,|-]/).map(part => part.trim());
-      if (salaryParts.length !== 2) {
-        toast.error('Please enter a valid salary range (e.g., 4-6 or 4,6)');
-        return;
-      }
-      const [min, max] = salaryParts.map(val => parseFloat(val));
-      if (isNaN(min) || isNaN(max) || min < 0 || max < min) {
-        toast.error('Please enter a valid salary range (min ≤ max, both non-negative)');
-        return;
-      }
+      const [min, max] = input.salaryRange.split(/[,|-]/).map(part => parseFloat(part.trim()));
       formattedSalaryRange = { minSalary: min, maxSalary: max };
     }
-
-    // Validate number of positions
-    const positions = parseInt(input.numberOfPositions);
-    if (isNaN(positions) || positions < 1) {
-      toast.error('Please enter a valid number of positions (minimum 1)');
-      return;
-    }
-
-    // Validate experience level (should be a number)
-    const experience = parseFloat(input.experienceLevel);
-    if (isNaN(experience) || experience < 0) {
-      toast.error('Please enter a valid experience level in years');
-      return;
-    }
-
-    const formattedSkills = input.skills.split(',').map((skill) => skill.trim()).filter(Boolean);
-    const formattedBenefits = benefitBadges.filter(Boolean);
 
     const payload = {
       ...input,
       skills: formattedSkills,
       benefits: formattedBenefits,
       salaryRange: formattedSalaryRange,
-      numberOfPositions: positions,
-      experienceLevel: experience.toString()
+      numberOfPositions: parseInt(input.numberOfPositions),
+      experienceLevel: parseFloat(input.experienceLevel).toString()
     };
 
     try {
@@ -413,7 +438,7 @@ const PostJob = () => {
   return (
     <div className="min-h-screen bg-gradient-to-br from-indigo-100 via-purple-50 to-pink-100">
       <Navbar />
-      <div className="max-w-5xl mx-auto py-12 px-4 sm:px-6 lg:px-8">
+      <div className="mx-auto py-12 px-2 sm:px-2 lg:px-2">
         <Card className="bg-white shadow-2xl rounded-3xl overflow-hidden border border-indigo-100 transition-all duration-300 hover:shadow-3xl">
           <div className="bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-500 h-24"></div>
           <CardHeader className="relative pt-8 pb-4 px-8">
@@ -425,7 +450,6 @@ const PostJob = () => {
           <CardContent className="px-8 pb-10">
             <form onSubmit={submitHandler} className="space-y-8">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                {/* Job Title Field with Custom Input Option */}
                 <div className="md:col-span-2">
                   <Label htmlFor="jobTitle" className="text-sm font-semibold text-gray-800">Job Title</Label>
                   {isCustomTitle ? (
@@ -436,7 +460,10 @@ const PostJob = () => {
                         name="jobTitle"
                         value={input.jobTitle}
                         onChange={changeEventHandler}
-                        className="flex-1 h-12 border-gray-200 bg-gray-50 focus:border-indigo-600 focus:ring-indigo-600 rounded-l-xl shadow-sm transition-all duration-200"
+                        className={cn(
+                          "flex-1 h-12 border-gray-200 bg-gray-50 focus:border-indigo-600 focus:ring-indigo-600 rounded-l-xl shadow-sm transition-all duration-200",
+                          validationErrors.jobTitle && "border-red-500 focus:border-red-500 focus:ring-red-500"
+                        )}
                         placeholder="Enter custom job title"
                       />
                       <Button
@@ -454,7 +481,10 @@ const PostJob = () => {
                           variant="outline"
                           role="combobox"
                           aria-expanded={jobTitleOpen}
-                          className="w-full justify-between mt-2 h-12 border-gray-200 bg-gray-50 focus:border-indigo-600 focus:ring-indigo-600 rounded-xl shadow-sm text-left font-normal"
+                          className={cn(
+                            "w-full justify-between mt-2 h-12 border-gray-200 bg-gray-50 focus:border-indigo-600 focus:ring-indigo-600 rounded-xl shadow-sm text-left font-normal",
+                            validationErrors.jobTitle && "border-red-500 focus:border-red-500 focus:ring-red-500"
+                          )}
                         >
                           {input.jobTitle || "Select job title..."}
                           <div className="flex items-center">
@@ -481,6 +511,7 @@ const PostJob = () => {
                                 onSelect={() => {
                                   setInput({ ...input, jobTitle: title });
                                   setJobTitleOpen(false);
+                                  setValidationErrors(prev => ({ ...prev, jobTitle: '' }));
                                 }}
                               >
                                 <Check
@@ -497,6 +528,12 @@ const PostJob = () => {
                       </PopoverContent>
                     </Popover>
                   )}
+                  {validationErrors.jobTitle && (
+                    <div className="mt-1 text-sm text-red-500 flex items-center">
+                      <AlertCircle className="h-3 w-3 mr-1" />
+                      {validationErrors.jobTitle}
+                    </div>
+                  )}
                 </div>
 
                 <div className="md:col-span-2">
@@ -507,9 +544,18 @@ const PostJob = () => {
                     name="jobDescription"
                     value={input.jobDescription}
                     onChange={changeEventHandler}
-                    className="mt-2 h-12 border-gray-200 bg-gray-50 focus:border-indigo-600 focus:ring-indigo-600 rounded-xl shadow-sm transition-all duration-200"
+                    className={cn(
+                      "mt-2 h-12 border-gray-200 bg-gray-50 focus:border-indigo-600 focus:ring-indigo-600 rounded-xl shadow-sm transition-all duration-200",
+                      validationErrors.jobDescription && "border-red-500 focus:border-red-500 focus:ring-red-500"
+                    )}
                     placeholder="e.g., Develop and maintain web applications..."
                   />
+                  {validationErrors.jobDescription && (
+                    <div className="mt-1 text-sm text-red-500 flex items-center">
+                      <AlertCircle className="h-3 w-3 mr-1" />
+                      {validationErrors.jobDescription}
+                    </div>
+                  )}
                 </div>
 
                 <div>
@@ -520,48 +566,117 @@ const PostJob = () => {
                     name="skills"
                     value={input.skills}
                     onChange={changeEventHandler}
-                    className="mt-2 h-12 border-gray-200 bg-gray-50 focus:border-indigo-600 focus:ring-indigo-600 rounded-xl shadow-sm transition-all duration-200"
+                    className={cn(
+                      "mt-2 h-12 border-gray-200 bg-gray-50 focus:border-indigo-600 focus:ring-indigo-600 rounded-xl shadow-sm transition-all duration-200",
+                      validationErrors.skills && "border-red-500 focus:border-red-500 focus:ring-red-500"
+                    )}
                     placeholder="e.g., JavaScript, React, Node.js"
                   />
-                </div>
-
-                {/* Benefits field with badges */}
-                <div>
-                  <Label htmlFor="benefits" className="text-sm font-semibold text-gray-800">Benefits</Label>
-                  <Input
-                    id="benefits"
-                    type="text"
-                    value={benefitInput}
-                    onChange={handleBenefitInputChange}
-                    onKeyDown={handleBenefitKeyDown}
-                    className="mt-2 h-12 border-gray-200 bg-gray-50 focus:border-indigo-600 focus:ring-indigo-600 rounded-xl shadow-sm transition-all duration-200"
-                    placeholder="Type benefit and press Enter or comma to add"
-                  />
-                  {benefitBadges.length > 0 && (
-                    <div className="flex flex-wrap gap-2 mt-2">
-                      {benefitBadges.map((benefit, index) => (
-                        <Badge
-                          key={index}
-                          className="bg-indigo-100 text-indigo-800 hover:bg-indigo-200 gap-1 pl-3 pr-2 py-1"
-                        >
-                          {benefit}
-                          <button
-                            type="button"
-                            onClick={() => removeBenefitBadge(index)}
-                            className="text-indigo-600 hover:text-indigo-800 rounded-full focus:outline-none focus:ring-2 focus:ring-indigo-500 p-1"
-                          >
-                            <XIcon className="h-3 w-3" />
-                          </button>
-                        </Badge>
-                      ))}
+                  {validationErrors.skills && (
+                    <div className="mt-1 text-sm text-red-500 flex items-center">
+                      <AlertCircle className="h-3 w-3 mr-1" />
+                      {validationErrors.skills}
                     </div>
                   )}
                 </div>
 
                 <div>
+                  <Label htmlFor="benefits" className="text-sm font-semibold text-gray-800">Benefits</Label>
+                  <div className="mt-2">
+                    <div className="flex flex-wrap gap-2 mb-3">
+                      {commonBenefits.map((benefit) => (
+                        <Badge
+                          key={benefit}
+                          className={cn(
+                            "cursor-pointer px-3 py-1.5 text-sm",
+                            benefitBadges.includes(benefit)
+                              ? "bg-indigo-600 text-white hover:bg-indigo-700"
+                              : "bg-gray-100 text-gray-700 hover:bg-gray-200",
+                            validationErrors.benefits && "border border-red-500"
+                          )}
+                          onClick={() => toggleBenefit(benefit)}
+                        >
+                          {benefit}
+                          {benefitBadges.includes(benefit) && (
+                            <Check className="ml-1 h-3 w-3" />
+                          )}
+                        </Badge>
+                      ))}
+                      <Badge
+                        className="cursor-pointer bg-gray-100 text-gray-700 hover:bg-gray-200 px-3 py-1.5 text-sm flex items-center gap-1"
+                        onClick={() => setShowCustomBenefitInput(true)}
+                      >
+                        <Plus className="h-3 w-3" />
+                        Other
+                      </Badge>
+                    </div>
+
+                    {benefitBadges.filter(b => !commonBenefits.includes(b)).length > 0 && (
+                      <div className="flex flex-wrap gap-2 mb-3">
+                        {benefitBadges.filter(b => !commonBenefits.includes(b)).map((benefit, index) => (
+                          <Badge
+                            key={`custom-${index}`}
+                            className="bg-indigo-600 text-white hover:bg-indigo-700 px-3 py-1.5 text-sm flex items-center gap-1"
+                          >
+                            {benefit}
+                            <button
+                              type="button"
+                              onClick={() => setBenefitBadges(benefitBadges.filter(b => b !== benefit))}
+                              className="ml-1 rounded-full focus:outline-none"
+                            >
+                              <XIcon className="h-3 w-3" />
+                            </button>
+                          </Badge>
+                        ))}
+                      </div>
+                    )}
+
+                    {showCustomBenefitInput && (
+                      <div className="flex mt-2">
+                        <Input
+                          type="text"
+                          value={customBenefitInput}
+                          onChange={(e) => setCustomBenefitInput(e.target.value)}
+                          onKeyDown={handleCustomBenefitKeyDown}
+                          placeholder="Type custom benefit..."
+                          className="flex-1 h-10 border-gray-200 bg-gray-50 focus:border-indigo-600 focus:ring-indigo-600 rounded-l-lg shadow-sm transition-all duration-200"
+                        />
+                        <Button
+                          type="button"
+                          onClick={handleAddCustomBenefit}
+                          className="rounded-r-lg bg-indigo-600 text-white hover:bg-indigo-700"
+                        >
+                          Add
+                        </Button>
+                        <Button
+                          type="button"
+                          onClick={() => {
+                            setShowCustomBenefitInput(false);
+                            setCustomBenefitInput('');
+                          }}
+                          variant="ghost"
+                          className="ml-2 px-2 rounded-lg border border-gray-200 bg-gray-50 hover:bg-gray-100"
+                        >
+                          <XIcon className="h-4 w-4 text-gray-600" />
+                        </Button>
+                      </div>
+                    )}
+                    {validationErrors.benefits && (
+                      <div className="mt-1 text-sm text-red-500 flex items-center">
+                        <AlertCircle className="h-3 w-3 mr-1" />
+                        {validationErrors.benefits}
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                <div>
                   <Label htmlFor="companyId" className="text-sm font-semibold text-gray-800">Company</Label>
                   <Select onValueChange={(value) => selectChangeHandler('companyId', value)}>
-                    <SelectTrigger className="mt-2 h-12 border-gray-200 bg-gray-50 focus:border-indigo-600 focus:ring-indigo-600 rounded-xl shadow-sm">
+                    <SelectTrigger className={cn(
+                      "mt-2 h-12 border-gray-200 bg-gray-50 focus:border-indigo-600 focus:ring-indigo-600 rounded-xl shadow-sm",
+                      validationErrors.companyId && "border-red-500 focus:border-red-500 focus:ring-red-500"
+                    )}>
                       <SelectValue placeholder="Select a Company" />
                     </SelectTrigger>
                     <SelectContent>
@@ -574,9 +689,14 @@ const PostJob = () => {
                       </SelectGroup>
                     </SelectContent>
                   </Select>
+                  {validationErrors.companyId && (
+                    <div className="mt-1 text-sm text-red-500 flex items-center">
+                      <AlertCircle className="h-3 w-3 mr-1" />
+                      {validationErrors.companyId}
+                    </div>
+                  )}
                 </div>
 
-                {/* Pincode Field with API Integration */}
                 <div>
                   <Label htmlFor="workLocation.pincode" className="text-sm font-semibold text-gray-800">Pincode</Label>
                   <div className="mt-2 relative">
@@ -588,7 +708,7 @@ const PostJob = () => {
                       onChange={handlePincodeChange}
                       className={cn(
                         "h-12 border-gray-200 bg-gray-50 focus:border-indigo-600 focus:ring-indigo-600 rounded-xl shadow-sm transition-all duration-200",
-                        pincodeError && "border-red-500 focus:border-red-500 focus:ring-red-500"
+                        (pincodeError || validationErrors['workLocation.pincode']) && "border-red-500 focus:border-red-500 focus:ring-red-500"
                       )}
                       placeholder="e.g., 400001"
                     />
@@ -598,15 +718,14 @@ const PostJob = () => {
                       </div>
                     )}
                   </div>
-                  {pincodeError && (
+                  {(pincodeError || validationErrors['workLocation.pincode']) && (
                     <div className="mt-1 text-sm text-red-500 flex items-center">
                       <AlertCircle className="h-3 w-3 mr-1" />
-                      {pincodeError}
+                      {pincodeError || validationErrors['workLocation.pincode']}
                     </div>
                   )}
                 </div>
 
-                {/* Area Field - Populated based on Pincode */}
                 <div>
                   <Label htmlFor="workLocation.area" className="text-sm font-semibold text-gray-800">Area</Label>
                   <Popover open={areaOpen} onOpenChange={setAreaOpen}>
@@ -616,7 +735,10 @@ const PostJob = () => {
                         role="combobox"
                         aria-expanded={areaOpen}
                         disabled={fetchingAreas || availableAreas.length === 0}
-                        className="w-full justify-between mt-2 h-12 border-gray-200 bg-gray-50 focus:border-indigo-600 focus:ring-indigo-600 rounded-xl shadow-sm text-left font-normal"
+                        className={cn(
+                          "w-full justify-between mt-2 h-12 border-gray-200 bg-gray-50 focus:border-indigo-600 focus:ring-indigo-600 rounded-xl shadow-sm text-left font-normal",
+                          validationErrors['workLocation.area'] && "border-red-500 focus:border-red-500 focus:ring-red-500"
+                        )}
                       >
                         {input.workLocation.area || (
                           fetchingAreas
@@ -655,9 +777,14 @@ const PostJob = () => {
                       </Command>
                     </PopoverContent>
                   </Popover>
+                  {validationErrors['workLocation.area'] && (
+                    <div className="mt-1 text-sm text-red-500 flex items-center">
+                      <AlertCircle className="h-3 w-3 mr-1" />
+                      {validationErrors['workLocation.area']}
+                    </div>
+                  )}
                 </div>
 
-                {/* Street Address Field */}
                 <div>
                   <Label htmlFor="workLocation.streetAddress" className="text-sm font-semibold text-gray-800">Street Address</Label>
                   <Input
@@ -666,9 +793,18 @@ const PostJob = () => {
                     name="workLocation.streetAddress"
                     value={input.workLocation.streetAddress}
                     onChange={changeEventHandler}
-                    className="mt-2 h-12 border-gray-200 bg-gray-50 focus:border-indigo-600 focus:ring-indigo-600 rounded-xl shadow-sm transition-all duration-200"
+                    className={cn(
+                      "mt-2 h-12 border-gray-200 bg-gray-50 focus:border-indigo-600 focus:ring-indigo-600 rounded-xl shadow-sm transition-all duration-200",
+                      validationErrors['workLocation.streetAddress'] && "border-red-500 focus:border-red-500 focus:ring-red-500"
+                    )}
                     placeholder="e.g., 123 Main Street, Building 4, Floor 2"
                   />
+                  {validationErrors['workLocation.streetAddress'] && (
+                    <div className="mt-1 text-sm text-red-500 flex items-center">
+                      <AlertCircle className="h-3 w-3 mr-1" />
+                      {validationErrors['workLocation.streetAddress']}
+                    </div>
+                  )}
                 </div>
 
                 <div>
@@ -679,9 +815,18 @@ const PostJob = () => {
                     name="workLocation.city"
                     value={input.workLocation.city}
                     onChange={changeEventHandler}
-                    className="mt-2 h-12 border-gray-200 bg-gray-50 focus:border-indigo-600 focus:ring-indigo-600 rounded-xl shadow-sm transition-all duration-200"
+                    className={cn(
+                      "mt-2 h-12 border-gray-200 bg-gray-50 focus:border-indigo-600 focus:ring-indigo-600 rounded-xl shadow-sm transition-all duration-200",
+                      validationErrors['workLocation.city'] && "border-red-500 focus:border-red-500 focus:ring-red-500"
+                    )}
                     placeholder="e.g., Mumbai"
                   />
+                  {validationErrors['workLocation.city'] && (
+                    <div className="mt-1 text-sm text-red-500 flex items-center">
+                      <AlertCircle className="h-3 w-3 mr-1" />
+                      {validationErrors['workLocation.city']}
+                    </div>
+                  )}
                 </div>
 
                 <div>
@@ -692,7 +837,10 @@ const PostJob = () => {
                         variant="outline"
                         role="combobox"
                         aria-expanded={stateOpen}
-                        className="w-full justify-between mt-2 h-12 border-gray-200 bg-gray-50 focus:border-indigo-600 focus:ring-indigo-600 rounded-xl shadow-sm text-left font-normal"
+                        className={cn(
+                          "w-full justify-between mt-2 h-12 border-gray-200 bg-gray-50 focus:border-indigo-600 focus:ring-indigo-600 rounded-xl shadow-sm text-left font-normal",
+                          validationErrors['workLocation.state'] && "border-red-500 focus:border-red-500 focus:ring-red-500"
+                        )}
                       >
                         {input.workLocation.state || "Select state..."}
                         <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
@@ -725,14 +873,22 @@ const PostJob = () => {
                       </Command>
                     </PopoverContent>
                   </Popover>
+                  {validationErrors['workLocation.state'] && (
+                    <div className="mt-1 text-sm text-red-500 flex items-center">
+                      <AlertCircle className="h-3 w-3 mr-1" />
+                      {validationErrors['workLocation.state']}
+                    </div>
+                  )}
                 </div>
 
-                {/* Job Type Field with Select Tag */}
                 <div>
                   <Label htmlFor="jobType" className="text-sm font-semibold text-gray-800">Job Type</Label>
                   <Select onValueChange={(value) => selectChangeHandler('jobType', value)}>
-                    <SelectTrigger className="mt-2 h-12 border-gray-200 bg-gray-50 focus:border-indigo-600 focus:ring-indigo-600 rounded-xl shadow-sm">
-                      <SelectValue placeholder="Select job type" />
+                    <SelectTrigger className={cn(
+                      "mt-2 h-12 border-gray-200 bg-gray-50 focus:border-indigo-600 focus:ring-indigo-600 rounded-xl shadow-sm",
+                      validationErrors.jobType && "border-red-500 focus:border-red-500 focus:ring-red-500"
+                    )}>
+                      <SelectValue placeholder="Select job type..." />
                     </SelectTrigger>
                     <SelectContent>
                       <SelectGroup>
@@ -744,6 +900,12 @@ const PostJob = () => {
                       </SelectGroup>
                     </SelectContent>
                   </Select>
+                  {validationErrors.jobType && (
+                    <div className="mt-1 text-sm text-red-500 flex items-center">
+                      <AlertCircle className="h-3 w-3 mr-1" />
+                      {validationErrors.jobType}
+                    </div>
+                  )}
                 </div>
 
                 <div>
@@ -754,27 +916,53 @@ const PostJob = () => {
                     name="experienceLevel"
                     value={input.experienceLevel}
                     onChange={changeEventHandler}
-                    min="0"
-                    step="0.1"
-                    className="mt-2 h-12 border-gray-200 bg-gray-50 focus:border-indigo-600 focus:ring-indigo-600 rounded-xl shadow-sm transition-all duration-200"
+                    className={cn(
+                      "mt-2 h-12 border-gray-200 bg-gray-50 focus:border-indigo-600 focus:ring-indigo-600 rounded-xl shadow-sm transition-all duration-200",
+                      validationErrors.experienceLevel && "border-red-500 focus:border-red-500 focus:ring-red-500"
+                    )}
                     placeholder="e.g., 2"
                   />
+                  {validationErrors.experienceLevel && (
+                    <div className="mt-1 text-sm text-red-500 flex items-center">
+                      <AlertCircle className="h-3 w-3 mr-1" />
+                      {validationErrors.experienceLevel}
+                    </div>
+                  )}
                 </div>
-
                 <div>
-                  <Label htmlFor="workplacePlane" className="text-sm font-semibold text-gray-800">Workplace Plane</Label>
-                  <Input
-                    id="workplacePlane"
-                    type="text"
-                    name="workplacePlane"
-                    value={input.workplacePlane}
-                    onChange={changeEventHandler}
-                    className="mt-2 h-12 border-gray-200 bg-gray-50 focus:border-indigo-600 focus:ring-indigo-600 rounded-xl shadow-sm transition-all duration-200"
-                    placeholder="e.g., On-site, Remote, Hybrid"
-                  />
-                </div>
+  <Label htmlFor="workplacePlane" className="text-sm font-semibold text-gray-800">
+    Workplace Plane
+  </Label>
 
-                {/* Job Category Field with Custom Input Option */}
+  <Select
+    value={input.workplacePlane}
+    onValueChange={(value) => changeEventHandler({ target: { name: "workplacePlane", value } })}
+  >
+    <SelectTrigger
+      id="workplacePlane"
+      className={cn(
+        "mt-2 h-12 border-gray-200 bg-gray-50 focus:border-indigo-600 focus:ring-indigo-600 rounded-xl shadow-sm transition-all duration-200",
+        validationErrors.workplacePlane && "border-red-500 focus:border-red-500 focus:ring-red-500"
+      )}
+    >
+      <SelectValue placeholder="Select workplace type" />
+    </SelectTrigger>
+    <SelectContent>
+      <SelectItem value="Office">Office</SelectItem>
+      <SelectItem value="Remote">Remote</SelectItem>
+      <SelectItem value="Hybrid">Hybrid</SelectItem>
+    </SelectContent>
+  </Select>
+
+  {validationErrors.workplacePlane && (
+    <div className="mt-1 text-sm text-red-500 flex items-center">
+      <AlertCircle className="h-3 w-3 mr-1" />
+      {validationErrors.workplacePlane}
+    </div>
+  )}
+</div>
+
+
                 <div>
                   <Label htmlFor="jobCategory" className="text-sm font-semibold text-gray-800">Job Category</Label>
                   {isCustomCategory ? (
@@ -785,7 +973,10 @@ const PostJob = () => {
                         name="jobCategory"
                         value={input.jobCategory}
                         onChange={changeEventHandler}
-                        className="flex-1 h-12 border-gray-200 bg-gray-50 focus:border-indigo-600 focus:ring-indigo-600 rounded-l-xl shadow-sm transition-all duration-200"
+                        className={cn(
+                          "flex-1 h-12 border-gray-200 bg-gray-50 focus:border-indigo-600 focus:ring-indigo-600 rounded-l-xl shadow-sm transition-all duration-200",
+                          validationErrors.jobCategory && "border-red-500 focus:border-red-500 focus:ring-red-500"
+                        )}
                         placeholder="Enter custom job category"
                       />
                       <Button
@@ -803,7 +994,10 @@ const PostJob = () => {
                           variant="outline"
                           role="combobox"
                           aria-expanded={jobCategoryOpen}
-                          className="w-full justify-between mt-2 h-12 border-gray-200 bg-gray-50 focus:border-indigo-600 focus:ring-indigo-600 rounded-xl shadow-sm text-left font-normal"
+                          className={cn(
+                            "w-full justify-between mt-2 h-12 border-gray-200 bg-gray-50 focus:border-indigo-600 focus:ring-indigo-600 rounded-xl shadow-sm text-left font-normal",
+                            validationErrors.jobCategory && "border-red-500 focus:border-red-500 focus:ring-red-500"
+                          )}
                         >
                           {input.jobCategory || "Select job category..."}
                           <div className="flex items-center">
@@ -830,6 +1024,7 @@ const PostJob = () => {
                                 onSelect={() => {
                                   setInput({ ...input, jobCategory: category });
                                   setJobCategoryOpen(false);
+                                  setValidationErrors(prev => ({ ...prev, jobCategory: '' }));
                                 }}
                               >
                                 <Check
@@ -846,6 +1041,12 @@ const PostJob = () => {
                       </PopoverContent>
                     </Popover>
                   )}
+                  {validationErrors.jobCategory && (
+                    <div className="mt-1 text-sm text-red-500 flex items-center">
+                      <AlertCircle className="h-3 w-3 mr-1" />
+                      {validationErrors.jobCategory}
+                    </div>
+                  )}
                 </div>
 
                 <div>
@@ -856,12 +1057,20 @@ const PostJob = () => {
                     name="salaryRange"
                     value={input.salaryRange}
                     onChange={changeEventHandler}
-                    className="mt-2 h-12 border-gray-200 bg-gray-50 focus:border-indigo-600 focus:ring-indigo-600 rounded-xl shadow-sm transition-all duration-200"
+                    className={cn(
+                      "mt-2 h-12 border-gray-200 bg-gray-50 focus:border-indigo-600 focus:ring-indigo-600 rounded-xl shadow-sm transition-all duration-200",
+                      validationErrors.salaryRange && "border-red-500 focus:border-red-500 focus:ring-red-500"
+                    )}
                     placeholder="e.g., 4-6 or 4,6"
                   />
+                  {validationErrors.salaryRange && (
+                    <div className="mt-1 text-sm text-red-500 flex items-center">
+                      <AlertCircle className="h-3 w-3 mr-1" />
+                      {validationErrors.salaryRange}
+                    </div>
+                  )}
                 </div>
 
-                {/* Number of Positions Field */}
                 <div>
                   <Label htmlFor="numberOfPositions" className="text-sm font-semibold text-gray-800">Number of Positions</Label>
                   <Input
@@ -870,25 +1079,29 @@ const PostJob = () => {
                     name="numberOfPositions"
                     value={input.numberOfPositions}
                     onChange={changeEventHandler}
-                    min="1"
-                    className="mt-2 h-12 border-gray-200 bg-gray-50 focus:border-indigo-600 focus:ring-indigo-600 rounded-xl shadow-sm transition-all duration-200"
+                    className={cn(
+                      "mt-2 h-12 border-gray-200 bg-gray-50 focus:border-indigo-600 focus:ring-indigo-600 rounded-xl shadow-sm transition-all duration-200",
+                      validationErrors.numberOfPositions && "border-red-500 focus:border-red-500 focus:ring-red-500"
+                    )}
                     placeholder="e.g., 1"
                   />
+                  {validationErrors.numberOfPositions && (
+                    <div className="mt-1 text-sm text-red-500 flex items-center">
+                      <AlertCircle className="h-3 w-3 mr-1" />
+                      {validationErrors.numberOfPositions}
+                    </div>
+                  )}
                 </div>
               </div>
 
-              <Button
-                type="submit"
-                disabled={loading}
-                className="w-full h-12 bg-indigo-600 text-white font-semibold rounded-xl shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 transition-all duration-200"
-              >
+              <Button type="submit" className="w-full h-12 bg-indigo-600 text-white hover:bg-indigo-700 rounded-xl shadow-sm transition-all duration-200">
                 {loading ? (
-                  <>
+                  <div className="flex items-center justify-center">
                     <Loader2 className="h-5 w-5 animate-spin mr-2" />
                     Posting...
-                  </>
+                  </div>
                 ) : (
-                  'Post Job'
+                  "Post Job"
                 )}
               </Button>
             </form>

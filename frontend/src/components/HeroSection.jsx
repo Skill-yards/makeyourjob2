@@ -1,25 +1,95 @@
 import { useState } from 'react';
-import { useDispatch } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
-import { setSearchedQuery } from '@/redux/jobSlice';
-import { Search, Briefcase, ArrowRight } from 'lucide-react';
+import { setSearchedJobs } from '@/redux/browseJob.slice.js';
+import { Search, Briefcase, ArrowRight, Loader2, MapPin, AlertCircle } from 'lucide-react';
 import { Button } from './ui/button';
 import { Input } from './ui/input';
 import { Badge } from './ui/badge';
+import { JOB_API_END_POINT } from '@/utils/constant';
+import axios from 'axios';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from './ui/select';
+import { Alert, AlertDescription } from './ui/alert';
 
-// Import the background image
-import heroBackground from '../../public/employees-working-together-medium-shot.jpg'; // Adjust the path as needed
+const indianStates = [
+  "Andhra Pradesh", "Arunachal Pradesh", "Assam", "Bihar", "Chhattisgarh", "Goa", "Gujarat",
+  "Haryana", "Himachal Pradesh", "Jharkhand", "Karnataka", "Kerala", "Madhya Pradesh", "Maharashtra",
+  "Manipur", "Meghalaya", "Mizoram", "Nagaland", "Odisha", "Punjab", "Rajasthan", "Sikkim",
+  "Tamil Nadu", "Telangana", "Tripura", "Uttar Pradesh", "Uttarakhand", "West Bengal",
+  "Andaman and Nicobar Islands", "Chandigarh", "Dadra and Nagar Haveli and Daman and Diu",
+  "Delhi", "Jammu and Kashmir", "Ladakh", "Lakshadweep", "Puducherry"
+];
 
 const HeroSection = () => {
     const [jobType, setJobType] = useState("");
     const [location, setLocation] = useState("");
+    const [isLoading, setIsLoading] = useState(false);
+    const [error, setError] = useState(null);
     const dispatch = useDispatch();
     const navigate = useNavigate();
 
+    const { allJobs } = useSelector(store => store.job);
+
+    async function searchJob() {
+        // Reset error state before starting new search
+        setError(null);
+        
+        // Don't proceed if already loading
+        if (isLoading) return;
+        
+        setIsLoading(true);
+        
+        try {
+            const url = `${JOB_API_END_POINT}/search?jobTitle=${jobType}&city=${location}`;
+            const res = await axios.get(url, {
+                withCredentials: true
+            });
+
+            if (res.data.success) {
+                dispatch(setSearchedJobs(res.data.jobs));
+                navigate("/browse");
+            } else {
+                // Handle empty results
+                dispatch(setSearchedJobs([]));
+                setError("No jobs found matching your criteria. Try adjusting your search.");
+            }
+        } catch (error) {
+            console.error("Error while searching for jobs:", error);
+            
+            // Handle specific error types
+            if (error.response) {
+                // The request was made and the server responded with a status code
+                // that falls out of the range of 2xx
+                if (error.response.status === 401) {
+                    setError("Authentication required. Please log in.");
+                } else if (error.response.status === 404) {
+                    setError("Unable to find any jobs matching your search criteria.");
+                } else {
+                    setError(`Server error: ${error.response.data.message || "Something went wrong"}`);
+                }
+            } else if (error.request) {
+                // The request was made but no response was received
+                setError("Network error. Please check your connection and try again.");
+            } else {
+                // Something happened in setting up the request
+                setError("An unexpected error occurred. Please try again later.");
+            }
+            
+            // Set empty results when error occurs
+            dispatch(setSearchedJobs([]));
+        } finally {
+            setIsLoading(false);
+        }
+    }
+
     const searchJobHandler = () => {
-        const query = `${jobType} ${location ? `in ${location}` : ''}`.trim();
-        dispatch(setSearchedQuery(query));
-        navigate("/browse");
+        searchJob();
     };
     const handleKeyDown = (e) => {
         if (e.key === 'Enter') {
@@ -29,20 +99,17 @@ const HeroSection = () => {
 
     return (
         <div>
-            <div
-                className="relative bg-gradient-to-b from-purple-50 to-white dark:from-gray-900 dark:to-gray-950 overflow-hidden"
-                style={{
-                    backgroundImage: `url(${heroBackground})`, // Add background image
-                    backgroundSize: 'cover', // Cover the entire container
-                    backgroundPosition: 'center', // Center the image
-                    backgroundRepeat: 'no-repeat', // Prevent image repetition
-                    backgroundBlendMode: 'overlay', // Blend gradient with image
-                }}
-            >
-                {/* Add an overlay for better text readability */}
-                <div className="absolute inset-0 bg-black/30 dark:bg-black/50 z-0"></div>
+          <div 
+  style={{ 
+    backgroundImage: "linear-gradient(to bottom, rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.7)), url('/bg1.jpeg')",
+    backgroundRepeat: "no-repeat",
+    backgroundSize: "cover",
+    backgroundPosition: "center"
+  }}
+  className="relative overflow-hidden"
+>
 
-                {/* Background pattern elements */}
+
                 <div className="absolute inset-0 z-0 opacity-30">
                     <div className="absolute top-20 left-10 w-64 h-64 rounded-full bg-purple-200 dark:bg-purple-900 blur-3xl"></div>
                     <div className="absolute bottom-10 right-10 w-80 h-80 rounded-full bg-blue-200 dark:bg-blue-900 blur-3xl"></div>
@@ -55,7 +122,7 @@ const HeroSection = () => {
                             <span className="text-purple-700 dark:text-purple-400 font-semibold">No. 1 Job Hunt Website</span>
                         </Badge>
 
-                        <h1 className="text-4xl sm:text-5xl md:text-6xl font-extrabold tracking-tight mb-6 text-gray-900 dark:text-white">
+                        <h1 className="text-4xl sm:text-5xl md:text-6xl font-extrabold tracking-tight mb-6 text-white dark:text-white">
                             Search, Apply & 
                             <span className="block mt-2">Get Your <span className="text-transparent bg-clip-text bg-gradient-to-r from-purple-600 to-indigo-600 dark:from-purple-400 dark:to-indigo-400 relative">
                                 Dream Jobs
@@ -65,37 +132,72 @@ const HeroSection = () => {
                             </span></span>
                         </h1>
 
-                        <p className="text-lg text-gray-600 dark:text-gray-300 mb-10 max-w-2xl leading-relaxed">
+                        <p className="text-lg text-white dark:text-gray-300 mb-10 max-w-2xl leading-relaxed">
                             Find the perfect role in top companies worldwide. Your next career step is just a search away.
                         </p>
 
+                        {/* Error Alert */}
+                        {error && (
+                            <Alert variant="destructive" className="mb-6 w-full max-w-2xl">
+                                <AlertCircle className="h-4 w-4" />
+                                <AlertDescription>
+                                    {error}
+                                </AlertDescription>
+                            </Alert>
+                        )}
+
                         <div className="relative w-full max-w-2xl">
-                            <div className="flex items-center bg-white dark:bg-gray-800 rounded-2xl shadow-2xl border border-gray-100 dark:border-gray-800 p-3 transition-all hover:shadow-lg hover:shadow-purple-300 dark:hover:shadow-purple-900/30">
-                                <Search className="ml-4 h-6 w-6 text-gray-400 dark:text-gray-500 flex-shrink-0" />
-                                <div className="flex-1 flex space-x-4 px-4">
+                            <div className="flex flex-col sm:flex-row items-center gap-4 bg-white dark:bg-gray-800 rounded-xl shadow-xl border border-gray-100 dark:border-gray-700 p-2 transition-all hover:shadow-purple-100 dark:hover:shadow-purple-900/20">
+                                <div className="flex items-center flex-1">
+                                    <Search className="ml-3 h-5 w-5 text-gray-400 flex-shrink-0" />
                                     <Input
                                         type="text"
                                         placeholder="Job type (e.g. Developer, Designer)"
                                         value={jobType}
                                         onChange={(e) => setJobType(e.target.value)}
                                         onKeyDown={handleKeyDown}
-                                        className="flex-1 border-none shadow-none focus-visible:ring-0 focus-visible:ring-offset-0 bg-transparent text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 text-lg"
-                                    />
-                                    <Input
-                                        type="text"
-                                        placeholder="Location (e.g. New York, Remote)"
-                                        value={location}
-                                        onChange={(e) => setLocation(e.target.value)}
-                                        onKeyDown={handleKeyDown}
-                                        className="flex-1 border-none shadow-none focus-visible:ring-0 focus-visible:ring-offset-0 bg-transparent text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 text-lg"
+                                        className="flex-1 border-none shadow-none focus-visible:ring-0 focus-visible:ring-offset-0 bg-transparent pl-2 text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 text-lg"
+                                        disabled={isLoading}
                                     />
                                 </div>
+                                
+                                <div className="flex items-center flex-1">
+                                    <MapPin className="ml-3 h-5 w-5 text-gray-400 flex-shrink-0" />
+                                    <Select 
+                                        value={location} 
+                                        onValueChange={setLocation}
+                                        disabled={isLoading}
+                                    >
+                                        <SelectTrigger className="w-full border-none shadow-none focus:ring-0 bg-transparent">
+                                            <SelectValue placeholder="Select a state" />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            <SelectItem value="all">All Locations</SelectItem>
+                                            {indianStates.map((state) => (
+                                                <SelectItem key={state} value={state}>
+                                                    {state}
+                                                </SelectItem>
+                                            ))}
+                                        </SelectContent>
+                                    </Select>
+                                </div>
+                                
                                 <Button 
                                     onClick={searchJobHandler} 
-                                    className="rounded-xl bg-gradient-to-r from-purple-600 to-indigo-600 dark:from-purple-700 dark:to-indigo-700 hover:from-purple-700 hover:to-indigo-800 text-white px-6 py-3 transition-all transform hover:scale-105 shadow-md"
+                                    className="rounded-full bg-purple-700 hover:bg-purple-800 px-6 py-6 transition-all"
+                                    disabled={isLoading}
                                 >
-                                    <span className="hidden sm:inline mr-2 text-sm font-medium">Find Jobs</span>
-                                    <ArrowRight className="h-6 w-6" />
+                                    {isLoading ? (
+                                        <>
+                                            <Loader2 className="h-5 w-5 mr-2 animate-spin" />
+                                            <span className="hidden sm:inline text-sm font-medium">Searching...</span>
+                                        </>
+                                    ) : (
+                                        <>
+                                            <span className="hidden sm:inline mr-2 text-sm font-medium">Find Jobs</span>
+                                            <ArrowRight className="h-5 w-5" />
+                                        </>
+                                    )}
                                 </Button>
                             </div>
                         </div>
