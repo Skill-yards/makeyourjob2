@@ -17,7 +17,7 @@ app.use(express.json());
 app.use(express.urlencoded({extended:true}));
 app.use(cookieParser());
     const corsOptions = {
-        origin:['http://localhost:5173',"https://gvjgskdc-5173.inc1.devtunnels.ms"],
+        origin:['http://localhost:5173',"https://s73fplxz-5173.inc1.devtunnels.ms/","https://s73fplxz-5173.inc1.devtunnels.ms"],
         credentials:true
     }
 

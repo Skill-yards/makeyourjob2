@@ -17,6 +17,7 @@ import { Button } from '../ui/button'
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card'
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group'
 import { Separator } from '@/components/ui/separator'
+import { useCookies } from 'react-cookie'
 
 const Login = () => {
     const [input, setInput] = useState({
@@ -24,7 +25,7 @@ const Login = () => {
         password: "",
         role: "Employees", // Default role
     });
-    
+
     const { loading, user } = useSelector(store => store.auth);
     const navigate = useNavigate();
     const dispatch = useDispatch();
@@ -62,9 +63,6 @@ const Login = () => {
         }
     }, [user, navigate]);
 
-    // useEffect(() => {
-    //     dispatch(setLoading(false)); // Reset loading when Login mounts
-    //   }, [dispatch])
 
     return (
         <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex flex-col">

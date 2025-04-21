@@ -1,43 +1,72 @@
 import { createSlice } from "@reduxjs/toolkit";
 
 const jobSlice = createSlice({
-    name:"job",
-    initialState:{
-        allJobs:[],
-        allAdminJobs:[],
-        singleJob:null, 
-        searchJobByText:"",
-        allAppliedJobs:[],
-        searchedQuery:"",
+    name: "job",
+    initialState: {
+        allJobs: [],
+        allAdminJobs: [],
+        singleJob: null,
+        searchJobByText: "",
+        allAppliedJobs: [],
+        searchedQuery: "",
+        loading: false,      // Added loading state
+        error: null          // Added error state
     },
-    reducers:{
-        // actions
-        setAllJobs:(state,action) => {
+    reducers: {
+        // Existing actions
+        setAllJobs: (state, action) => {
             state.allJobs = action.payload;
+            state.loading = false;
+            state.error = null;
         },
-        setSingleJob:(state,action) => {
+        setSingleJob: (state, action) => {
             state.singleJob = action.payload;
+            state.loading = false;
+            state.error = null;
         },
-        setAllAdminJobs:(state,action) => {
+        setAllAdminJobs: (state, action) => {
             state.allAdminJobs = action.payload;
+            state.loading = false;
+            state.error = null;
         },
-        setSearchJobByText:(state,action) => {
+        setSearchJobByText: (state, action) => {
             state.searchJobByText = action.payload;
         },
-        setAllAppliedJobs:(state,action) => {
+        setAllAppliedJobs: (state, action) => {
             state.allAppliedJobs = action.payload;
+            state.loading = false;
+            state.error = null;
         },
-        setSearchedQuery:(state,action) => {
+        setSearchedQuery: (state, action) => {
             state.searchedQuery = action.payload;
+        },
+        
+        // New error handling actions
+        setJobLoading: (state) => {
+            state.loading = true;
+            state.error = null;
+        },
+        setJobError: (state, action) => {
+            state.error = action.payload;
+            state.loading = false;
+        },
+        clearJobError: (state) => {
+            state.error = null;
         }
     }
 });
+
+// Export all action creators
 export const {
-    setAllJobs, 
-    setSingleJob, 
+    setAllJobs,
+    setSingleJob,
     setAllAdminJobs,
-    setSearchJobByText, 
+    setSearchJobByText,
     setAllAppliedJobs,
-    setSearchedQuery
+    setSearchedQuery,
+    setJobLoading,
+    setJobError,
+    clearJobError
 } = jobSlice.actions;
+
 export default jobSlice.reducer;

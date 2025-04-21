@@ -4,6 +4,7 @@ import { Suspense, lazy } from 'react';
 // Shared Components
 
 import ProtectedRoute from './components/admin/ProtectedRoute';
+// import { CookiesProvider } from 'react-cookie';
 
 // Lazy-loaded Components
 const Home = lazy(() => import('./components/Home'));
@@ -50,12 +51,16 @@ const appRouter = createBrowserRouter([
 
 function App() {
   return (
+ 
     <Suspense fallback={<div className="flex justify-center items-center text-3xl  h-screen"><div className='w-30 h-10 mt-2 bg-transparent'>
-      <img src="../../../public/logo-removebg-preview.png"  alt="Logo" className="w-full h-full bg-transparent object-contain"></img>
+      <img src="/LOGOs.png"  alt="Logo" className="w-full h-full bg-transparent object-contain"></img>
       </div>....
       </div>}>
       <RouterProvider router={appRouter} />
+  
+
     </Suspense>
+
   );
 }
 
