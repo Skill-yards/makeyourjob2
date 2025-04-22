@@ -948,7 +948,7 @@ const PostJob = () => {
       <SelectValue placeholder="Select workplace type" />
     </SelectTrigger>
     <SelectContent>
-      <SelectItem value="Office">Office</SelectItem>
+      <SelectItem value="On-site">On-site</SelectItem>
       <SelectItem value="Remote">Remote</SelectItem>
       <SelectItem value="Hybrid">Hybrid</SelectItem>
     </SelectContent>

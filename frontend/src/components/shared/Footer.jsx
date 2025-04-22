@@ -6,7 +6,7 @@
 import { Mail, Phone, MapPin, Linkedin, Instagram } from 'lucide-react';
 import { Button } from '../ui/button';
 import { Input } from '../ui/input';
-import { useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 
 const Footer = () => {
   const currentYear = new Date().getFullYear();
@@ -91,9 +91,9 @@ const Footer = () => {
             </h3>
             <ul className="space-y-2">
               <li>
-                <a href="#" className="text-sm text-slate-300 hover:text-white transition-colors">
+                <Link to='/browse' className="text-sm text-slate-300 hover:text-white transition-colors">
                   Browse Jobs
-                </a>
+                </Link>
               </li>
               <li>
                 <a href="#" className="text-sm text-slate-300 hover:text-white transition-colors">
@@ -122,16 +122,6 @@ const Footer = () => {
               <li>
                 <a href="/browse" className="text-sm text-slate-300 hover:text-white transition-colors">
                   Post a Job
-                </a>
-              </li>
-              <li>
-                <a href="#" className="text-sm text-slate-300 hover:text-white transition-colors">
-                  Browse Candidates
-                </a>
-              </li>
-              <li>
-                <a href="#" className="text-sm text-slate-300 hover:text-white transition-colors">
-                  Company Profile
                 </a>
               </li>
             </ul>

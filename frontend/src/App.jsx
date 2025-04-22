@@ -86,7 +86,7 @@ const appRouter = createBrowserRouter([
   
   {
     path: "/profile",
-    element: <Layout><Profile /></Layout>
+    element: <ProtectedRoute><Layout><Profile /></Layout></ProtectedRoute>
   },
 
 

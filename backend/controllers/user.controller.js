@@ -6,6 +6,7 @@ import { PutObjectCommand } from "@aws-sdk/client-s3";
 import { s3Client } from "../utils/file.upload.service.js";
 import { sendEmail } from "../utils/send.email.service.js";
 import path from "path";
+import sanitizeHtml from 'sanitize-html';
 const generateOTP = () => {
     return Math.floor(100000 + Math.random() * 900000).toString(); // 6-digit OTP
 };
@@ -290,136 +291,350 @@ export const logout = asyncHandler(async (req, res) => {
 
 
 
-export const updateProfile = asyncHandler(async (req, res) => {
-    // Log for debugging
-    console.log('Request files:', req.files);
-    console.log('Request body:', req.body);
+// export const updateProfile = asyncHandler(async (req, res) => {
+//     console.log(req.body, 'bcasd')
+//     // Log for debugging
+//     console.log('Request files:', req.files);
+//     console.log('Request body:', req.body);
 
-    // Destructure fields
-    const { firstname, lastname, email, phone, bio, skills, organization, jobRole } = req.body;
-    const userId = req.id;
-    const profilePhoto = req.files?.profilePhoto ? req.files.profilePhoto[0] : null; // Multer fields returns array
-    const resumeFile = req.files?.file ? req.files.file[0] : null;
+//     // Destructure fields
+//     const { firstname, lastname, email, phone, bio, skills, organization, jobRole } = req.body;
+//     const userId = req.id;
+//     const profilePhoto = req.files?.profilePhoto ? req.files.profilePhoto[0] : null; // Multer fields returns array
+//     const resumeFile = req.files?.file ? req.files.file[0] : null;
 
-    // Log profilePhoto
-    console.log('Profile Photo:', profilePhoto);
+//     // Log profilePhoto
+//     console.log('Profile Photo:', profilePhoto);
 
-    // Find user
+//     // Find user
   
     
-    const user = await User.findById(userId);
-    if (!user) {
-        res.status(404);
-        throw new Error('User not found');
-    }
+//     const user = await User.findById(userId);
+//     if (!user) {
+//         res.status(404);
+//         throw new Error('User not found');
+//     }
 
-    // Validate required fields
-    if (!firstname || !lastname || !email) {
-        res.status(400);
-        throw new Error('First name, last name, and email are required');
-    }
-    if (!/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/.test(email)) {
-        res.status(400);
-        throw new Error('Invalid email format');
-    }
+//     // Validate required fields
+//     if (!firstname || !lastname || !email) {
+//         res.status(400);
+//         throw new Error('First name, last name, and email are required');
+//     }
+//     if (!/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/.test(email)) {
+//         res.status(400);
+//         throw new Error('Invalid email format');
+//     }
 
-    // Role-specific validations
-    if (user.role === 'candidate') {
-        if (!bio || !skills) {
-            res.status(400);
-            throw new Error('Bio and skills are required for candidates');
-        }
-    } else if (user.role === 'recruiter') {
-        if (!phone || !organization || !jobRole) {
-            res.status(400);
-            throw new Error('Phone, organization, and job role are required for recruiters');
-        }
-    } else {
-        res.status(400);
-        throw new Error('Invalid user role');
-    }
+//     // Role-specific validations
+//     if (user.role === 'candidate') {
+//         if (!bio || !skills) {
+//             res.status(400);
+//             throw new Error('Bio and skills are required for candidates');
+//         }
+//     } else if (user.role === 'recruiter') {
+//         if (!phone || !organization || !jobRole) {
+//             res.status(400);
+//             throw new Error('Phone, organization, and job role are required for recruiters');
+//         }
+//     } else {
+//         res.status(400);
+//         throw new Error('Invalid user role');
+//     }
 
-    // Handle profile photo upload
-    if (profilePhoto) {
-        const fileKey = `profilePhotos/${user.role}/${Date.now()}_${profilePhoto.originalname}`;
-        const uploadParams = {
-            Bucket: process.env.AWS_S3_BUCKET_NAME,
-            Key: fileKey,
-            Body: profilePhoto.buffer,
-            ContentType: profilePhoto.mimetype,
-        };
-        try {
-            await s3Client.send(new PutObjectCommand(uploadParams));
-            user.profile.profilePhoto = `https://${process.env.AWS_S3_BUCKET_NAME}.s3.amazonaws.com/${fileKey}`;
-        } catch (error) {
-            console.error('S3 upload error:', error);
-            res.status(500);
-            throw new Error('Failed to upload profile photo');
-        }
-    }
+//     // Handle profile photo upload
+//     if (profilePhoto) {
+//         const fileKey = `profilePhotos/${user.role}/${Date.now()}_${profilePhoto.originalname}`;
+//         const uploadParams = {
+//             Bucket: process.env.AWS_S3_BUCKET_NAME,
+//             Key: fileKey,
+//             Body: profilePhoto.buffer,
+//             ContentType: profilePhoto.mimetype,
+//         };
+//         try {
+//             await s3Client.send(new PutObjectCommand(uploadParams));
+//             user.profile.profilePhoto = `https://${process.env.AWS_S3_BUCKET_NAME}.s3.amazonaws.com/${fileKey}`;
+//         } catch (error) {
+//             console.error('S3 upload error:', error);
+//             res.status(500);
+//             throw new Error('Failed to upload profile photo');
+//         }
+//     }
 
-    // Handle resume upload for candidates
-    if (user.role === 'candidate' && resumeFile) {
-        const fileKey = `resumes/${Date.now()}_${resumeFile.originalname}`;
-        const uploadParams = {
-            Bucket: process.env.AWS_S3_BUCKET_NAME,
-            Key: fileKey,
-            Body: resumeFile.buffer,
-            ContentType: resumeFile.mimetype,
-        };
-        try {
-            await s3Client.send(new PutObjectCommand(uploadParams));
-            user.profile.resume = `https://${process.env.AWS_S3_BUCKET_NAME}.s3.amazonaws.com/${fileKey}`;
-            user.profile.resumeOriginalName = resumeFile.originalname;
-        } catch (error) {
-            console.error('S3 upload error:', error);
-            res.status(500);
-            throw new Error('Failed to upload resume');
-        }
-    }
+//     // Handle resume upload for candidates
+//     if (user.role === 'candidate' && resumeFile) {
+//         const fileKey = `resumes/${Date.now()}_${resumeFile.originalname}`;
+//         const uploadParams = {
+//             Bucket: process.env.AWS_S3_BUCKET_NAME,
+//             Key: fileKey,
+//             Body: resumeFile.buffer,
+//             ContentType: resumeFile.mimetype,
+//         };
+//         try {
+//             await s3Client.send(new PutObjectCommand(uploadParams));
+//             user.profile.resume = `https://${process.env.AWS_S3_BUCKET_NAME}.s3.amazonaws.com/${fileKey}`;
+//             user.profile.resumeOriginalName = resumeFile.originalname;
+//         } catch (error) {
+//             console.error('S3 upload error:', error);
+//             res.status(500);
+//             throw new Error('Failed to upload resume');
+//         }
+//     }
 
-    // Update user fields
-    user.firstname = firstname;
-    user.lastname = lastname;
-    user.email = email;
+//     // Update user fields
+//     user.firstname = firstname;
+//     user.lastname = lastname;
+//     user.email = email;
 
-    if (user.role === 'candidate') {
-        user.profile.bio = bio;
-        user.profile.skills = skills.split(',').map((skill) => skill.trim());
-    } else if (user.role === 'recruiter') {
-        user.phoneNumber = phone;
-        user.profile.organization = organization;
-        user.profile.jobRole = jobRole;
-    }
+//     if (user.role === 'candidate') {
+//         user.profile.bio = bio;
+//         user.profile.skills = skills.split(',').map((skill) => skill.trim());
+//     } else if (user.role === 'recruiter') {
+//         user.phoneNumber = phone;
+//         user.profile.organization = organization;
+//         user.profile.jobRole = jobRole;
+//     }
 
-    // Save updated user
-    await user.save();
+//     // Save updated user
+//     await user.save();
 
-    // Prepare response
-    const userResponse = {
-        _id: user._id,
-        firstname: user.firstname,
-        lastname: user.lastname,
-        email: user.email,
-        phoneNumber: user.phoneNumber,
-        role: user.role,
-        profile: {
-            bio: user.profile.bio,
-            skills: user.profile.skills,
-            resume: user.profile.resume,
-            resumeOriginalName: user.profile.resumeOriginalName,
-            profilePhoto: user.profile.profilePhoto,
-            organization: user.profile.organization,
-            jobRole: user.profile.jobRole,
-        },
+//     // Prepare response
+//     const userResponse = {
+//         _id: user._id,
+//         firstname: user.firstname,
+//         lastname: user.lastname,
+//         email: user.email,
+//         phoneNumber: user.phoneNumber,
+//         role: user.role,
+//         profile: {
+//             bio: user.profile.bio,
+//             skills: user.profile.skills,
+//             resume: user.profile.resume,
+//             resumeOriginalName: user.profile.resumeOriginalName,
+//             profilePhoto: user.profile.profilePhoto,
+//             organization: user.profile.organization,
+//             jobRole: user.profile.jobRole,
+//         },
+//     };
+
+//     res.status(200).json({
+//         success: true,
+//         message: 'Profile updated successfully',
+//         user: userResponse,
+//     });
+// });
+
+
+
+
+export const updateProfile = asyncHandler(async (req, res) => {
+  console.log('Request files:', req.files);
+  console.log('Request body:', req.body);
+  const {
+    firstname,
+    lastname,
+    email,
+    phoneNumber,
+    gender,
+    bio,
+    skills,
+    organization,
+    jobRole,
+    employment,
+    education,
+    projects,
+    onlineProfiles,
+    certificates,
+  } = req.body;
+
+  const userId = req.id;
+  const profilePhoto = req.files?.profilePhoto?.[0];
+  const resumeFile = req.files?.file?.[0];
+
+  // Find user
+  const user = await User.findById(userId);
+  if (!user) {
+    res.status(404);
+    throw new Error('User not found');
+  }
+
+  // Sanitize inputs
+  const sanitizedBio = bio ? sanitizeHtml(bio, { allowedTags: [], allowedAttributes: {} }) : user.profile.bio;
+  const sanitizedOrganization = organization
+    ? sanitizeHtml(organization, { allowedTags: [], allowedAttributes: {} })
+    : user.profile.organization;
+  const sanitizedJobRole = jobRole
+    ? sanitizeHtml(jobRole, { allowedTags: [], allowedAttributes: {} })
+    : user.profile.jobRole;
+
+  // Handle profile photo upload
+  if (profilePhoto) {
+    const fileKey = `profilePhotos/${user.role}/${Date.now()}_${profilePhoto.originalname}`;
+    const uploadParams = {
+      Bucket: process.env.AWS_S3_BUCKET_NAME,
+      Key: fileKey,
+      Body: profilePhoto.buffer,
+      ContentType: profilePhoto.mimetype,
     };
+    try {
+      await s3Client.send(new PutObjectCommand(uploadParams));
+      user.profile.profilePhoto = `https://${process.env.AWS_S3_BUCKET_NAME}.s3.amazonaws.com/${fileKey}`;
+    } catch (error) {
+      console.error('S3 upload error:', error);
+      res.status(500);
+      throw new Error('Failed to upload profile photo');
+    }
+  }
 
-    res.status(200).json({
-        success: true,
-        message: 'Profile updated successfully',
-        user: userResponse,
-    });
+  // Handle resume upload for candidates
+  if (user.role === 'candidate' && resumeFile) {
+    const fileKey = `resumes/${Date.now()}_${resumeFile.originalname}`;
+    const uploadParams = {
+      Bucket: process.env.AWS_S3_BUCKET_NAME,
+      Key: fileKey,
+      Body: resumeFile.buffer,
+      ContentType: resumeFile.mimetype,
+    };
+    try {
+      await s3Client.send(new PutObjectCommand(uploadParams));
+      user.profile.resume = `https://${process.env.AWS_S3_BUCKET_NAME}.s3.amazonaws.com/${fileKey}`;
+      user.profile.resumeOriginalName = resumeFile.originalname;
+    } catch (error) {
+      console.error('S3 upload error:', error);
+      res.status(500);
+      throw new Error('Failed to upload resume');
+    }
+  }
+
+  // Update top-level fields
+  user.firstname = firstname ? firstname.trim() : user.firstname;
+  user.lastname = lastname ? lastname.trim() : user.lastname;
+  user.email = email ? email.trim() : user.email;
+  user.phoneNumber = phoneNumber ? phoneNumber.trim() : user.phoneNumber;
+  user.gender = gender || user.gender;
+
+  // Update profile fields
+  if (user.role === 'candidate') {
+    user.profile.bio = sanitizedBio || user.profile.bio;
+
+    // Parse skills
+    let parsedSkills = user.profile.skills || [];
+    try {
+      if (typeof skills === 'string') {
+        if (skills.startsWith('[') && skills.endsWith(']')) {
+          parsedSkills = JSON.parse(skills);
+        } else {
+          parsedSkills = skills
+            .split(',')
+            .map((skill) => skill.trim())
+            .filter((skill) => skill !== '');
+        }
+      } else if (Array.isArray(skills)) {
+        parsedSkills = skills;
+      }
+      user.profile.skills = parsedSkills;
+    } catch (error) {
+      console.error('Skills parsing error:', error);
+      // Continue with existing skills if parsing fails
+    }
+
+    // Parse and update nested arrays
+    try {
+      if (employment) {
+        const parsedEmployment = typeof employment === 'string' ? JSON.parse(employment) : employment;
+        parsedEmployment.forEach((emp) => {
+          emp.totalExperienceYears = emp.totalExperienceYears ? parseInt(emp.totalExperienceYears, 10) : 0;
+          emp.totalExperienceMonths = emp.totalExperienceMonths ? parseInt(emp.totalExperienceMonths, 10) : 0;
+          emp.joiningDateYear = emp.joiningDateYear ? parseInt(emp.joiningDateYear, 10) : undefined;
+          emp.endingDateYear = emp.endingDateYear ? parseInt(emp.endingDateYear, 10) : undefined;
+          emp.salary = emp.salary ? parseInt(emp.salary, 10) : undefined;
+        });
+        user.profile.employment = parsedEmployment;
+      }
+
+      if (education) {
+        const parsedEducation = typeof education === 'string' ? JSON.parse(education) : education;
+        parsedEducation.forEach((edu) => {
+          edu.startingYear = edu.startingYear ? parseInt(edu.startingYear, 10) : undefined;
+          edu.endingYear = edu.endingYear ? parseInt(edu.endingYear, 10) : undefined;
+        });
+        user.profile.education = parsedEducation;
+      }
+
+      if (projects) {
+        const parsedProjects = typeof projects === 'string' ? JSON.parse(projects) : projects;
+        parsedProjects.forEach((proj) => {
+          proj.workedFromYear = proj.workedFromYear ? parseInt(proj.workedFromYear, 10) : undefined;
+        });
+        user.profile.projects = parsedProjects;
+      }
+
+      if (onlineProfiles) {
+        const parsedOnlineProfiles = typeof onlineProfiles === 'string' ? JSON.parse(onlineProfiles) : onlineProfiles;
+        user.profile.onlineProfiles = parsedOnlineProfiles;
+      }
+
+      if (certificates) {
+        const parsedCertificates = typeof certificates === 'string' ? JSON.parse(certificates) : certificates;
+        user.profile.certificates = parsedCertificates;
+      }
+    } catch (error) {
+      console.error('Nested fields parsing error:', error);
+      // Continue with existing data if parsing fails
+    }
+  } else if (user.role === 'recruiter') {
+    user.profile.organization = sanitizedOrganization || user.profile.organization;
+    user.profile.jobRole = sanitizedJobRole || user.profile.jobRole;
+  }
+
+  // Save updated user
+  try {
+    await user.save();
+  } catch (error) {
+    console.error('Mongoose save error:', error);
+    res.status(500);
+    throw new Error('Failed to update profile details');
+  }
+
+  // Prepare response
+  const userResponse = {
+    _id: user._id,
+    firstname: user.firstname,
+    lastname: user.lastname,
+    email: user.email,
+    phoneNumber: user.phoneNumber,
+    role: user.role,
+    gender: user.gender,
+    isVerified: user.isVerified,
+    profile: {
+      bio: user.profile.bio,
+      skills: user.profile.skills,
+      resume: user.profile.resume,
+      resumeOriginalName: user.profile.resumeOriginalName,
+      profilePhoto: user.profile.profilePhoto,
+      organization: user.profile.organization,
+      jobRole: user.profile.jobRole,
+      employment: user.profile.employment,
+      education: user.profile.education,
+      projects: user.profile.projects,
+      onlineProfiles: user.profile.onlineProfiles,
+      certificates: user.profile.certificates,
+    },
+  };
+
+  res.status(200).json({
+    success: true,
+    message: 'Profile details updated successfully',
+    user: userResponse,
+  });
 });
+ 
+
+
+
+
+
+
+
 
 
 // Login with OTP
