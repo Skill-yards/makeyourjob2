@@ -2,20 +2,38 @@ import { useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 import { setSearchedJobs } from '@/redux/browseJob.slice.js';
-import { Search, Briefcase, ArrowRight, Loader2, MapPin, AlertCircle, XCircle } from 'lucide-react';
+import { Search, Briefcase, ArrowRight, Loader2, MapPin, AlertCircle, XCircle, Clock, X } from 'lucide-react';
 import { Button } from './ui/button';
 import { Input } from './ui/input';
 import { Badge } from './ui/badge';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
 import { JOB_API_END_POINT } from '@/utils/constant';
 import axios from 'axios';
 import { cities } from '../lib/state-cities.js';
 import { motion, AnimatePresence } from 'framer-motion';
 
+// Predefined job titles for suggestions
+const jobTitles = [
+    'Python Developer',
+    'Node.js Developer',
+    'Nest js Developer',
+    'JavaScript Developer',
+    'Full Stack Developer',
+    'Back End Developer',
+    'Front End Developer',
+    'Software Engineer',
+    'Data Scientist',
+    'UI/UX Designer'
+];
+
 const HeroSection = () => {
-    const [jobType, setJobType] = useState('');
-    const [location, setLocation] = useState('');
-    const [citySearch, setCitySearch] = useState('');
+    const [selectedJobTitles, setSelectedJobTitles] = useState([]);
+    const [jobSearch, setJobSearch] = useState(''); // Temporary input for typing
+    const [showJobDropdown, setShowJobDropdown] = useState(false);
+    const [selectedCities, setSelectedCities] = useState([]);
+    const [citySearch, setCitySearch] = useState(''); // Temporary input for typing
     const [showCityDropdown, setShowCityDropdown] = useState(false);
+    const [experienceLevel, setExperienceLevel] = useState('');
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState(null);
     const dispatch = useDispatch();
@@ -23,18 +41,56 @@ const HeroSection = () => {
 
     const { allJobs } = useSelector(store => store.job);
 
-    // Filter cities based on citySearch input
+    // Filter job titles based on the current search input
+    const filteredJobs = jobTitles
+        .filter((job) => job.toLowerCase().includes(jobSearch.toLowerCase()))
+        .filter((job) => !selectedJobTitles.includes(job)) // Avoid duplicates
+        .slice(0, 10); // Limit to 10 results
+
+    // Filter cities based on the current search input
     const filteredCities = cities
-        .filter((city) => city.name.toLowerCase().startsWith(citySearch.toLowerCase()))
-        .slice(0, 10); // Limit to 10 results for performance
+        .filter((city) => city.name.toLowerCase().includes(citySearch.toLowerCase()))
+        .filter((city) => !selectedCities.includes(city.name)) // Avoid duplicates
+        .slice(0, 10);
+
+    // Experience level options
+    const experienceOptions = [
+        { label: 'Fresher (less than 1 year)', value: '0' },
+        { label: '1 year', value: '1' },
+        { label: '2 years', value: '2' },
+        { label: '3 years', value: '3' },
+        { label: '4 years', value: '4' },
+        { label: '6 years', value: '6' },
+        { label: '7 years', value: '7' },
+        { label: '8 years', value: '8' },
+        { label: '9 years', value: '9' },
+        { label: '10 years', value: '10' },
+        { label: '11 years', value: '11' },
+        { label: '12 years', value: '12' },
+        { label: '13 years', value: '13' },
+        { label: '14 years', value: '14' },
+        { label: '15 years', value: '15' },
+    ];
 
     async function searchJob() {
         setError(null);
         if (isLoading) return;
         setIsLoading(true);
 
+        if (!selectedJobTitles.length && !selectedCities.length && !experienceLevel) {
+            setError({
+                type: 'error',
+                title: 'Invalid Input',
+                message: 'Please provide at least one search parameter (job title, city, or experience level).'
+            });
+            setIsLoading(false);
+            return;
+        }
+
         try {
-            const url = `${JOB_API_END_POINT}/search?jobTitle=${jobType}&city=${location}`;
+            const jobTitle = selectedJobTitles.join(', ');
+            const city = selectedCities.join(', ');
+            const url = `${JOB_API_END_POINT}/search?jobTitle=${encodeURIComponent(jobTitle)}&city=${encodeURIComponent(city)}&experienceLevel=${encodeURIComponent(experienceLevel)}`;
             const res = await axios.get(url, { withCredentials: true });
 
             if (res.data.success) {
@@ -49,13 +105,18 @@ const HeroSection = () => {
                 });
             }
         } catch (error) {
-            console.error('Error while searching for jobs:', error);
             if (error.response) {
                 if (error.response.status === 401) {
                     setError({
                         type: 'warning',
                         title: 'Authentication Required',
                         message: 'Please log in to search for jobs.'
+                    });
+                } else if (error.response.status === 400) {
+                    setError({
+                        type: 'error',
+                        title: 'Invalid Input',
+                        message: error.response.data.message || 'Please provide valid search parameters.'
                     });
                 } else if (error.response.status === 404) {
                     setError({
@@ -92,31 +153,52 @@ const HeroSection = () => {
     const searchJobHandler = () => {
         searchJob();
     };
-    const handleKeyDown = (e) => {
-        if (e.key === 'Enter') {
-            searchJobHandler();
+
+    const handleJobSelect = (jobName) => {
+        console.log(jobName,"check this..")
+        if (!selectedJobTitles.includes(jobName)) {
+            setSelectedJobTitles([...selectedJobTitles, jobName]);
+            setJobSearch(''); // Clear the input after selection
+            setShowJobDropdown(false);
         }
     };
 
-    const handleCityClick = (cityName) => {
-        setLocation(cityName);
-        setCitySearch(cityName);
-        setShowCityDropdown(false);
+    const handleJobRemove = (jobToRemove) => {
+        setSelectedJobTitles(selectedJobTitles.filter(job => job !== jobToRemove));
+    };
+
+    const handleCitySelect = (cityName) => {
+        if (!selectedCities.includes(cityName)) {
+            setSelectedCities([...selectedCities, cityName]);
+            setCitySearch(''); // Clear the input after selection
+            setShowCityDropdown(false);
+        }
+    };
+
+    const handleCityRemove = (cityToRemove) => {
+        setSelectedCities(selectedCities.filter(city => city !== cityToRemove));
+    };
+
+    const handleJobInputChange = (e) => {
+        setJobSearch(e.target.value);
+        setShowJobDropdown(true);
+    };
+
+    const handleJobInputFocus = () => {
+        setShowJobDropdown(true);
     };
 
     const handleCityInputChange = (e) => {
         setCitySearch(e.target.value);
-        setLocation(e.target.value); // Update location as user types
         setShowCityDropdown(true);
     };
 
     const handleCityInputFocus = () => {
-        if (citySearch) {
-            setShowCityDropdown(true);
-        }
+        setShowCityDropdown(true);
     };
 
     const handleClickOutside = () => {
+        setShowJobDropdown(false);
         setShowCityDropdown(false);
     };
 
@@ -199,7 +281,6 @@ const HeroSection = () => {
                             </span>
                         </h1>
 
-                        {/* Error message area that replaces the previous text */}
                         <div className="min-h-16 mb-4">
                             {!error ? (
                                 <p className="text-lg text-white dark:text-gray-300 max-w-xl leading-relaxed">
@@ -239,34 +320,106 @@ const HeroSection = () => {
                             )}
                         </div>
 
-                        <div className="relative w-full max-w-xl">
-                            <div className="flex flex-col sm:flex-row items-center gap-4 bg-white dark:bg-gray-800 rounded-xl shadow-xl border border-gray-100 dark:border-gray-700 p-2 transition-all hover:shadow-purple-100 dark:hover:shadow-purple-900/20">
-                                <div className="flex items-center flex-1 w-full">
+                        <div className="relative w-full max-w-4xl">
+                            <div className="flex flex-col sm:flex-row items-center gap-4 bg-white dark:bg-gray-800 rounded-xl shadow-xl border border-gray-100 dark:border-gray-700 p-2 transition-all  dark:hover:shadow-purple-900/20">
+                                {/* Job Title Multi-Selector */}
+                                <div className="flex items-center flex-1 w-full relative">
                                     <Search className="ml-3 h-5 w-5 text-gray-400 flex-shrink-0" />
-                                    <Input
-                                        type="text"
-                                        placeholder="Job type (e.g. Developer, Designer)"
-                                        value={jobType}
-                                        onChange={(e) => setJobType(e.target.value)}
-                                        onKeyDown={handleKeyDown}
-                                        className="flex-1 border-none shadow-none focus-visible:ring-0 focus-visible:ring-offset-0 bg-transparent pl-2 text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 text-lg"
-                                        disabled={isLoading}
-                                    />
+                                    <div className="flex-1 border-none focus-visible:ring-0 focus-visible:ring-offset-0 bg-transparent pl-2 text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 text-lg flex  items-center">
+                                        {selectedJobTitles.map((job, index) => (
+                                            <Badge
+                                                key={index}
+                                                variant="secondary"
+                                                className="mr-2  text-black-800 flex items-center justify-between p-1"
+                                            >
+                                                {job}
+                                                <Button
+                                                    variant="ghost"
+                                                    size="icon"
+                                                    onClick={() => handleJobRemove(job)}
+                                                    className="h-4 w-4 ml-1 p-0"
+                                                >
+                                                    <X className="h-3 w-3  " />
+                                                </Button>
+                                            </Badge>
+                                        ))}
+                                        <Input
+                                            type="text"
+                                            placeholder={selectedJobTitles.length ? '' : 'Select job types (e.g., Python Developer)'}
+                                            value={jobSearch}
+                                            onChange={handleJobInputChange}
+                                            onFocus={handleJobInputFocus}
+                                            onBlur={() => setTimeout(handleClickOutside, 200)}
+                                            onKeyDown={(e) => {
+                                                if (e.key === 'Enter' && filteredJobs.length > 0) {
+                                                    handleJobSelect(filteredJobs[0]);
+                                                }
+                                            }}
+                                            className="inline-flex-1 border-none shadow-none focus-visible:ring-0 focus-visible:ring-offset-0 bg-transparent pl-0 text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 text-lg flex-1"
+                                            disabled={isLoading}
+                                        />
+                                    </div>
+                                    {showJobDropdown && jobSearch && (
+                                        <div className="absolute top-full left-0 mt-2 w-full bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-md shadow-lg z-20 max-h-60 overflow-y-auto">
+                                            {filteredJobs.length > 0 ? (
+                                                filteredJobs.map((job) => (
+                                                    <div
+                                                        key={job}
+                                                        className="px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-700 cursor-pointer"
+                                                        onMouseDown={(e) => {
+                                                            e.preventDefault();
+                                                            handleJobSelect(job);
+                                                        }}
+                                                    >
+                                                        {job}
+                                                    </div>
+                                                ))
+                                            ) : (
+                                                <div className="px-4 py-2 text-gray-500 dark:text-gray-400">
+                                                    No job titles found
+                                                </div>
+                                            )}
+                                        </div>
+                                    )}
                                 </div>
 
+                                {/* City Multi-Selector */}
                                 <div className="flex items-center flex-1 w-full relative">
                                     <MapPin className="ml-3 h-5 w-5 text-gray-400 flex-shrink-0" />
-                                    <Input
-                                        type="text"
-                                        placeholder="Search city (e.g., Agra)"
-                                        value={citySearch}
-                                        onChange={handleCityInputChange}
-                                        onFocus={handleCityInputFocus}
-                                        onBlur={() => setTimeout(handleClickOutside, 200)}
-                                        onKeyDown={handleKeyDown}
-                                        className="flex-1 border-none shadow-none focus-visible:ring-0 focus-visible:ring-offset-0 bg-transparent pl-2 text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 text-lg"
-                                        disabled={isLoading}
-                                    />
+                                    <div className="flex-1 border-none focus-visible:ring-0 focus-visible:ring-offset-0 bg-transparent pl-2 text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 text-lg flex  items-center">
+                                        {selectedCities.map((city, index) => (
+                                            <Badge
+                                                key={index}
+                                                variant="secondary"
+                                                className="mr-2 inline-flex items-center"
+                                            >
+                                                {city}
+                                                <Button
+                                                    variant="ghost"
+                                                    size="icon"
+                                                    onClick={() => handleCityRemove(city)}
+                                                    className="h-4 w-4 ml-1 p-0"
+                                                >
+                                                    <X className="h-3 w-3 " />
+                                                </Button>
+                                            </Badge>
+                                        ))}
+                                        <Input
+                                            type="text"
+                                            placeholder={selectedCities.length ? '' : 'Select cities (e.g., Agra)'}
+                                            value={citySearch}
+                                            onChange={handleCityInputChange}
+                                            onFocus={handleCityInputFocus}
+                                            onBlur={() => setTimeout(handleClickOutside, 200)}
+                                            onKeyDown={(e) => {
+                                                if (e.key === 'Enter' && filteredCities.length > 0) {
+                                                    handleCitySelect(filteredCities[0].name);
+                                                }
+                                            }}
+                                            className="inline-flex-1 border-none shadow-none focus-visible:ring-0 focus-visible:ring-offset-0 bg-transparent pl-0 text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 text-lg flex-1"
+                                            disabled={isLoading}
+                                        />
+                                    </div>
                                     {showCityDropdown && citySearch && (
                                         <div className="absolute top-full left-0 mt-2 w-full bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-md shadow-lg z-20 max-h-60 overflow-y-auto">
                                             {filteredCities.length > 0 ? (
@@ -276,7 +429,7 @@ const HeroSection = () => {
                                                         className="px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-700 cursor-pointer"
                                                         onMouseDown={(e) => {
                                                             e.preventDefault();
-                                                            handleCityClick(city.name);
+                                                            handleCitySelect(city.name);
                                                         }}
                                                     >
                                                         {city.name} ({city.state})
@@ -291,9 +444,31 @@ const HeroSection = () => {
                                     )}
                                 </div>
 
+                                {/* Experience Level Dropdown */}
+                                <div className="flex items-center flex-1 w-full">
+                                    <Clock className="ml-3 h-5 w-5 text-gray-400 flex-shrink-0" />
+                                    <Select
+                                        value={experienceLevel}
+                                        onValueChange={setExperienceLevel}
+                                        disabled={isLoading}
+                                    >
+                                        <SelectTrigger className="flex-1 border-none shadow-none focus:ring-0 bg-transparent text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 text-lg">
+                                            <SelectValue placeholder="Experience (e.g., 1-2 years)" />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            {experienceOptions.map((option) => (
+                                                <SelectItem key={option.value || option.label} value={option.value || '0'}>
+                                                    {option.label}
+                                                </SelectItem>
+                                            ))}
+                                        </SelectContent>
+                                    </Select>
+                                </div>
+
+                                {/* Search Button */}
                                 <Button
                                     onClick={searchJobHandler}
-                                    className="rounded-full bg-purple-700 hover:bg-purple-800 px-6 py-6 transition-all w-full sm:w-auto"
+                                    className="rounded-full bg-blue-600 hover:bg-blue-700 px-6 py-6 transition-all w-full sm:w-auto"
                                     disabled={isLoading}
                                 >
                                     {isLoading ? (
@@ -303,7 +478,7 @@ const HeroSection = () => {
                                         </>
                                     ) : (
                                         <>
-                                            <span className="hidden sm:inline mr-2 text-sm font-medium">Find Jobs</span>
+                                            <span className="hidden sm:inline mr-2 text-sm font-medium">Search</span>
                                             <ArrowRight className="h-5 w-5" />
                                         </>
                                     )}
@@ -339,37 +514,3 @@ const HeroSection = () => {
 };
 
 export default HeroSection;
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

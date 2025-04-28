@@ -1,11 +1,11 @@
-import  { useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Table, TableBody, TableCaption, TableCell, TableHead, TableHeader, TableRow } from '../ui/table';
 import { Avatar, AvatarImage } from '../ui/avatar';
 import { Popover, PopoverContent, PopoverTrigger } from '../ui/popover';
 import { Edit2, Eye, MoreHorizontal } from 'lucide-react';
 import { useSelector } from 'react-redux';
-import { useNavigate } from 'react-router-dom';
-// import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
+import { Link, useNavigate } from 'react-router-dom';
+import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
 
 const AdminJobsTable = () => {
     const { allAdminJobs, searchJobByText } = useSelector((store) => store.job);
@@ -13,6 +13,7 @@ const AdminJobsTable = () => {
     const navigate = useNavigate();
 
     useEffect(() => {
+        console.log(allAdminJobs,"check job")
         const filteredJobs = allAdminJobs.filter((job) => {
             if (!searchJobByText) return true;
             const searchText = searchJobByText.toLowerCase();

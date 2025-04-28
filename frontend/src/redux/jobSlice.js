@@ -13,6 +13,7 @@ const jobSlice = createSlice({
   },
   reducers: {
     setAllJobs: (state, action) => {
+      console.log(action.payload,'job slice');
       state.allJobs = action.payload;
     },
     setSingleJob: (state, action) => {
@@ -33,6 +34,16 @@ const jobSlice = createSlice({
     setSearchLocation: (state, action) => {
       state.searchLocation = action.payload;
     },
+    setJobs: (state, action) => {
+      state.jobs = action.payload.jobs;
+      state.total = action.payload.total;
+      state.page = action.payload.page;
+      state.pages = action.payload.pages;
+      state.isLoading = false;
+    },
+    setLoading: (state) => {
+      state.isLoading = true;
+    },
   },
 });
 
@@ -44,5 +55,7 @@ export const {
   setAllAppliedJobs,
   setSearchedQuery,
   setSearchLocation,
+  setJobs,
+  setLoading,
 } = jobSlice.actions;
 export default jobSlice.reducer;

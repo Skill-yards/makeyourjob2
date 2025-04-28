@@ -10,6 +10,7 @@ const useGetAllAdminJobs = () => {
         const fetchAllAdminJobs = async () => {
             try {
                 const res = await axios.get(`${JOB_API_END_POINT}/getadminjobs`,{withCredentials:true});
+                console.log(res.data,'data come from redux ')
                 if(res.data.success){
                     dispatch(setAllAdminJobs(res.data.jobs));
                 }

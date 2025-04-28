@@ -15,23 +15,8 @@ const Browse = () => {
  
   const dispatch = useDispatch();
   const { searchedJobs, loading, error } = useSelector((state) => state.jobBrowse);
-
   const {allJobs} = useSelector(store=>store.job);
-
-
-  console.log(searchedJobs, "check in browse page");
-  
-
-  
-  // console.log(searchedJobs,"check in browse page");
-
-
-  
-  
   useEffect(() => {
-    // return () => {
-    //   dispatch(setSearchedQuery(""));
-    // }
     if(searchedJobs.length===0){
       dispatch(setSearchedJobs(allJobs))
     }

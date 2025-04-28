@@ -1,12 +1,9 @@
-
-
-
-
-
 import { Mail, Phone, MapPin, Linkedin, Instagram } from 'lucide-react';
 import { Button } from '../ui/button';
 import { Input } from '../ui/input';
 import { Link, useNavigate } from 'react-router-dom';
+import { useState } from 'react';
+import axios from 'axios';
 
 const Footer = () => {
   const currentYear = new Date().getFullYear();
@@ -17,6 +14,36 @@ const Footer = () => {
   const googleMapsUrl = `https://www.google.com/maps/search/?api=1&query=${encodedAddress}`;
   // Email for mailto link
   const email = "info@makeyourjobs.com";
+  // State for email input and subscription status
+  const [emailInput, setEmailInput] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [message, setMessage] = useState('');
+
+  // Handle subscription
+  const handleSubscribe = async (e) => {
+    e.preventDefault();
+    if (!emailInput) {
+      setMessage('Please enter a valid email address.');
+      return;
+    }
+    setIsSubmitting(true);
+    setMessage('');
+    try {
+      const response = await axios.post('http://localhost:3000/api/v1/user/subscribe', {
+        email: emailInput,
+      });
+      setMessage('Successfully subscribed to the newsletter!');
+      setEmailInput(''); 
+      console.log(response.data)
+    } catch (error) {
+      const errorMessage =
+        error.response?.data?.message ||
+        'Failed to subscribe. Please try again later.';
+      setMessage(errorMessage);
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
 
   return (
     <footer className="bg-gradient-to-r from-slate-900 to-slate-800 text-white">
@@ -25,21 +52,36 @@ const Footer = () => {
         <div className="container mx-auto px-4 py-10">
           <div className="flex flex-col md:flex-row justify-between items-center gap-6">
             <div className="max-w-md">
-              <h3 className="text-xl font-bold mb-2">Join our newsletter</h3>
+              {/* <h3 className="text-xl font-bold mb-2">Join our newsletter</h3>
               <p className="text-slate-300 text-sm">
                 Stay updated with the latest job opportunities and career insights.
-              </p>
+              </p> */}
             </div>
             <div className="w-full md:w-auto flex flex-col sm:flex-row gap-3">
               <Input
                 placeholder="Enter your email"
                 className="bg-slate-800 border-slate-700 text-white placeholder:text-slate-500 min-w-64"
+                value={emailInput}
+                onChange={(e) => setEmailInput(e.target.value)}
               />
-              <Button className="bg-indigo-600 hover:bg-indigo-700 transition-colors">
-                Subscribe
+              <Button
+                className="bg-indigo-600 hover:bg-indigo-700 transition-colors"
+                onClick={handleSubscribe}
+                disabled={isSubmitting}
+              >
+                {isSubmitting ? 'Subscribing...' : 'Subscribe'}
               </Button>
             </div>
           </div>
+          {message && (
+            <p
+              className={`text-sm mt-4 text-center ${
+                message.includes('Successfully') ? 'text-green-400' : 'text-red-400'
+              }`}
+            >
+              {message}
+            </p>
+          )}
         </div>
       </div>
 
@@ -91,7 +133,7 @@ const Footer = () => {
             </h3>
             <ul className="space-y-2">
               <li>
-                <Link to='/browse' className="text-sm text-slate-300 hover:text-white transition-colors">
+                <Link to="/browse" className="text-sm text-slate-300 hover:text-white transition-colors">
                   Browse Jobs
                 </Link>
               </li>
@@ -189,6 +231,3 @@ const Footer = () => {
 };
 
 export default Footer;
-
-
-

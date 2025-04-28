@@ -14,15 +14,9 @@ import {
   Loader2,
   MapPin,
   Briefcase,
-  DollarSign,
   Users,
-  Calendar,
   AlertCircle,
   CheckCircle2,
-  Clock,
-  Tag,
-  Award,
-  Home,
   Mail,
   Phone,
   FileText,
@@ -45,17 +39,9 @@ import {
   DialogTitle,
 } from "./ui/dialog";
 
-
 const JobDescription = () => {
   const { singleJob } = useSelector((store) => store.job);
-  //console.log(singleJob, "single job check in jobdescription");
-
-  // console.log(singleJob,"this is single job");
-  
-  
-  const  {user}  = useSelector((store) => store.auth);
-  // console.log(user, "user check in jobdescription");
-  
+  const { user } = useSelector((store) => store.auth);
   const [isApplied, setIsApplied] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [isApplying, setIsApplying] = useState(false);
@@ -73,29 +59,21 @@ const JobDescription = () => {
   // Memoize profile completion check
   const profileStatus = useMemo(() => {
     if (!user) return { isComplete: false, missingFields: ["login"] };
-  
     const missingFields = [];
-  
     if (!user.firstname || !user.firstname.trim()) missingFields.push("first name");
     if (!user.lastname || !user.lastname.trim()) missingFields.push("last name");
     if (!user.email) missingFields.push("email");
     if (!user.phoneNumber) missingFields.push("phone number");
-  
     const profile = user.profile || {};
     if (!profile.resume) missingFields.push("resume");
     if (!profile.skills || profile.skills.length === 0) missingFields.push("skills");
     if (!profile.profilePhoto) missingFields.push("profile photo");
     if (!profile.bio || !profile.bio.trim()) missingFields.push("bio");
-  
     return {
       isComplete: missingFields.length === 0,
       missingFields,
     };
   }, [user]);
-  
-
- //console.log(user,"user check in profilestatus");
-  
 
   // Handle job application
   const applyJobHandler = async () => {
@@ -104,13 +82,11 @@ const JobDescription = () => {
       navigate("/login");
       return;
     }
-
     if (!profileStatus.isComplete) {
       toast.error(`Complete your profile: ${profileStatus.missingFields.join(", ")} required`);
       navigate("/profile");
       return;
     }
-
     try {
       setIsApplying(true);
       const res = await axios.post(
@@ -165,18 +141,12 @@ const JobDescription = () => {
     const fetchSimilarJobs = async () => {
       try {
         setIsSimilarJobsLoading(true);
-        // Replace with actual API call
-        const res = await axios.get(`${JOB_API_END_POINT}/similar/${jobId}`,{
+        const res = await axios.get(`${JOB_API_END_POINT}/similar/${jobId}`, {
           withCredentials: true,
         });
-        // console.log(res,"this is similar job");
-        
         if (res.data) {
           setSimilarJobs(res.data);
         }
-
-        // Using mock data for now
-       // setSimilarJobs(mockSimilarJobs.filter((job) => job._id !== jobId));
       } catch (error) {
         console.error("Failed to fetch similar jobs:", error);
         setSimilarJobs([]);
@@ -184,9 +154,6 @@ const JobDescription = () => {
         setIsSimilarJobsLoading(false);
       }
     };
-    //console.log(similarJobs,"check similar jobs");
-    
-
     if (singleJob?.jobCategory) {
       fetchSimilarJobs();
     }
@@ -210,10 +177,12 @@ const JobDescription = () => {
   };
 
   // Format salary
-  const getSalaryDisplay = (job) =>
-    job?.salaryRange?.min && job?.salaryRange?.max
-      ? `${job.salaryRange.min} - ${job.salaryRange.max} ${job.salaryRange.currency} / ${job.salaryRange.frequency}`
-      : "Not disclosed";
+  const getSalaryDisplay = (job) => {
+    if (job?.salaryRange?.min && job?.salaryRange?.max) {
+      return `${job.salaryRange.min}-${job.salaryRange.max} LPA`;
+    }
+    return "Not disclosed";
+  };
 
   // Success dialog
   const SuccessDialog = () => (
@@ -229,7 +198,8 @@ const JobDescription = () => {
             Application Submitted!
           </DialogTitle>
           <DialogDescription className="text-center text-gray-600 mt-2 max-w-sm mx-auto">
-            Your application has been successfully submitted to {singleJob?.companyName}. You'll hear from the hiring team soon.
+            Your application has been successfully submitted to{" "}
+            {singleJob?.companyName}. You'll hear from the hiring team soon.
           </DialogDescription>
         </DialogHeader>
         <div className="space-y-4 mt-6">
@@ -240,33 +210,18 @@ const JobDescription = () => {
                   <Briefcase className="h-6 w-6 text-indigo-600" />
                 </div>
                 <div className="ml-3">
-                  <p className="text-sm font-medium text-gray-900">{singleJob?.jobTitle}</p>
-                  <p className="text-xs text-gray-500">{singleJob?.companyName}</p>
+                  <p className="text-sm font-medium text-gray-900">
+                    {singleJob?.jobTitle}
+                  </p>
+                  <p className="text-xs text-gray-500">
+                    {singleJob?.companyName}
+                  </p>
                 </div>
               </div>
               <Badge className="bg-emerald-100 text-emerald-800 border-0">
                 Applied
               </Badge>
             </div>
-          </div>
-          <div className="flex gap-4">
-            {/* <Button
-              onClick={() => {
-                setShowSuccessDialog(false);
-                navigate("/applications");
-              }}
-              className="flex-1 bg-gradient-to-r from-indigo-500 to-violet-500 hover:from-indigo-600 hover:to-violet-600 text-white rounded-xl shadow-md transition hover:shadow-lg border-0"
-            >
-              View Applications
-              <ArrowRight className="ml-2 h-4 w-4" />
-            </Button>
-            <Button
-              onClick={() => setShowSuccessDialog(false)}
-              variant="outline"
-              className="flex-1 border-gray-300 hover:bg-gray-50 text-gray-800 rounded-xl"
-            >
-              Close
-            </Button> */}
           </div>
         </div>
       </DialogContent>
@@ -322,9 +277,6 @@ const JobDescription = () => {
     );
   }
 
-
-  //console.log(profileStatus, "profile status");
-
   return (
     <>
       <Navbar />
@@ -332,11 +284,17 @@ const JobDescription = () => {
         <div className="max-w-6xl mx-auto pt-8 pb-16 px-4 sm:px-6 lg:px-8">
           {/* Breadcrumb */}
           <div className="flex items-center gap-2 text-sm text-gray-500 mb-6">
-            <Link to="/" className="hover:text-indigo-600 transition">Home</Link>
+            <Link to="/" className="hover:text-indigo-600 transition">
+              Home
+            </Link>
             <span>/</span>
-            <Link to="/jobs" className="hover:text-indigo-600 transition">Jobs</Link>
+            <Link to="/jobs" className="hover:text-indigo-600 transition">
+              Jobs
+            </Link>
             <span>/</span>
-            <span className="text-gray-900 font-medium">{singleJob?.jobTitle}</span>
+            <span className="text-gray-900 font-medium">
+              {singleJob?.jobTitle}
+            </span>
           </div>
 
           {/* Floating action buttons on mobile */}
@@ -346,11 +304,19 @@ const JobDescription = () => {
               className="bg-white text-indigo-600 hover:bg-indigo-50 shadow-lg rounded-full p-3 flex items-center justify-center transition w-12 h-12"
               aria-label={isSaved ? "Unsave job" : "Save job"}
             >
-              {isSaved ? <Heart className="h-6 w-6 fill-red-500 text-red-500" /> : <BookmarkPlus className="h-6 w-6" />}
+              {isSaved ? (
+                <Heart className="h-6 w-6 fill-red-500 text-red-500" />
+              ) : (
+                <BookmarkPlus className="h-6 w-6" />
+              )}
             </button>
             <button
               onClick={isApplied || isApplying ? null : applyJobHandler}
-              disabled={isApplied || isApplying || profileStatus.missingFields.length > 0}
+              disabled={
+                isApplied ||
+                isApplying ||
+                profileStatus.missingFields.length > 0
+              }
               className={`shadow-lg rounded-full p-3 flex items-center justify-center transition w-12 h-12 ${
                 isApplied
                   ? "bg-green-100 text-green-600"
@@ -387,7 +353,10 @@ const JobDescription = () => {
               <Button
                 variant="outline"
                 className="text-gray-600 hover:text-gray-800 border-gray-300 rounded-full px-4 py-2 shadow-sm hover:shadow-md transition bg-white"
-                onClick={() => navigator.clipboard.writeText(window.location.href) && toast.success("Link copied to clipboard")}
+                onClick={() =>
+                  navigator.clipboard.writeText(window.location.href) &&
+                  toast.success("Link copied to clipboard")
+                }
                 aria-label="Share job link"
               >
                 <Share2 className="h-4 w-4 mr-2" />
@@ -434,7 +403,8 @@ const JobDescription = () => {
                         className="w-full h-full object-cover rounded-xl"
                         onError={(e) => {
                           e.target.onerror = null;
-                          e.target.src = "https://via.placeholder.com/100?text=Logo";
+                          e.target.src =
+                            "https://via.placeholder.com/100?text=Logo";
                         }}
                       />
                     ) : (
@@ -458,9 +428,14 @@ const JobDescription = () => {
                         {formatDate(singleJob?.postedDate)}
                       </Badge>
                     </div>
-                    <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">{singleJob?.jobTitle}</h1>
+                    <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">
+                      {singleJob?.jobTitle}
+                    </h1>
                     <div className="flex items-center mt-1 text-gray-600">
-                      <Link to={`/company/${singleJob?.company?._id}`} className="font-medium hover:text-indigo-600 transition">
+                      <Link
+                        to={`/company/${singleJob?.company?._id}`}
+                        className="font-medium hover:text-indigo-600 transition"
+                      >
                         {singleJob?.companyName}
                       </Link>
                       <span className="mx-2">•</span>
@@ -468,33 +443,43 @@ const JobDescription = () => {
                         <MapPin className="h-4 w-4 mr-1" />
                         <span>
                           {singleJob?.workLocation?.city || "Remote"}
-                          {singleJob?.workLocation?.state && `, ${singleJob.workLocation.state}`}
+                          {singleJob?.workLocation?.state &&
+                            `, ${singleJob.workLocation.state}`}
                         </span>
                       </div>
                     </div>
                   </div>
                 </CardHeader>
-
                 <CardContent className="pt-6 pb-8">
                   <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 mb-8">
                     <div className="bg-gray-50 rounded-xl p-4">
                       <div className="flex items-center mb-2">
                         <div className="p-2 bg-indigo-100 rounded-md">
-                          <DollarSign className="h-4 w-4 text-indigo-600" />
+                          <span className="h-4 w-4 text-indigo-600 inline-flex items-center justify-center">
+                            ₹
+                          </span>
                         </div>
-                        <span className="ml-2 text-sm font-medium text-gray-600">Salary</span>
+                        <span className="ml-2 text-sm font-medium text-gray-600">
+                          Salary
+                        </span>
                       </div>
-                      <p className="text-gray-900 font-semibold">{getSalaryDisplay(singleJob)}</p>
+                      <p className="text-gray-900 font-semibold">
+                        {getSalaryDisplay(singleJob)}
+                      </p>
                     </div>
                     <div className="bg-gray-50 rounded-xl p-4">
                       <div className="flex items-center mb-2">
                         <div className="p-2 bg-amber-100 rounded-md">
                           <GraduationCap className="h-4 w-4 text-amber-600" />
                         </div>
-                        <span className="ml-2 text-sm font-medium text-gray-600">Experience</span>
+                        <span className="ml-2 text-sm font-medium text-gray-600">
+                          Experience
+                        </span>
                       </div>
                       <p className="text-gray-900 font-semibold">
-                        {singleJob?.experienceLevel ? `${singleJob.experienceLevel} years` : "N/A"}
+                        {singleJob?.experienceLevel
+                          ? `${singleJob.experienceLevel} years`
+                          : "N/A"}
                       </p>
                     </div>
                     <div className="bg-gray-50 rounded-xl p-4">
@@ -502,22 +487,32 @@ const JobDescription = () => {
                         <div className="p-2 bg-purple-100 rounded-md">
                           <Users className="h-4 w-4 text-purple-600" />
                         </div>
-                        <span className="ml-2 text-sm font-medium text-gray-600">Vacancies</span>
+                        <span className="ml-2 text-sm font-medium text-gray-600">
+                          Vacancies
+                        </span>
                       </div>
-                      <p className="text-gray-900 font-semibold">{singleJob?.numberOfPositions || "N/A"}</p>
+                      <p className="text-gray-900 font-semibold">
+                        {singleJob?.numberOfPositions || "N/A"}
+                      </p>
                     </div>
                   </div>
 
                   <div className="space-y-6">
                     <div>
-                      <h3 className="font-bold text-lg text-gray-900 mb-3">Job Description</h3>
+                      <h3 className="font-bold text-lg text-gray-900 mb-3">
+                        Job Description
+                      </h3>
                       <div className="bg-gray-50 rounded-xl p-5 border border-gray-100">
-                        <p className="text-gray-700 leading-relaxed">{singleJob?.jobDescription || "N/A"}</p>
+                        <p className="text-gray-700 leading-relaxed">
+                          {singleJob?.description || "N/A"}
+                        </p>
                       </div>
                     </div>
 
                     <div>
-                      <h3 className="font-bold text-lg text-gray-900 mb-3">Skills Required</h3>
+                      <h3 className="font-bold text-lg text-gray-900 mb-3">
+                        Skills Required
+                      </h3>
                       <div className="flex flex-wrap gap-2">
                         {singleJob?.skills?.length > 0 ? (
                           singleJob.skills.map((skill, index) => (
@@ -529,17 +524,24 @@ const JobDescription = () => {
                             </Badge>
                           ))
                         ) : (
-                          <span className="text-gray-500">No specific skills mentioned</span>
+                          <span className="text-gray-500">
+                            No specific skills mentioned
+                          </span>
                         )}
                       </div>
                     </div>
 
                     <div>
-                      <h3 className="font-bold text-lg text-gray-900 mb-3">Benefits & Perks</h3>
+                      <h3 className="font-bold text-lg text-gray-900 mb-3">
+                        Benefits & Perks
+                      </h3>
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                         {singleJob?.benefits?.length > 0 ? (
                           singleJob.benefits.map((benefit, index) => (
-                            <div key={index} className="flex items-center gap-3 bg-gray-50 p-3 rounded-lg border border-gray-100">
+                            <div
+                              key={index}
+                              className="flex items-center gap-3 bg-gray-50 p-3 rounded-lg border border-gray-100"
+                            >
                               <div className="p-1.5 bg-green-100 rounded-md">
                                 <CheckCircle2 className="h-4 w-4 text-green-600" />
                               </div>
@@ -547,7 +549,9 @@ const JobDescription = () => {
                             </div>
                           ))
                         ) : (
-                          <span className="text-gray-500">No benefits specified</span>
+                          <span className="text-gray-500">
+                            No benefits specified
+                          </span>
                         )}
                       </div>
                     </div>
@@ -559,14 +563,9 @@ const JobDescription = () => {
               <Card className="overflow-hidden border-0 shadow-xl bg-white rounded-2xl">
                 <CardContent className="p-6">
                   <div className="flex items-center justify-between mb-4">
-                    <h3 className="font-bold text-lg text-gray-900">About the Company</h3>
-                    {/* <Link
-                      to={`/c/${singleJob?.company?._id}`}
-                      className="text-indigo-600 hover:text-indigo-800 text-sm font-medium flex items-center"
-                    >
-                      View Company
-                      <ArrowRight className="h-4 w-4 ml-1" />
-                    </Link> */}
+                    <h3 className="font-bold text-lg text-gray-900">
+                      About the Company
+                    </h3>
                   </div>
 
                   <div className="flex items-start gap-4">
@@ -583,9 +582,13 @@ const JobDescription = () => {
                     </div>
 
                     <div>
-                      <h4 className="font-bold text-gray-900">{singleJob?.companyName}</h4>
+                      <h4 className="font-bold text-gray-900">
+                        {singleJob?.companyName}
+                      </h4>
                       <p className="text-gray-500 text-sm mt-1">
-                        {singleJob?.company?.industry || "Technology"} • {singleJob?.company?.employeeCount || "Unknown"} employees
+                        {singleJob?.company?.industry || "Technology"} •{" "}
+                        {singleJob?.company?.employeeCount || "Unknown"}{" "}
+                        employees
                       </p>
                       <div className="flex items-center mt-2">
                         <div className="flex items-center text-amber-500">
@@ -595,10 +598,13 @@ const JobDescription = () => {
                           <Star className="h-4 w-4 fill-current" />
                           <Star className="h-4 w-4 text-gray-300" />
                         </div>
-                        <span className="text-gray-500 text-sm ml-2">4.0 • 25 reviews</span>
+                        <span className="text-gray-500 text-sm ml-2">
+                          4.0 • 25 reviews
+                        </span>
                       </div>
                       <p className="text-gray-700 mt-3">
-                        {singleJob?.company?.description || "No company description available."}
+                        {singleJob?.company?.description ||
+                          "No company description available."}
                       </p>
                     </div>
                   </div>
@@ -611,13 +617,19 @@ const JobDescription = () => {
               {/* Job Actions Card */}
               <Card className="overflow-hidden border-0 shadow-xl bg-white rounded-2xl sticky top-6">
                 <CardContent className="p-6">
-                  <h3 className="font-bold text-lg text-gray-900 mb-4">Apply for this position</h3>
+                  <h3 className="font-bold text-lg text-gray-900 mb-4">
+                    Apply for this position
+                  </h3>
 
                   <div className="space-y-4">
                     {/* Apply button for desktop */}
                     <Button
                       onClick={isApplied || isApplying ? null : applyJobHandler}
-                      disabled={isApplied || isApplying || profileStatus.missingFields.length > 0}
+                      disabled={
+                        isApplied ||
+                        isApplying ||
+                        profileStatus.missingFields.length > 0
+                      }
                       className={`w-full py-6 rounded-xl text-base font-semibold shadow-lg transition ${
                         isApplied
                           ? "bg-green-100 text-green-700 border border-green-200"
@@ -627,7 +639,9 @@ const JobDescription = () => {
                           ? "bg-gray-200 text-gray-600"
                           : "bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-700 hover:to-violet-700 text-white"
                       }`}
-                      aria-label={isApplied ? "Application submitted" : "Apply now"}
+                      aria-label={
+                        isApplied ? "Application submitted" : "Apply now"
+                      }
                     >
                       {isApplying ? (
                         <>
@@ -649,20 +663,35 @@ const JobDescription = () => {
                         <div className="flex items-start">
                           <AlertCircle className="h-5 w-5 text-red-600 mt-0.5" />
                           <div className="ml-3">
-                            <h4 className="text-sm font-medium text-red-800">Complete your profile</h4>
+                            <h4 className="text-sm font-medium text-red-800">
+                              Complete your profile
+                            </h4>
                             <p className="text-xs text-red-700 mt-1">
                               Please add the following required information:
                             </p>
                             <ul className="mt-2 space-y-1">
-                              {profileStatus.missingFields.map((field, index) => (
-                                <li key={index} className="flex items-center text-xs text-red-700">
-                                  {field === "email" && <Mail className="h-3 w-3 mr-1" />}
-                                  {field === "phone number" && <Phone className="h-3 w-3 mr-1" />}
-                                  {field === "resume" && <FileText className="h-3 w-3 mr-1" />}
-                                  {field === "skills" && <ListChecks className="h-3 w-3 mr-1" />}
-                                  {field}
-                                </li>
-                              ))}
+                              {profileStatus.missingFields.map(
+                                (field, index) => (
+                                  <li
+                                    key={index}
+                                    className="flex items-center text-xs text-red-700"
+                                  >
+                                    {field === "email" && (
+                                      <Mail className="h-3 w-3 mr-1" />
+                                    )}
+                                    {field === "phone number" && (
+                                      <Phone className="h-3 w-3 mr-1" />
+                                    )}
+                                    {field === "resume" && (
+                                      <FileText className="h-3 w-3 mr-1" />
+                                    )}
+                                    {field === "skills" && (
+                                      <ListChecks className="h-3 w-3 mr-1" />
+                                    )}
+                                    {field}
+                                  </li>
+                                )
+                              )}
                             </ul>
                             <Link
                               to="/profile"
@@ -677,27 +706,39 @@ const JobDescription = () => {
 
                     {/* Job overview for quick reference */}
                     <div className="bg-gray-50 rounded-xl p-5 border border-gray-100">
-                      <h4 className="font-medium text-gray-900 mb-3">Job Overview</h4>
+                      <h4 className="font-medium text-gray-900 mb-3">
+                        Job Overview
+                      </h4>
                       <div className="space-y-3 text-sm">
                         <div className="flex justify-between">
                           <span className="text-gray-600">Posted:</span>
-                          <span className="font-medium text-gray-900">{formatDate(singleJob?.postedDate)}</span>
+                          <span className="font-medium text-gray-900">
+                            {formatDate(singleJob?.postedDate)}
+                          </span>
                         </div>
                         <div className="flex justify-between">
                           <span className="text-gray-600">Job Type:</span>
-                          <span className="font-medium text-gray-900">{singleJob?.jobType}</span>
+                          <span className="font-medium text-gray-900">
+                            {singleJob?.jobType}
+                          </span>
                         </div>
                         <div className="flex justify-between">
                           <span className="text-gray-600">Location:</span>
-                          <span className="font-medium text-gray-900">{singleJob?.workLocation?.city || "Remote"}</span>
+                          <span className="font-medium text-gray-900">
+                            {singleJob?.workLocation?.city || "Remote"}
+                          </span>
                         </div>
                         <div className="flex justify-between">
                           <span className="text-gray-600">Category:</span>
-                          <span className="font-medium text-gray-900">{singleJob?.jobCategory}</span>
+                          <span className="font-medium text-gray-900">
+                            {singleJob?.jobCategory}
+                          </span>
                         </div>
                         <div className="flex justify-between">
                           <span className="text-gray-600">Applications:</span>
-                          <span className="font-medium text-gray-900">{singleJob?.applications?.length || 0}</span>
+                          <span className="font-medium text-gray-900">
+                            {singleJob?.applications?.length || 0}
+                          </span>
                         </div>
                         <div className="flex justify-between">
                           <span className="text-gray-600">Status:</span>
@@ -716,59 +757,74 @@ const JobDescription = () => {
 
                     {/* Similar Jobs Section */}
                     <div>
-  <h4 className="font-medium text-gray-900 mb-3">Similar Jobs</h4>
-  <div className="space-y-3">
-    {isSimilarJobsLoading ? (
-      <>
-        <Skeleton className="h-24 w-full rounded-xl" />
-        <Skeleton className="h-24 w-full rounded-xl" />
-        <Skeleton className="h-24 w-full rounded-xl" />
-      </>
-    ) : similarJobs.length > 0 ? (
-      similarJobs.slice(0, 3).map((job) => (
-        <Card key={job._id} className="border-0 shadow-sm bg-white rounded-xl">
-          <CardContent className="p-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <h5 className="text-sm font-semibold text-gray-900">{job.jobTitle}</h5>
-                <p className="text-xs text-gray-600 mt-1">{job.companyName}</p>
-                <div className="flex items-center text-xs text-gray-600 mt-1">
-                  <MapPin className="h-3 w-3 mr-1" />
-                  <span>{job.workLocation?.city || "Remote"}</span>
-                </div>
-                <div className="flex items-center text-xs text-gray-600 mt-1">
-                  <DollarSign className="h-3 w-3 mr-1" />
-                  <span>{getSalaryDisplay(job)}</span>
-                </div>
-                <Badge className="bg-indigo-100 text-indigo-800 px-2 py-0.5 mt-2 rounded-full text-xs">
-                  {job.jobType}
-                </Badge>
-              </div>
-              <Link
-                to={`/jobs/${job._id}`}
-                className="text-indigo-600 hover:text-indigo-800 text-xs font-medium flex items-center"
-              >
-                View Job
-                <ArrowRight className="h-3 w-3 ml-1" />
-              </Link>
-            </div>
-          </CardContent>
-        </Card>
-      ))
-    ) : (
-      <p className="text-sm text-gray-500">No similar jobs found.</p>
-    )}
-  </div>
-  {similarJobs.length > 3 && (
-    <Link
-      to="/jobs"
-      className="text-indigo-600 hover:text-indigo-800 text-sm font-medium flex items-center mt-3"
-    >
-      View More Jobs
-      <ArrowRight className="h-4 w-4 ml-1" />
-    </Link>
-  )}
-</div>
+                      <h4 className="font-medium text-gray-900 mb-3">
+                        Similar Jobs
+                      </h4>
+                      <div className="space-y-3">
+                        {isSimilarJobsLoading ? (
+                          <>
+                            <Skeleton className="h-24 w-full rounded-xl" />
+                            <Skeleton className="h-24 w-full rounded-xl" />
+                            <Skeleton className="h-24 w-full rounded-xl" />
+                          </>
+                        ) : similarJobs.length > 0 ? (
+                          similarJobs.slice(0, 3).map((job) => (
+                            <Card
+                              key={job._id}
+                              className="border-0 shadow-sm bg-white rounded-xl"
+                            >
+                              <CardContent className="p-4">
+                                <div className="flex items-center justify-between">
+                                  <div>
+                                    <h5 className="text-sm font-semibold text-gray-900">
+                                      {job.jobTitle}
+                                    </h5>
+                                    <p className="text-xs text-gray-600 mt-1">
+                                      {job.companyName}
+                                    </p>
+                                    <div className="flex items-center text-xs text-gray-600 mt-1">
+                                      <MapPin className="h-3 w-3 mr-1" />
+                                      <span>
+                                        {job.workLocation?.city || "Remote"}
+                                      </span>
+                                    </div>
+                                    <div className="flex items-center text-xs text-gray-600 mt-1">
+                                      <span className="h-3 w-3 mr-1 text-indigo-600 inline-flex items-center justify-center">
+                                        ₹
+                                      </span>
+                                      <span>{getSalaryDisplay(job)}</span>
+                                    </div>
+                                    <Badge className="bg-indigo-100 text-indigo-800 px-2 py-0.5 mt-2 rounded-full text-xs">
+                                      {job.jobType}
+                                    </Badge>
+                                  </div>
+                                  <Link
+                                    to={`/jobs/${job._id}`}
+                                    className="text-indigo-600 hover:text-indigo-800 text-xs font-medium flex items-center"
+                                  >
+                                    View Job
+                                    <ArrowRight className="h-3 w-3 ml-1" />
+                                  </Link>
+                                </div>
+                              </CardContent>
+                            </Card>
+                          ))
+                        ) : (
+                          <p className="text-sm text-gray-500">
+                            No similar jobs found.
+                          </p>
+                        )}
+                      </div>
+                      {similarJobs.length > 3 && (
+                        <Link
+                          to="/jobs"
+                          className="text-indigo-600 hover:text-indigo-800 text-sm font-medium flex items-center mt-3"
+                        >
+                          View More Jobs
+                          <ArrowRight className="h-4 w-4 ml-1" />
+                        </Link>
+                      )}
+                    </div>
                   </div>
                 </CardContent>
               </Card>

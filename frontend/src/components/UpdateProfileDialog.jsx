@@ -19,10 +19,7 @@ import {
   SelectValue,
 } from "./ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "./ui/tabs";
-import {
-  Card,
-  CardContent,
-} from "./ui/card";
+import { Card, CardContent } from "./ui/card";
 import {
   Loader2,
   ArrowLeft,
@@ -92,6 +89,7 @@ const UpdateProfileDialog = ({ open, setOpen, croppedImage }) => {
     onlineProfiles: user?.profile?.onlineProfiles || [],
     certificates: user?.profile?.certificates || [],
   });
+  // console.log(input.profile.jobRole,"check data jobRole c")
 
   // Handle initial skill parsing
   useEffect(() => {
@@ -283,7 +281,6 @@ const UpdateProfileDialog = ({ open, setOpen, croppedImage }) => {
   // Handle adding new complex field items
   const handleAddItem = (field) => {
     let newItem;
-
     switch (field) {
       case "employment":
         newItem = {
@@ -385,15 +382,6 @@ const UpdateProfileDialog = ({ open, setOpen, croppedImage }) => {
     }
   };
 
-  // Handle skills list change in employment
-  const handleEmploymentSkillsChange = (index, skillsText) => {
-    const skillsArray = skillsText
-      .split(",")
-      .map((skill) => skill.trim())
-      .filter((skill) => skill.length > 0 && skill !== " "); // Ensure no empty or space-only skills
-    handleComplexFieldChange("employment", index, "skillsUsed", skillsArray);
-  };
-
   // Submit form handler
   const submitHandler = async (e) => {
     e.preventDefault();
@@ -443,6 +431,7 @@ const UpdateProfileDialog = ({ open, setOpen, croppedImage }) => {
     formData.append("email", input.email);
     formData.append("phoneNumber", input.phoneNumber);
     formData.append("gender", input.gender);
+    formData.append("jobRole", input.jobRole);
 
     // Handle profile photo
     if (croppedImage) {
@@ -705,6 +694,29 @@ const UpdateProfileDialog = ({ open, setOpen, croppedImage }) => {
                     </p>
                   )}
                 </div>
+                <div className="mt-4">
+                  <Label
+                    htmlFor="jobRole"
+                    className="text-sm font-medium text-gray-700"
+                  >
+                    Job Role *
+                  </Label>
+                  <Input
+                    id="jobRole"
+                    name="jobRole"
+                    type="text"
+                    value={input.jobRole}
+                    onChange={changeEventHandler}
+                    className={`mt-1 ${errors.jobRole ? "border-red-500" : ""}`}
+                    placeholder="Enter your job role"
+                  />
+                  {errors.jobRole && (
+                    <p className="text-sm text-red-600 mt-1">
+                      {errors.jobRole}
+                    </p>
+                  )}
+                </div>
+
                 <div>
                   <Label
                     htmlFor="gender"

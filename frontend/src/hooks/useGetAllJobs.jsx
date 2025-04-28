@@ -15,9 +15,9 @@ const useGetAllJobs = () => {
           `${JOB_API_END_POINT}/get`,
           { withCredentials: true }
         );
-        console.log(res,"res")
         if (res.data.success) {
-          dispatch(setAllJobs(res.data.jobs || [])); // Ensure jobs is always an array
+          console.log(res.data,'job details from addd')
+          dispatch(setAllJobs(res.data.jobs || []));
         } else {
           dispatch(setAllJobs([])); // Set empty array on failure
         }

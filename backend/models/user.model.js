@@ -170,6 +170,12 @@ const userSchema = new mongoose.Schema(
         },
       ],
     },
+    subscription: {
+      isSubscribed: {
+        type: Boolean,
+        default: false,
+      },
+    }
   },
   { timestamps: true }
 );

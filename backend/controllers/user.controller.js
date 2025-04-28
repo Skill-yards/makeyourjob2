@@ -47,7 +47,6 @@ export const sendOtp = asyncHandler(async (req, res) => {
 
 export const sendOtpForRegister = asyncHandler(async (req, res) => {
     const { email } = req.body;
-
     if (!email) {
         res.status(400);
         throw new Error("Email required");
@@ -174,7 +173,6 @@ export const register = asyncHandler(async (req, res) => {
         jobRole,
     } = req.body;
     const file = req.file;
-
     const requiredFields = ["email", "firstname", "role", "gender", "phoneNumber", "password"];
     if (!requiredFields.every((field) => req.body[field]) || !isOtpVerified) {
         res.status(400);
@@ -236,14 +234,12 @@ export const register = asyncHandler(async (req, res) => {
 
 // Login
 export const login = asyncHandler(async (req, res) => {
-    console.log(req.body,"sjabdkja")
     const { email, password, role } = req.body;
 
     if (!email || !password || !role) {
         res.status(400);
         throw new Error("Email, password, and role are required");
     }
-
     const user = await User.findOne({ email });
     if (!user) {
         res.status(404);
@@ -291,144 +287,8 @@ export const logout = asyncHandler(async (req, res) => {
 
 
 
-// export const updateProfile = asyncHandler(async (req, res) => {
-//     console.log(req.body, 'bcasd')
-//     // Log for debugging
-//     console.log('Request files:', req.files);
-//     console.log('Request body:', req.body);
-
-//     // Destructure fields
-//     const { firstname, lastname, email, phone, bio, skills, organization, jobRole } = req.body;
-//     const userId = req.id;
-//     const profilePhoto = req.files?.profilePhoto ? req.files.profilePhoto[0] : null; // Multer fields returns array
-//     const resumeFile = req.files?.file ? req.files.file[0] : null;
-
-//     // Log profilePhoto
-//     console.log('Profile Photo:', profilePhoto);
-
-//     // Find user
-  
-    
-//     const user = await User.findById(userId);
-//     if (!user) {
-//         res.status(404);
-//         throw new Error('User not found');
-//     }
-
-//     // Validate required fields
-//     if (!firstname || !lastname || !email) {
-//         res.status(400);
-//         throw new Error('First name, last name, and email are required');
-//     }
-//     if (!/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/.test(email)) {
-//         res.status(400);
-//         throw new Error('Invalid email format');
-//     }
-
-//     // Role-specific validations
-//     if (user.role === 'candidate') {
-//         if (!bio || !skills) {
-//             res.status(400);
-//             throw new Error('Bio and skills are required for candidates');
-//         }
-//     } else if (user.role === 'recruiter') {
-//         if (!phone || !organization || !jobRole) {
-//             res.status(400);
-//             throw new Error('Phone, organization, and job role are required for recruiters');
-//         }
-//     } else {
-//         res.status(400);
-//         throw new Error('Invalid user role');
-//     }
-
-//     // Handle profile photo upload
-//     if (profilePhoto) {
-//         const fileKey = `profilePhotos/${user.role}/${Date.now()}_${profilePhoto.originalname}`;
-//         const uploadParams = {
-//             Bucket: process.env.AWS_S3_BUCKET_NAME,
-//             Key: fileKey,
-//             Body: profilePhoto.buffer,
-//             ContentType: profilePhoto.mimetype,
-//         };
-//         try {
-//             await s3Client.send(new PutObjectCommand(uploadParams));
-//             user.profile.profilePhoto = `https://${process.env.AWS_S3_BUCKET_NAME}.s3.amazonaws.com/${fileKey}`;
-//         } catch (error) {
-//             console.error('S3 upload error:', error);
-//             res.status(500);
-//             throw new Error('Failed to upload profile photo');
-//         }
-//     }
-
-//     // Handle resume upload for candidates
-//     if (user.role === 'candidate' && resumeFile) {
-//         const fileKey = `resumes/${Date.now()}_${resumeFile.originalname}`;
-//         const uploadParams = {
-//             Bucket: process.env.AWS_S3_BUCKET_NAME,
-//             Key: fileKey,
-//             Body: resumeFile.buffer,
-//             ContentType: resumeFile.mimetype,
-//         };
-//         try {
-//             await s3Client.send(new PutObjectCommand(uploadParams));
-//             user.profile.resume = `https://${process.env.AWS_S3_BUCKET_NAME}.s3.amazonaws.com/${fileKey}`;
-//             user.profile.resumeOriginalName = resumeFile.originalname;
-//         } catch (error) {
-//             console.error('S3 upload error:', error);
-//             res.status(500);
-//             throw new Error('Failed to upload resume');
-//         }
-//     }
-
-//     // Update user fields
-//     user.firstname = firstname;
-//     user.lastname = lastname;
-//     user.email = email;
-
-//     if (user.role === 'candidate') {
-//         user.profile.bio = bio;
-//         user.profile.skills = skills.split(',').map((skill) => skill.trim());
-//     } else if (user.role === 'recruiter') {
-//         user.phoneNumber = phone;
-//         user.profile.organization = organization;
-//         user.profile.jobRole = jobRole;
-//     }
-
-//     // Save updated user
-//     await user.save();
-
-//     // Prepare response
-//     const userResponse = {
-//         _id: user._id,
-//         firstname: user.firstname,
-//         lastname: user.lastname,
-//         email: user.email,
-//         phoneNumber: user.phoneNumber,
-//         role: user.role,
-//         profile: {
-//             bio: user.profile.bio,
-//             skills: user.profile.skills,
-//             resume: user.profile.resume,
-//             resumeOriginalName: user.profile.resumeOriginalName,
-//             profilePhoto: user.profile.profilePhoto,
-//             organization: user.profile.organization,
-//             jobRole: user.profile.jobRole,
-//         },
-//     };
-
-//     res.status(200).json({
-//         success: true,
-//         message: 'Profile updated successfully',
-//         user: userResponse,
-//     });
-// });
-
-
-
 
 export const updateProfile = asyncHandler(async (req, res) => {
-  console.log('Request files:', req.files);
-  console.log('Request body:', req.body);
   const {
     firstname,
     lastname,
@@ -445,10 +305,10 @@ export const updateProfile = asyncHandler(async (req, res) => {
     onlineProfiles,
     certificates,
   } = req.body;
-
   const userId = req.id;
   const profilePhoto = req.files?.profilePhoto?.[0];
   const resumeFile = req.files?.file?.[0];
+  
 
   // Find user
   const user = await User.findById(userId);
@@ -515,6 +375,7 @@ export const updateProfile = asyncHandler(async (req, res) => {
   // Update profile fields
   if (user.role === 'candidate') {
     user.profile.bio = sanitizedBio || user.profile.bio;
+    user.profile.jobRole = sanitizedJobRole;
 
     // Parse skills
     let parsedSkills = user.profile.skills || [];
@@ -594,6 +455,7 @@ export const updateProfile = asyncHandler(async (req, res) => {
     res.status(500);
     throw new Error('Failed to update profile details');
   }
+ 
 
   // Prepare response
   const userResponse = {
@@ -612,7 +474,7 @@ export const updateProfile = asyncHandler(async (req, res) => {
       resumeOriginalName: user.profile.resumeOriginalName,
       profilePhoto: user.profile.profilePhoto,
       organization: user.profile.organization,
-      jobRole: user.profile.jobRole,
+      jobRole: jobRole,
       employment: user.profile.employment,
       education: user.profile.education,
       projects: user.profile.projects,
@@ -621,6 +483,7 @@ export const updateProfile = asyncHandler(async (req, res) => {
     },
   };
 
+
   res.status(200).json({
     success: true,
     message: 'Profile details updated successfully',
@@ -628,14 +491,6 @@ export const updateProfile = asyncHandler(async (req, res) => {
   });
 });
  
-
-
-
-
-
-
-
-
 
 // Login with OTP
 export const loginWithOtp = asyncHandler(async (req, res) => {
@@ -687,7 +542,6 @@ export const resetPassword = asyncHandler(async (req, res) => {
         res.status(400);
         throw new Error("Email, new password, and role are required");
     }
-
     const user = await User.findOne({ email });
     if (!user) {
         res.status(404);
@@ -707,3 +561,26 @@ export const resetPassword = asyncHandler(async (req, res) => {
 
     res.status(200).json({ success: true, message: "Password reset successfully" });
 });
+
+
+
+
+export const subscribeGuestFromJobAlerts = async (req, res) => {
+  try {
+    const { email } = req.body;
+    if (!email) {
+      return res.status(400).json({ message: "Email is required" });
+    }
+    const subscription = await User.findOneAndUpdate(
+      { email },
+      { $set: { "subscription.isSubscribed": true } }, 
+      { new: true }
+    );
+    if (!subscription) {
+      return res.status(404).json({ message: "Subscription not found" });
+    }
+    res.status(200).json({ message: "subscribed successfully" });
+  } catch (error) {
+    res.status(500).json({ message: "Server error", error: error.message });
+  }
+};

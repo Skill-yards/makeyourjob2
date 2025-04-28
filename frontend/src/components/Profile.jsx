@@ -14,8 +14,6 @@ import Cropper from 'react-easy-crop';
 import { Input } from './ui/input';
 import { useSelector } from 'react-redux';
 
-
-
 const Profile = () => {
   useGetAppliedJobs();
   const [open, setOpen] = useState(false);
@@ -26,13 +24,7 @@ const Profile = () => {
   const [croppedAreaPixels, setCroppedAreaPixels] = useState(null);
   const [showCropper, setShowCropper] = useState(false);
   const {user} = useSelector(store=>store.auth);
-  
-  console.log(user,"check user come or not")
 
-  // Use static data for now; replace with useSelector if dynamic
-  // const user = staticUserData;
-
-  // Handle image selection
   const handleImageChange = (e) => {
     const file = e.target.files[0];
     if (file) {
@@ -45,12 +37,10 @@ const Profile = () => {
     }
   };
 
-  // Update cropped area
   const onCropComplete = useCallback((croppedArea, croppedAreaPixels) => {
     setCroppedAreaPixels(croppedAreaPixels);
   }, []);
 
-  // Generate cropped image and open dialog
   const handleCrop = useCallback(async () => {
     try {
       const croppedImageUrl = await getCroppedImg(imageSrc, croppedAreaPixels);
@@ -62,7 +52,6 @@ const Profile = () => {
     }
   }, [imageSrc, croppedAreaPixels]);
 
-  // Cancel cropping
   const handleCancelCrop = () => {
     setShowCropper(false);
     setImageSrc(null);
@@ -70,26 +59,26 @@ const Profile = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-gray-50 to-gray-100 font-sans">
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50 font-sans">
       <Navbar />
-      <div className="container mx-auto px-4 py-10 space-y-8">
+      <div className="container mx-auto px-4 py-12 space-y-12">
         {/* Profile Header Card */}
-        <Card className="relative bg-white shadow-2xl rounded-2xl overflow-hidden border-none transform transition-all hover:scale-[1.01]">
-          <div className="h-32 bg-gradient-to-r from-indigo-600 to-purple-600 relative">
-            <div className="absolute -bottom-16 left-8">
+        <Card className="relative bg-white/80 backdrop-blur-lg shadow-xl rounded-3xl overflow-hidden border border-gray-100/50 transition-all duration-300 hover:shadow-2xl">
+          <div className="h-40 bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 relative">
+            <div className="absolute -bottom-20 left-10">
               <div className="relative group">
-                <Avatar className="h-32 w-32 border-4 border-white shadow-xl ring-4 ring-indigo-200 transition-transform group-hover:scale-105">
+                <Avatar className="h-36 w-36 border-4 border-white shadow-2xl ring-4 ring-blue-200/50 transition-transform group-hover:scale-110 duration-300">
                   <AvatarImage
                     src={croppedImage || user.profile.profilePhoto}
                     alt="profile"
-                    className="object-cover"
+                    className="object-cover transition-opacity group-hover:opacity-90"
                   />
                 </Avatar>
                 <label
                   htmlFor="profilePhoto"
-                  className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-60 flex items-center justify-center rounded-full cursor-pointer transition-all duration-300"
+                  className="absolute inset-0 bg-blue-900/0 group-hover:bg-blue-900/60 flex items-center justify-center rounded-full cursor-pointer transition-all duration-300"
                 >
-                  <span className="text-white text-sm opacity-0 group-hover:opacity-100 font-medium">Change Photo</span>
+                  <span className="text-white text-sm font-medium opacity-0 group-hover:opacity-100 transform group-hover:scale-105 transition-all">Update Photo</span>
                 </label>
                 <Input
                   id="profilePhoto"
@@ -101,42 +90,42 @@ const Profile = () => {
               </div>
             </div>
           </div>
-          <CardContent className="pt-20 pb-8 px-8">
+          <CardContent className="pt-24 pb-10 px-10">
             <div className="flex justify-between items-start">
-              <div className="ml-44">
-                <h1 className="text-3xl font-bold text-gray-900">{user.firstname} {user.lastname}</h1>
-                <p className="text-gray-600 mt-2 text-lg">{user.profile.bio}</p>
+              <div className="ml-48">
+                <h1 className="text-4xl font-extrabold text-gray-900 tracking-tight">{user.firstname} {user.lastname}</h1>
+                <p className="text-gray-600 mt-3 text-lg font-medium max-w-2xl">{user.profile.bio}</p>
               </div>
               <Button
                 onClick={() => setOpen(true)}
-                className="bg-indigo-600 text-white hover:bg-indigo-700 rounded-full px-6 py-2 transition-all duration-300"
+                className="bg-blue-600 text-white hover:bg-blue-700 rounded-full px-8 py-3 text-lg font-semibold transition-all duration-300 transform hover:scale-105"
               >
-                <Pen className="h-4 w-4 mr-2" />
+                <Pen className="h-5 w-5 mr-2" />
                 Edit Profile
               </Button>
             </div>
-            <div className="mt-8 grid grid-cols-1 sm:grid-cols-2 gap-6">
-              <div className="flex items-center gap-4 text-gray-700">
-                <Mail className="h-6 w-6 text-indigo-600" />
-                <span className="text-lg">{user.email}</span>
+            <div className="mt-10 grid grid-cols-1 sm:grid-cols-2 gap-8">
+              <div className="flex items-center gap-5 text-gray-700 hover:text-blue-600 transition-colors">
+                <Mail className="h-7 w-7 text-blue-600" />
+                <span className="text-lg font-medium">{user.email}</span>
               </div>
-              <div className="flex items-center gap-4 text-gray-700">
-                <Contact className="h-6 w-6 text-indigo-600" />
-                <span className="text-lg">{user.phoneNumber}</span>
+              <div className="flex items-center gap-5 text-gray-700 hover:text-blue-600 transition-colors">
+                <Contact className="h-7 w-7 text-blue-600" />
+                <span className="text-lg font-medium">{user.phoneNumber}</span>
               </div>
             </div>
           </CardContent>
         </Card>
 
         {/* Profile Details Section */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-10">
           {/* Left Column: Skills, Resume, Certificates */}
-          <div className="lg:col-span-1 space-y-8">
+          <div className="lg:col-span-1 space-y-10">
             {/* Skills */}
-            <Card className="bg-white shadow-xl rounded-2xl border-none">
+            <Card className="bg-white/90 backdrop-blur-sm shadow-lg rounded-3xl border border-gray-100/30 transition-all duration-300 hover:shadow-xl hover:-translate-y-1">
               <CardHeader>
-                <CardTitle className="text-xl font-semibold text-gray-900 flex items-center">
-                  <Code className="h-6 w-6 mr-2 text-indigo-600" />
+                <CardTitle className="text-2xl font-semibold text-gray-900 flex items-center">
+                  <Code className="h-7 w-7 mr-3 text-blue-600" />
                   Skills
                 </CardTitle>
               </CardHeader>
@@ -145,7 +134,7 @@ const Profile = () => {
                   {user.profile.skills.map((skill, index) => (
                     <Badge
                       key={index}
-                      className="bg-indigo-100 text-indigo-800 px-3 py-1 rounded-full text-sm font-medium"
+                      className="bg-blue-100 text-blue-800 px-4 py-2 rounded-full text-sm font-semibold hover:bg-blue-200 transition-colors"
                     >
                       {skill}
                     </Badge>
@@ -155,10 +144,10 @@ const Profile = () => {
             </Card>
 
             {/* Resume */}
-            <Card className="bg-white shadow-xl rounded-2xl border-none">
+            <Card className="bg-white/90 backdrop-blur-sm shadow-lg rounded-3xl border border-gray-100/30 transition-all duration-300 hover:shadow-xl hover:-translate-y-1">
               <CardHeader>
-                <CardTitle className="text-xl font-semibold text-gray-900 flex items-center">
-                  <FileText className="h-6 w-6 mr-2 text-indigo-600" />
+                <CardTitle className="text-2xl font-semibold text-gray-900 flex items-center">
+                  <FileText className="h-7 w-7 mr-3 text-blue-600" />
                   Resume
                 </CardTitle>
               </CardHeader>
@@ -167,32 +156,32 @@ const Profile = () => {
                   href={user.profile.resume}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="flex items-center gap-3 text-indigo-600 hover:text-indigo-800 text-lg transition-colors"
+                  className="flex items-center gap-4 text-blue-600 hover:text-blue-800 text-lg font-medium transition-colors group"
                 >
-                  <FileText className="h-5 w-5" />
+                  <FileText className="h-6 w-6 group-hover:scale-110 transition-transform" />
                   {user.profile.resumeOriginalName}
                 </a>
               </CardContent>
             </Card>
 
             {/* Certificates */}
-            <Card className="bg-white shadow-xl rounded-2xl border-none">
+            <Card className="bg-white/90 backdrop-blur-sm shadow-lg rounded-3xl border border-gray-100/30 transition-all duration-300 hover:shadow-xl hover:-translate-y-1">
               <CardHeader>
-                <CardTitle className="text-xl font-semibold text-gray-900 flex items-center">
-                  <Award className="h-6 w-6 mr-2 text-indigo-600" />
+                <CardTitle className="text-2xl font-semibold text-gray-900 flex items-center">
+                  <Award className="h-7 w-7 mr-3 text-blue-600" />
                   Certificates
                 </CardTitle>
               </CardHeader>
               <CardContent>
                 {user.profile.certificates.map((cert, index) => (
-                  <div key={index} className="mb-4">
-                    <h3 className="text-lg font-medium text-gray-900">{cert.certificateName}</h3>
+                  <div key={index} className="mb-6 group">
+                    <h3 className="text-lg font-semibold text-gray-900 group-hover:text-blue-600 transition-colors">{cert.certificateName}</h3>
                     <p className="text-gray-600">{cert.issuingOrganization} • {cert.issueDate}</p>
                     <a
                       href={cert.credentialUrl}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="text-indigo-600 hover:text-indigo-800 text-sm"
+                      className="text-blue-600 hover:text-blue-800 text-sm font-medium transition-colors"
                     >
                       View Credential
                     </a>
@@ -203,20 +192,20 @@ const Profile = () => {
           </div>
 
           {/* Right Column: Education, Employment, Projects, Online Profiles */}
-          <div className="lg:col-span-2 space-y-8">
+          <div className="lg:col-span-2 space-y-10">
             {/* Education */}
-            <Card className="bg-white shadow-xl rounded-2xl border-none">
+            <Card className="bg-white/90 backdrop-blur-sm shadow-lg rounded-3xl border border-gray-100/30 transition-all duration-300 hover:shadow-xl hover:-translate-y-1">
               <CardHeader>
-                <CardTitle className="text-xl font-semibold text-gray-900 flex items-center">
-                  <GraduationCap className="h-6 w-6 mr-2 text-indigo-600" />
+                <CardTitle className="text-2xl font-semibold text-gray-900 flex items-center">
+                  <GraduationCap className="h-7 w-7 mr-3 text-blue-600" />
                   Education
                 </CardTitle>
               </CardHeader>
               <CardContent>
                 {user.profile.education.map((edu, index) => (
-                  <div key={index} className="mb-4">
-                    <h3 className="text-lg font-medium text-gray-900">{edu.educationLevel} in {edu.specialization}</h3>
-                    <p className="text-gray-600">{edu.university} • {edu.startingYear} - {edu.endingYear}</p>
+                  <div key={index} className="mb-6 group">
+                    <h3 className="text-lg font-semibold text-gray-900 group-hover:text-blue-600 transition-colors">{edu.educationLevel} in {edu.specialization}</h3>
+                    <p className="text-gray-600 font-medium">{edu.university} • {edu.startingYear} - {edu.endingYear}</p>
                     <p className="text-gray-500 text-sm">{edu.courseType} • {edu.gradingSystem}</p>
                   </div>
                 ))}
@@ -224,18 +213,18 @@ const Profile = () => {
             </Card>
 
             {/* Employment */}
-            <Card className="bg-white shadow-xl rounded-2xl border-none">
+            <Card className="bg-white/90 backdrop-blur-sm shadow-lg rounded-3xl border border-gray-100/30 transition-all duration-300 hover:shadow-xl hover:-translate-y-1">
               <CardHeader>
-                <CardTitle className="text-xl font-semibold text-gray-900 flex items-center">
-                  <Briefcase className="h-6 w-6 mr-2 text-indigo-600" />
+                <CardTitle className="text-2xl font-semibold text-gray-900 flex items-center">
+                  <Briefcase className="h-7 w-7 mr-3 text-blue-600" />
                   Employment
                 </CardTitle>
               </CardHeader>
               <CardContent>
                 {user.profile.employment.map((emp, index) => (
-                  <div key={index} className="mb-4">
-                    <h3 className="text-lg font-medium text-gray-900">{emp.jobTitle}</h3>
-                    <p className="text-gray-600">
+                  <div key={index} className="mb-6 group">
+                    <h3 className="text-lg font-semibold text-gray-900 group-hover:text-blue-600 transition-colors">{emp.jobTitle}</h3>
+                    <p className="text-gray-600 font-medium">
                       {emp.companyName} • {emp.joiningDateMonth} {emp.joiningDateYear} -{' '}
                       {emp.isCurrentEmployment ? 'Present' : `${emp.endingDateMonth} ${emp.endingDateYear}`}
                     </p>
@@ -247,49 +236,49 @@ const Profile = () => {
             </Card>
 
             {/* Projects */}
-            <Card className="bg-white shadow-xl rounded-2xl border-none">
+            <Card className="bg-white/90 backdrop-blur-sm shadow-lg rounded-3xl border border-gray-100/30 transition-all duration-300 hover:shadow-xl hover:-translate-y-1">
               <CardHeader>
-                <CardTitle className="text-xl font-semibold text-gray-900 flex items-center">
-                  <Code className="h-6 w-6 mr-2 text-indigo-600" />
+                <CardTitle className="text-2xl font-semibold text-gray-900 flex items-center">
+                  <Code className="h-7 w-7 mr-3 text-blue-600" />
                   Projects
                 </CardTitle>
               </CardHeader>
               <CardContent>
                 {user.profile.projects.map((project, index) => (
-                  <div key={index} className="mb-4">
-                    <h3 className="text-lg font-medium text-gray-900">{project.projectTitle}</h3>
-                    <p className="text-gray-600">{project.tagInstitution} • {project.client}</p>
+                  <div key={index} className="mb-6 group">
+                    <h3 className="text-lg font-semibold text-gray-900 group-hover:text-blue-600 transition-colors">{project.projectTitle}</h3>
+                    <p className="text-gray-600 font-medium">{project.tagInstitution} • {project.client}</p>
                     <p className="text-gray-500 text-sm">
                       {project.workedFromMonth} {project.workedFromYear} - {project.endingDateMonth} •{' '}
                       {project.projectStatus}
                     </p>
-                    <p className="text-gray-600 mt-1">{project.details}</p>
+                    <p className="text-gray-600 mt-2 font-medium">{project.details}</p>
                   </div>
                 ))}
               </CardContent>
             </Card>
 
             {/* Online Profiles */}
-            <Card className="bg-white shadow-xl rounded-2xl border-none">
+            <Card className="bg-white/90 backdrop-blur-sm shadow-lg rounded-3xl border border-gray-100/30 transition-all duration-300 hover:shadow-xl hover:-translate-y-1">
               <CardHeader>
-                <CardTitle className="text-xl font-semibold text-gray-900 flex items-center">
-                  <Globe className="h-6 w-6 mr-2 text-indigo-600" />
+                <CardTitle className="text-2xl font-semibold text-gray-900 flex items-center">
+                  <Globe className="h-7 w-7 mr-3 text-blue-600" />
                   Online Profiles
                 </CardTitle>
               </CardHeader>
               <CardContent>
                 {user.profile.onlineProfiles.map((profile, index) => (
-                  <div key={index} className="mb-4">
-                    <h3 className="text-lg font-medium text-gray-900">{profile.socialProfileName}</h3>
+                  <div key={index} className="mb-6 group">
+                    <h3 className="text-lg font-semibold text-gray-900 group-hover:text-blue-600 transition-colors">{profile.socialProfileName}</h3>
                     <a
                       href={profile.url}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="text-indigo-600 hover:text-indigo-800"
+                      className="text-blue-600 hover:text-blue-800 font-medium transition-colors"
                     >
                       {profile.url}
                     </a>
-                    <p className="text-gray-600 mt-1">{profile.description}</p>
+                    <p className="text-gray-600 mt-2 font-medium">{profile.description}</p>
                   </div>
                 ))}
               </CardContent>
@@ -298,9 +287,9 @@ const Profile = () => {
         </div>
 
         {/* Applied Jobs Section */}
-        <Card className="bg-white shadow-xl rounded-2xl border-none">
+        <Card className="bg-white/90 backdrop-blur-sm shadow-lg rounded-3xl border border-gray-100/30 transition-all duration-300 hover:shadow-xl">
           <CardHeader>
-            <CardTitle className="text-xl font-semibold text-gray-900">Applied Jobs</CardTitle>
+            <CardTitle className="text-2xl font-semibold text-gray-900">Applied Jobs</CardTitle>
           </CardHeader>
           <CardContent>
             <AppliedJobTable />
@@ -313,16 +302,16 @@ const Profile = () => {
 
       {/* Cropper Modal */}
       {showCropper && (
-        <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50">
-          <div className="bg-white rounded-2xl p-8 w-full max-w-md relative shadow-2xl">
+        <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 animate-in fade-in duration-300">
+          <div className="bg-white/95 backdrop-blur-md rounded-3xl p-10 w-full max-w-lg relative shadow-2xl transform transition-all scale-100 hover:scale-105">
             <button
               onClick={handleCancelCrop}
-              className="absolute top-4 right-4 text-gray-500 hover:text-gray-900 transition-colors"
+              className="absolute top-6 right-6 text-gray-500 hover:text-gray-900 transition-colors duration-200"
             >
-              <X className="h-6 w-6" />
+              <X className="h-7 w-7" />
             </button>
-            <h2 className="text-xl font-semibold text-gray-900 mb-6">Crop Profile Photo</h2>
-            <div className="relative w-full h-80">
+            <h2 className="text-2xl font-semibold text-gray-900 mb-8">Crop Your Profile Photo</h2>
+            <div className="relative w-full h-96 rounded-xl overflow-hidden">
               <Cropper
                 image={imageSrc}
                 crop={crop}
@@ -335,16 +324,16 @@ const Profile = () => {
                 onCropComplete={onCropComplete}
               />
             </div>
-            <div className="mt-6 flex space-x-4">
+            <div className="mt-8 flex space-x-6">
               <Button
                 onClick={handleCrop}
-                className="bg-indigo-600 hover:bg-indigo-700 text-white rounded-full px-6 py-2"
+                className="bg-blue-600 hover:bg-blue-700 text-white rounded-full px-8 py-3 text-lg font-semibold transition-all duration-300"
               >
                 Crop & Save
               </Button>
               <Button
                 onClick={handleCancelCrop}
-                className="border-indigo-300 text-indigo-600 hover:bg-indigo-50 rounded-full px-6 py-2"
+                className="border-blue-300 text-blue-600 hover:bg-blue-50 rounded-full px-8 py-3 text-lg font-semibold transition-all duration-300"
               >
                 Cancel
               </Button>
