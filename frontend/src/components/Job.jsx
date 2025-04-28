@@ -126,6 +126,7 @@ const Job = ({ job }) => {
   };
 
   return (
+    <>
     <Card className="w-full hover:shadow-md transition-shadow duration-300 overflow-hidden border border-gray-200">
       <CardHeader className="p-4 pb-2 flex flex-row items-start justify-between">
         <div className="flex gap-3">
@@ -226,6 +227,7 @@ const Job = ({ job }) => {
         </Button>
       </CardFooter>
     </Card>
+    </>
   );
 };
 

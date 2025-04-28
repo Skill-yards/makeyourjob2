@@ -1,11 +1,11 @@
-import React, { useState, useCallback } from 'react';
+import { useState, useCallback } from 'react';
 import { useSelector } from 'react-redux';
 import Navbar from '../shared/Navbar';
 import { Card, CardContent } from '../ui/card';
 import { Button } from '../ui/button';
 import { Contact, Mail, Pen, Building, Briefcase, X } from 'lucide-react';
-import { Badge } from '../ui/badge';
-import Footer from '../shared/Footer';
+// import { Badge } from '../ui/badge';
+// import Footer from '../shared/Footer';
 import { Avatar, AvatarImage } from '../ui/avatar';
 import CompaniesTable from './CompaniesTable';
 import UpdateProfileDialog from '../UpdateProfileDialog';

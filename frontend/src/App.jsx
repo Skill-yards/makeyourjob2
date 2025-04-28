@@ -1,11 +1,10 @@
-import { createBrowserRouter, RouterProvider, useLocation } from 'react-router-dom';
-import { Suspense, lazy, useEffect } from 'react';
+import { createBrowserRouter, RouterProvider,  } from 'react-router-dom';
+import { Suspense, lazy,  } from 'react';
 
 // Shared Components
 
 import ProtectedRoute from './components/admin/ProtectedRoute';
 import PrivacyPolicy from './components/PrivacyPolicy.jsx';
-
 
 // Lazy-loaded Components
 const Home = lazy(() => import('./components/Home'));
@@ -71,6 +70,20 @@ const appRouter = createBrowserRouter([
     path: "/terms",
     element: <Layout><TermsAndConditions/></Layout>
   },
+  {
+    path: "/contact",
+    element: <ContactUs/>
+  },
+
+  {
+    path: "/privacy",
+    element: <PrivacyPolicy/>
+  },
+  {
+    path: "/terms",
+    element: <TermsAndConditions/>
+  },
+  
   {
     path: "/profile",
     element: <ProtectedRoute><Layout><Profile /></Layout></ProtectedRoute>

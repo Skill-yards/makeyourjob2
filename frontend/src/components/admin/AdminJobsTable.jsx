@@ -13,6 +13,7 @@ const AdminJobsTable = () => {
     const navigate = useNavigate();
 
     useEffect(() => {
+        console.log(allAdminJobs,"check job")
         const filteredJobs = allAdminJobs.filter((job) => {
             if (!searchJobByText) return true;
             const searchText = searchJobByText.toLowerCase();

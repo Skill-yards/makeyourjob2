@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import  { useState } from 'react'
 import { Link, useNavigate, useLocation } from 'react-router-dom'
 import { useDispatch, useSelector } from 'react-redux'
 import axios from 'axios'
@@ -7,7 +7,7 @@ import { setUser } from '@/redux/authSlice'
 import { toast } from 'sonner'
 
 // Lucide Icons
-import { LogOut, User2, Briefcase, Menu, X, Home, Search, Building, ChevronDown } from 'lucide-react'
+import { LogOut, User2, Briefcase, Menu, X, Home, Search,  ChevronDown } from 'lucide-react'
 
 // UI Components
 import { Button } from '../ui/button'
@@ -74,7 +74,7 @@ const Navbar = () => {
                             </div>
                         </Link>
                     </div>
-
+                   
                     {/* Desktop Navigation */}
                     <nav className="hidden md:flex items-center space-x-1">
                         {getNavLinks().map((link, index) => (

@@ -145,9 +145,6 @@ export const updateCompany = async (req, res) => {
         });
       }
     }
-
-    console.log("Files received:", files);
-
     const company = await Company.findById(companyId);
     if (!company) {
       return res.status(404).json({
@@ -193,9 +190,6 @@ export const updateCompany = async (req, res) => {
       }
       if (files.panDocument && files.panDocument.length > 0) {
         updateData.panDocument = await uploadFile(files.panDocument[0], 'pan_documents');
-      }
-      if (files.registrationDocument && files.registrationDocument.length > 0) {
-        updateData.registrationDocument = await uploadFile(files.registrationDocument[0], 'registration_documents');
       }
     }
 

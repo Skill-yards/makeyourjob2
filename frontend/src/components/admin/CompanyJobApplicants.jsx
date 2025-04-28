@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { Badge } from '../ui/badge';
 import { Button } from '../ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
-import { Link, useNavigate, useParams } from 'react-router-dom';
+import {  useNavigate, useParams } from 'react-router-dom';
 import axios from 'axios';
 import { COMPANY_API_END_POINT } from '@/utils/constant';
 import { setSingleCompany } from '@/redux/companySlice';
@@ -39,16 +39,15 @@ const CompanyJobApplicants = () => {
       try {
         setIsLoading(true);
         setError(null);
-
         const response = await axios.get(`${COMPANY_API_END_POINT}/get/${companyId}`, {
           withCredentials: true,
         });
-
         if (response.data.success) {
           const { company, jobs } = response.data;
           dispatch(setSingleCompany(company));
           setCompanyData({ ...company, jobs: jobs || [] });
         }
+        console.log(response.data)
       } catch (error) {
         setError(error.response?.data?.message || 'Failed to load company details');
       } finally {
