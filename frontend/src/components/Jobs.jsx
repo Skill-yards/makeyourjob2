@@ -10,8 +10,6 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
 const Jobs = () => {
   const { jobs, searchedQuery, isLoading } = useSelector(store => store.job);
- 
-
   // Animation variants
   const containerVariants = {
     hidden: { opacity: 0 },

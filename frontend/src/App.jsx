@@ -1,8 +1,5 @@
 import { createBrowserRouter, RouterProvider,  } from 'react-router-dom';
 import { Suspense, lazy,  } from 'react';
-
-// Shared Components
-
 import ProtectedRoute from './components/admin/ProtectedRoute';
 import PrivacyPolicy from './components/PrivacyPolicy.jsx';
 
@@ -18,7 +15,6 @@ const ContactUs = lazy(() => import('./components/Contact'));
 const TermsAndConditions = lazy(() => import('./components/Terms'));
 const AdminSingleWithApply = lazy(() => import('./components/admin/AdminSingleJobWithApply'));
 const CompanyJobApplicants = lazy(() => import('./components/admin/CompanyJobApplicants'));
-// const CompanyJobList = lazy(() => import('./components/admin/CompanyJobList'));
 const JobSetup = lazy(() => import('./components/admin/JobSetup'));
 const AdminProfile = lazy(() => import('./components/admin/AdminProfile'));
 
@@ -143,7 +139,6 @@ function App() {
       </div>....
       </div>}>
       <RouterProvider router={appRouter} />
-     
     </Suspense>
    </div>
   );
