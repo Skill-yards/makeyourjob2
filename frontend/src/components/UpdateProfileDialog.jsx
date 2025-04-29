@@ -385,6 +385,8 @@ const UpdateProfileDialog = ({ open, setOpen, croppedImage }) => {
   // Submit form handler
   const submitHandler = async (e) => {
     e.preventDefault();
+    console.log('submit handelr call');
+    
     if (!validateInputs()) {
       toast.error("Please fill all required fields correctly");
 

@@ -69,7 +69,7 @@ const FilterCard = () => {
   const [page, setPage] = useState(1);
   const [isLoading, setIsLoading] = useState(false);
   const dispatch = useDispatch();
-  const { jobs, total, pages } = useSelector(state => state.jobs||{ jobs: [], total: 0, pages: 1, page: 1, isLoading: false });
+  const { jobs, total, pages } = useSelector(state => state.jobs || { jobs: [], total: 0, pages: 1, page: 1, isLoading: false });
   console.log(jobs,'check data ')
 
  
@@ -112,7 +112,7 @@ const FilterCard = () => {
       const response = await axios.get(`${JOB_API_END_POINT}/searchCriteria`, {
         params: { ...filters, page: currentPage, limit: 10 }
       });
-      console.log('Fetched jobs:', response.data);
+      console.log('API URL:', `${JOB_API_END_POINT}/searchCriteria`, 'Params:', { ...filters, page: currentPage, limit: 10 });
       dispatch(setJobs({
         jobs: response.data.data,
         total: response.data.total,
