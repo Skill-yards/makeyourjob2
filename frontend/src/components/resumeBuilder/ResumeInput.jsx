@@ -182,7 +182,9 @@ function ResumeInput({ template, formData, setFormData }) {
           : (formData[steps[currentStep - 1].section] || {})
       );
     } else {
-      navigate('/resume-builder');
+      // Stay on /input since there's no template selection
+      setCurrentStep(0);
+      setShowFields(false);
     }
   };
 

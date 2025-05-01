@@ -114,9 +114,6 @@ function ResumePreview({ template, formData }) {
         <CardContent>
           <ResumePreviewPane template={template} formData={formData} />
           <div className="flex space-x-4 mt-6 justify-center">
-            <Button variant="outline" onClick={() => navigate('/resume-builder')}>
-              Change Template
-            </Button>
             <Button variant="outline" onClick={() => navigate('/resume-builder/input')}>
               Edit Information
             </Button>
