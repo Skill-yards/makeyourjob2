@@ -3,17 +3,21 @@ import { createSlice } from "@reduxjs/toolkit";
 const jobSlice = createSlice({
   name: "job",
   initialState: {
-    allJobs: [],
+    allJobs: [], // Stores all jobs when no filters are applied
     allAdminJobs: [],
     singleJob: null,
     searchJobByText: "",
     allAppliedJobs: [],
     searchedQuery: "",
-    searchLocation: "", // New field for location
+    searchLocation: "",
+    jobs: [], // Stores filtered jobs
+    total: 0,
+    page: 1,
+    pages: 1,
+    isLoading: false,
   },
   reducers: {
     setAllJobs: (state, action) => {
-      console.log(action.payload,'job slice');
       state.allJobs = action.payload;
     },
     setSingleJob: (state, action) => {
@@ -44,6 +48,13 @@ const jobSlice = createSlice({
     setLoading: (state) => {
       state.isLoading = true;
     },
+    clearFilters: (state) => {
+      state.jobs = [];
+      state.searchedQuery = "";
+      state.page = 1;
+      state.total = 0;
+      state.pages = 1;
+    },
   },
 });
 
@@ -57,5 +68,6 @@ export const {
   setSearchLocation,
   setJobs,
   setLoading,
+  clearFilters,
 } = jobSlice.actions;
 export default jobSlice.reducer;

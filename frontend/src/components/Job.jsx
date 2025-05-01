@@ -190,7 +190,7 @@ const Job = ({ job }) => {
             <Briefcase className="h-3 w-3 mr-1" />
             {jobType}
           </Badge>
-
+                  
           <Badge
             variant="outline"
             className="bg-green-50 border-green-100 text-green-700 flex items-center"

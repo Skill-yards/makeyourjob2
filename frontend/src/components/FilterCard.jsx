@@ -21,9 +21,10 @@ const filterData = [
     array: ["Full-time", "Part-time", "Contract", "Temporary", "Internship", "Freelancing"]
   },
   {
-    filterType: "location",
+    filterType: "Location",
     icon: <MapPin size={16} />,
-    array: ["Delhi NCR", "Bangalore", "Hyderabad", "Pune", "Mumbai"]
+    array: ["Noida (694)", "New Delhi (15)", "Greater Noida (32)", "Ghaziabad (4)", "Gurugram (25)", "Delhi / NCR (703)", "Pune (19)", "Bengaluru (14)", "Mumbai (6)", "Kanpur (6)"],
+    moreArray: ["Rajkot (6)", "Mumbai (All Areas) (6)", "Chennai (5)", "Supaul (5)", "Patna (5)", "Hyderabad (4)", "Coimbatore (4)", "Prayagraj (4)", "Gwalior (3)", "Jaipur (3)", "Lucknow (1)", "Indore (2)", "Guwahati (1)", "Ahmedabad (1)", "Kozhikode (1)","Agra(3)"]
   },
   {
     filterType: "Industry",
@@ -31,12 +32,12 @@ const filterData = [
     array: ["Frontend Developer", "Backend Developer", "FullStack Developer"]
   },
   {
-    filterType: "salary",
+    filterType: "Salary",
     icon: <Banknote size={16} />,
     array: ["0-3Lakhs", "3-6Lakhs", "6-10Lakhs", "10-15Lakhs", "15-25Lakhs", "25-50Lakhs", "50-75Lakhs"]
   },
   {
-    filterType: "experienceLevel",
+    filterType: "Experience",
     icon: <Clock size={16} />,
     type: "slider",
     max: 15,
@@ -68,43 +69,30 @@ const FilterCard = () => {
   const [selectedCount, setSelectedCount] = useState(0);
   const [page, setPage] = useState(1);
   const [isLoading, setIsLoading] = useState(false);
+  const [showMoreLocations, setShowMoreLocations] = useState(false);
   const dispatch = useDispatch();
-  const { jobs, total, pages } = useSelector(state => state.jobs||{ jobs: [], total: 0, pages: 1, page: 1, isLoading: false });
-  console.log(jobs,'check data ')
+  const { total, pages } = useSelector(state => state.jobs || { jobs: [], total: 0, pages: 1, page: 1, isLoading: false });
 
- 
-
-  // Convert front-end filter values to API-compatible format
   const formatFilters = () => {
     const formatted = { ...selectedValues };
-
-    // Convert Salary (e.g., "3-6Lakhs" to "300000-600000")
     if (formatted.Salary) {
       const range = formatted.Salary.replace('Lakhs', '').split('-').map(Number);
       formatted.Salary = `${range[0]}-${range[1]}`;
     }
-
-    // Convert Freshness (e.g., "7days" to "7")
     if (formatted.Freshness) {
       formatted.Freshness = formatted.Freshness.replace('days', '');
     }
-
-    // Map Industry to jobCategory
     if (formatted.Industry) {
       formatted.industry = formatted.Industry;
       delete formatted.Industry;
     }
-
-    // Map Work Type to jobType
     if (formatted['Work Type']) {
       formatted.jobType = formatted['Work Type'];
       delete formatted['Work Type'];
     }
-
     return formatted;
   };
 
-  // Fetch jobs from API
   const fetchJobs = async (currentPage = page) => {
     setIsLoading(true);
     try {
@@ -112,7 +100,6 @@ const FilterCard = () => {
       const response = await axios.get(`${JOB_API_END_POINT}/searchCriteria`, {
         params: { ...filters, page: currentPage, limit: 10 }
       });
-      console.log('Fetched jobs:', response.data);
       dispatch(setJobs({
         jobs: response.data.data,
         total: response.data.total,
@@ -126,27 +113,44 @@ const FilterCard = () => {
     }
   };
 
-  // Handle filter changes
+  const fetchAllJobs = async (currentPage = page) => {
+    dispatch(setLoading());
+    try {
+      const response = await axios.get(`${JOB_API_END_POINT}/get`, {
+        params: { page: currentPage, limit: 10 }
+      });
+      dispatch(setJobs({
+        jobs: response.data.data,
+      }));
+    } catch (error) {
+      console.error('Error fetching all jobs:', error);
+    }
+  };
+
   const handleChange = (filterType, value) => {
     setSelectedValues(prev => ({
       ...prev,
       [filterType]: value
     }));
-    setPage(1); // Reset to first page on filter change
+    setPage(1);
   };
 
-  // Clear filters
   const clearFilters = () => {
     setSelectedValues({});
     setPage(1);
   };
 
-  // Apply filters and fetch jobs
+  const clearFiltersHandler = () => {
+    setSelectedValues({});
+    setPage(1);
+    dispatch(clearFilters());
+    fetchAllJobs(1);
+  };
+
   const applyFilters = () => {
     fetchJobs(1);
   };
 
-  // Pagination handlers
   const handleNextPage = () => {
     if (page < pages) {
       setPage(page + 1);
@@ -161,7 +165,10 @@ const FilterCard = () => {
     }
   };
 
-  // Update Redux query string and fetch jobs on filter change
+  const toggleShowMoreLocations = () => {
+    setShowMoreLocations(!showMoreLocations);
+  };
+
   useEffect(() => {
     const count = Object.values(selectedValues).filter(Boolean).length;
     setSelectedCount(count);
@@ -174,9 +181,10 @@ const FilterCard = () => {
       .join(', ');
     dispatch(setSearchedQuery(queryString));
 
-    // Auto-fetch jobs when filters change
     if (count > 0) {
       fetchJobs();
+    } else {
+      fetchAllJobs(1);
     }
   }, [selectedValues]);
 
@@ -194,7 +202,7 @@ const FilterCard = () => {
             )}
           </CardTitle>
           {selectedCount > 0 && (
-            <Button variant="ghost" size="sm" onClick={clearFilters} className="text-xs h-8">
+            <Button variant="ghost" size="sm" onClick={clearFiltersHandler} className="text-xs h-8">
               Clear all
             </Button>
           )}
@@ -251,6 +259,39 @@ const FilterCard = () => {
                         </Label>
                       </div>
                     ))}
+                    {category.filterType === "Location" && (
+                      <div className="p-2">
+                        <Button variant="link" size="sm" onClick={toggleShowMoreLocations} className="p-0 h-auto text-blue-600">
+                          View More
+                        </Button>
+                        {showMoreLocations && (
+                          <Card className="mt-2 p-2 bg-white shadow-md">
+                            <CardContent className="p-0">
+                              <RadioGroup
+                                value={selectedValues[category.filterType] || ""}
+                                onValueChange={(value) => handleChange(category.filterType, value)}
+                                className="space-y-1"
+                              >
+                                {category.moreArray.map((item, idx) => (
+                                  <div key={idx + category.array.length} className="flex items-center space-x-2 rounded-md p-2 hover:bg-gray-50 transition-colors">
+                                    <RadioGroupItem
+                                      value={item}
+                                      id={`${category.filterType}-${idx + category.array.length}`}
+                                    />
+                                    <Label
+                                      htmlFor={`${category.filterType}-${idx + category.array.length}`}
+                                      className="text-sm font-normal cursor-pointer w-full"
+                                    >
+                                      {item}
+                                    </Label>
+                                  </div>
+                                ))}
+                              </RadioGroup>
+                            </CardContent>
+                          </Card>
+                        )}
+                      </div>
+                    )}
                   </RadioGroup>
                 )}
               </AccordionContent>

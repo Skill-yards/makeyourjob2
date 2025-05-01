@@ -211,7 +211,7 @@ const PrivacyPolicy = () => {
                       href="mailto:help@makeyourjobs.com"
                       className="text-blue-600 hover:text-blue-800 font-medium"
                     >
-                      help@makeyourjobs.com
+                      info@makeyourjobs.com
                     </a>
                     .
                   </p>

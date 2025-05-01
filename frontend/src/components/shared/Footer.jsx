@@ -52,10 +52,6 @@ const Footer = () => {
         <div className="container mx-auto px-4 py-10">
           <div className="flex flex-col md:flex-row justify-between items-center gap-6">
             <div className="max-w-md">
-              {/* <h3 className="text-xl font-bold mb-2">Join our newsletter</h3>
-              <p className="text-slate-300 text-sm">
-                Stay updated with the latest job opportunities and career insights.
-              </p> */}
             </div>
             <div className="w-full md:w-auto flex flex-col sm:flex-row gap-3">
               <Input
@@ -100,7 +96,7 @@ const Footer = () => {
             </div>
             <div className="space-y-3">
               <div className="flex items-center text-sm text-slate-300">
-                <Phone className="h-4 w-4 mr-3 text-indigo-400" />
+                <Phone className="h-4 w-4 mr-3 text-indigo-400"/>
                 <span>+91 7060100562</span>
               </div>
               <div className="flex items-center text-sm text-slate-300">
@@ -108,7 +104,7 @@ const Footer = () => {
                   href={`mailto:${email}`}
                   className="flex items-center hover:text-indigo-400 transition-colors"
                 >
-                  <Mail className="h-4 w-4 mr-3 text-indigo-400" />
+                  <Mail className="h-4 w-4 mr-3 text-indigo-400"/>
                   <span>{email}</span>
                 </a>
               </div>
@@ -119,7 +115,7 @@ const Footer = () => {
                   rel="noopener noreferrer"
                   className="flex items-start hover:text-indigo-400 transition-colors"
                 >
-                  <MapPin className="h-4 w-5 mr-3 mb-5 text-indigo-400 mt-1" />
+                  <MapPin className="h-4 w-5 mr-3 mb-5 text-indigo-400 mt-1"/>
                   <span>{address}</span>
                 </a>
               </div>
@@ -148,7 +144,7 @@ const Footer = () => {
                 </a>
               </li>
               <li>
-                <a href="#" className="text-sm text-slate-300 hover:text-white transition-colors">
+                <a href="/careeradvice" className="text-sm text-slate-300 hover:text-white transition-colors">
                   Career Advice
                 </a>
               </li>
@@ -176,7 +172,7 @@ const Footer = () => {
             </h3>
             <ul className="space-y-2">
               <li>
-                <a href="#" className="text-sm text-slate-300 hover:text-white transition-colors">
+                <a href="/help" className="text-sm text-slate-300 hover:text-white transition-colors">
                   Help Center
                 </a>
               </li>

@@ -12,7 +12,6 @@ import { setSearchedJobs } from '@/redux/browseJob.slice';
 
 const Browse = () => {
   useGetAllJobs();
- 
   const dispatch = useDispatch();
   const { searchedJobs, loading, error } = useSelector((state) => state.jobBrowse);
   const {allJobs} = useSelector(store=>store.job);

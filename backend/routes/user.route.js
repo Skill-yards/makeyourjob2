@@ -9,7 +9,8 @@ import {
   resetPassword,
   sendOtp,
   sendOtpForRegister,
-  subscribeGuestFromJobAlerts
+  subscribeGuestFromJobAlerts,
+  deleteResume
 } from "../controllers/user.controller.js";
 import isAuthenticated from "../middlewares/isAuthenticated.js";
 import multer from "multer";
@@ -56,6 +57,7 @@ router.route("/register").post(registerUpload, register);
 router.route("/login").post(login);
 router.route("/logout").get(logout);
 router.route("/profile/update").post(isAuthenticated, updateProfileUpload, updateProfile);
+router.route("/resume/:id").get(isAuthenticated,deleteResume);
 router.route("/verify/otp").post(verifyEmail);
 router.route("/login-otp").post(loginWithOtp);
 router.route("/reset-password").post(resetPassword);

@@ -123,13 +123,21 @@ const UpdateProfileDialog = ({ open, setOpen, croppedImage }) => {
   // Skills change handler with improved validation
   const handleSkillsChange = (e) => {
     const skillsText = e.target.value;
-    // Split by commas, trim each skill, remove empty strings and strings with only spaces
+    // Split by commas, trim each skill, remove empty strings
     const skillsArray = skillsText
       .split(",")
-      .map((skill) => skill)
-      .filter((skill) => skill.length > 0 && skill !== " "); // Ensure no empty or space-only skills
+      .map((skill) => skill.trim()) // Trim leading/trailing spaces
+      .filter((skill) => skill.length > 0); // Remove empty strings
     setInput({ ...input, skills: skillsArray });
     setErrors({ ...errors, skills: "" });
+    // const skillsText = e.target.value;
+    // // Split by commas, trim each skill, remove empty strings and strings with only spaces
+    // const skillsArray = skillsText
+    //   .split(",")
+    //   .map((skill) => skill)
+    //   .filter((skill) => skill.length > 0 && skill !== " "); // Ensure no empty or space-only skills
+    // setInput({ ...input, skills: skillsArray });
+    // setErrors({ ...errors, skills: "" });
   };
 
   // Validate all inputs
@@ -385,6 +393,8 @@ const UpdateProfileDialog = ({ open, setOpen, croppedImage }) => {
   // Submit form handler
   const submitHandler = async (e) => {
     e.preventDefault();
+    console.log("submit handelr call");
+
     if (!validateInputs()) {
       toast.error("Please fill all required fields correctly");
 
@@ -432,6 +442,7 @@ const UpdateProfileDialog = ({ open, setOpen, croppedImage }) => {
     formData.append("phoneNumber", input.phoneNumber);
     formData.append("gender", input.gender);
     formData.append("jobRole", input.jobRole);
+    console.log(formData, "check data files ");
 
     // Handle profile photo
     if (croppedImage) {
@@ -445,6 +456,7 @@ const UpdateProfileDialog = ({ open, setOpen, croppedImage }) => {
           const profileImageFile = new File([blob], "profile-image.jpg", {
             type: "image/jpeg",
           });
+          console.log(blob);
           formData.append("profilePhoto", profileImageFile);
         } catch (error) {
           toast.error("Failed to process profile image");
@@ -786,7 +798,7 @@ const UpdateProfileDialog = ({ open, setOpen, croppedImage }) => {
                     <Textarea
                       id="skills"
                       name="skills"
-                      value={input.skills}
+                      value={input.skills.join(", ")} // Convert array to comma-separated string
                       onChange={handleSkillsChange}
                       placeholder="e.g., HTML, CSS, JavaScript, React"
                       className={`mt-1 ${
@@ -810,6 +822,40 @@ const UpdateProfileDialog = ({ open, setOpen, croppedImage }) => {
                       ))}
                     </div>
                   </div>
+                  {/* <div className="mt-4">
+                    <Label
+                      htmlFor="skills"
+                      className="text-sm font-medium text-gray-700"
+                    >
+                      Skills * (comma-separated)
+                    </Label>
+                    <Textarea
+                      id="skills"
+                      name="skills"
+                      value={input.skills}
+                      onChange={handleSkillsChange}
+                      placeholder="e.g., HTML, CSS, JavaScript, React"
+                      className={`mt-1 ${
+                        errors.skills ? "border-red-500" : ""
+                      }`}
+                    />
+                    {errors.skills && (
+                      <p className="text-sm text-red-600 mt-1">
+                        {errors.skills}
+                      </p>
+                    )}
+                    <div className="flex flex-wrap gap-2 mt-2">
+                      {input.skills.map((skill, index) => (
+                        <Badge
+                          key={index}
+                          variant="secondary"
+                          className="px-2 py-1"
+                        >
+                          {skill}
+                        </Badge>
+                      ))}
+                    </div>
+                  </div> */}
                   <div className="mt-4">
                     <Label
                       htmlFor="file"
