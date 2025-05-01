@@ -75,6 +75,12 @@ const jobSchema = new mongoose.Schema({
   salaryRange: {
     min: { type: Number, min: 0 },
     max: { type: Number, min: 0 },
+    currency: {
+      type: String,
+      
+      default: "INR",
+    },
+    
    
   },
   numberOfPositions: {

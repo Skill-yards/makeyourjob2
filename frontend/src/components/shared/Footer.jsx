@@ -4,6 +4,7 @@ import { Input } from '../ui/input';
 import { Link, useNavigate } from 'react-router-dom';
 import { useState } from 'react';
 import axios from 'axios';
+import { USER_API_END_POINT } from '@/utils/constant';
 
 const Footer = () => {
   const currentYear = new Date().getFullYear();
@@ -29,7 +30,7 @@ const Footer = () => {
     setIsSubmitting(true);
     setMessage('');
     try {
-      const response = await axios.post('http://localhost:3000/api/v1/user/subscribe', {
+      const response = await axios.post(`${USER_API_END_POINT}/subscribe`, {
         email: emailInput,
       });
       setMessage('Successfully subscribed to new job updates!');

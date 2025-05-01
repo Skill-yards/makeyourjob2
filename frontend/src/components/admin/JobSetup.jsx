@@ -410,7 +410,7 @@ const JobSetup = () => {
 
     try {
       setLoading(true);
-      const res = await axios.put(
+      const res = await axios.patch(
         `${JOB_API_END_POINT}/update/${params.id}`,
         payload,
         { headers: { 'Content-Type': 'application/json' }, withCredentials: true }

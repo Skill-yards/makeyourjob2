@@ -56,7 +56,7 @@ router.route("/send-otp").post(sendOtp);
 router.route("/register").post(registerUpload, register);
 router.route("/login").post(login);
 router.route("/logout").get(logout);
-router.route("/profile/update").post(isAuthenticated, updateProfileUpload, updateProfile);
+router.route("/profile/update").patch(isAuthenticated, updateProfileUpload, updateProfile);
 router.route("/verify/otp").post(verifyEmail);
 router.route("/login-otp").post(loginWithOtp);
 router.route("/reset-password").post(resetPassword);

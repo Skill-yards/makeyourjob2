@@ -10,7 +10,7 @@ router.route("/getadminjobs").get(isAuthenticated, getAdminJobs);
 // router.route("/getadminjobs").get(getAdminJobs);
 router.route("/get/:id").get(getJobById);
 router.route("/admin-get/:id").get(isAuthenticated, adminGetJob)
-router.route("/update/:id").put(isAuthenticated, updateJob);
+router.route("/update/:id").patch(isAuthenticated, updateJob);
 router.route("/delete/:id").delete(isAuthenticated, AdminedeleteJob);
 router.route("/search").get(searchJob);
 /// create route for the searchCriteria

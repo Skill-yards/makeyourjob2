@@ -10,23 +10,14 @@ import { getCroppedImg } from "@/utils/cropUtil";
 import { useNavigate } from "react-router-dom";
 import Footer from './shared/Footer';
 import axios from "axios";
-// import { useEffect } from "react";
-
 import { USER_API_END_POINT } from '@/utils/constant';
 import { setUser } from "@/redux/authSlice";
 import { toast } from "react-toastify";
-
-
-
 
 const Profile = () => {
   // Fetch user data from Redux store
   const { user } = useSelector((store) => store.auth);
 
-   //console.log(user.profile.skills,"skillsCheck");
-  
- 
-  
   useGetAppliedJobs();
   const [open, setOpen] = useState(false);
   const [imageSrc, setImageSrc] = useState(null);
@@ -93,16 +84,13 @@ const Profile = () => {
   };
 
   // Handle resume view/download
-  // console.log(user.profile.resume, "resume");
-
   const handleViewResume = () => {
     if (user.profile.resume) {
       window.open(user.profile.resume, "_blank", "noopener,noreferrer");
     }
   };
 
-  console.log(user,"user check");
-  
+  console.log(user, "user check");
 
   // Create refs for each section
   const resumeRef = useRef(null);
@@ -110,9 +98,7 @@ const Profile = () => {
   const keySkillsRef = useRef(null);
   const employmentRef = useRef(null);
   const educationRef = useRef(null);
-  
   const projectsRef = useRef(null);
-
 
   // Scroll to section function
   const scrollToSection = (ref) => {
@@ -140,8 +126,6 @@ const Profile = () => {
     if (!year) return "";
     return `${month || ""} ${year}`;
   };
-
-  const navigate=useNavigate()
 
   // Calculate duration between two dates (or to present)
   const calculateDuration = (
@@ -207,72 +191,59 @@ const Profile = () => {
     );
   }
 
-  const dispatch=useDispatch()
+  const dispatch = useDispatch();
+  const navigate = useNavigate();
 
- 
+  // Function to handle the resume deletion
+  const handleDelete = async () => {
+    const confirmDelete = window.confirm("Are you sure you want to delete your resume?");
+    if (!confirmDelete) return;
 
-  function ResumeSection({ user }) {
-    // Only render if resume exists
-    if (!user?.profile?.resume) return null;
-  }
-    
-    // Function to handle the resume deletion
-    const handleDelete = async () => {
-      const confirmDelete = window.confirm("Are you sure you want to delete your resume?");
-      if (!confirmDelete) return;
-    
-      try {
-        const response = await axios.get(`${USER_API_END_POINT}/resume/${user._id}`, {
-          withCredentials: true,
+    try {
+      const response = await axios.get(`${USER_API_END_POINT}/resume/${user._id}`, {
+        withCredentials: true,
+      });
+      console.log(response);
+
+      if (response.data.success) {
+        toast.success("Resume deleted successfully", {
+          position: "top-right",
+          autoClose: 3000,
         });
-        console.log(response);
-        
-        if (response.data.success) {
-          toast.success("Resume deleted successfully", {
-            position: "top-right",
-            autoClose: 3000,
-          });
-          
-          // Create a new user object with resume set to null
-          const updatedUser = {
-            ...user,
-            profile: {
-              ...user.profile,
-              resume: "",
-              resumeOriginalName: ""  // You might want to clear this too
-            }
-          };
-          
-          dispatch(setUser(updatedUser));
-        } else {
-          toast.error(response.data.message || "Failed to delete resume", {
-            position: "top-right",
-            autoClose: 3000,
-          });
-        }
-      } catch (error) {
-        console.error("Error deleting resume:", error);
-        toast.error(
-          error.response?.data?.message || "Internal server error while deleting resume",
-          {
-            position: "top-right",
-            autoClose: 3000,
+
+        // Create a new user object with resume set to null
+        const updatedUser = {
+          ...user,
+          profile: {
+            ...user.profile,
+            resume: "",
+            resumeOriginalName: ""  // You might want to clear this too
           }
-        );
+        };
+
+        dispatch(setUser(updatedUser));
+      } else {
+        toast.error(response.data.message || "Failed to delete resume", {
+          position: "top-right",
+          autoClose: 3000,
+        });
       }
-    };
-
-    
-    
-
-
-    
-
+    } catch (error) {
+      console.error("Error deleting resume:", error);
+      toast.error(
+        error.response?.data?.message || "Internal server error while deleting resume",
+        {
+          position: "top-right",
+          autoClose: 3000,
+        }
+      );
+    }
+  };
 
   return (
     <div className="flex flex-col bg-gray-50 min-h-screen">
       {/* Profile Header Section */}
-        <div className="bg-white rounded-lg shadow-sm p-6 m-4">
+      <div className="bg-white rounded-lg shadow-sm p-6 m-4">
         <div className="flex mb-4">
           <button
             onClick={() => navigate(-1)}
@@ -422,7 +393,7 @@ const Profile = () => {
                 onClick={() => scrollToSection(resumeHeadlineRef)}
                 className="text-gray-700 hover:text-blue-500 transition-colors"
               >
-                Resume headline
+                Resume Headline
               </button>
             </li>
             <li className="flex justify-between items-center">
@@ -430,7 +401,7 @@ const Profile = () => {
                 onClick={() => scrollToSection(keySkillsRef)}
                 className="text-gray-700 hover:text-blue-500 transition-colors"
               >
-                Key skills
+                Key Skills
               </button>
             </li>
             <li className="flex justify-between items-center">
@@ -449,14 +420,6 @@ const Profile = () => {
                 Education
               </button>
             </li>
-            {/* <li className="flex justify-between items-center">
-              <button
-                onClick={() => scrollToSection(itSkillsRef)}
-                className="text-gray-700 hover:text-blue-500 transition-colors"
-              >
-                IT skills
-              </button>
-            </li> */}
             <li className="flex justify-between items-center">
               <button
                 onClick={() => scrollToSection(projectsRef)}
@@ -465,46 +428,11 @@ const Profile = () => {
                 Projects
               </button>
             </li>
-            {/* <li className="flex justify-between items-center">
-              <button
-                onClick={() => scrollToSection(profileSummaryRef)}
-                className="text-gray-700 hover:text-blue-500 transition-colors"
-              >
-                Profile summary
-              </button>
-            </li> */}
-            {/* <li className="flex justify-between items-center">
-              <button
-                onClick={() => scrollToSection(accomplishmentsRef)}
-                className="text-gray-700 hover:text-blue-500 transition-colors"
-              >
-                Accomplishments
-              </button>
-            </li> */}
-            {/* <li className="flex justify-between items-center">
-              <button
-                onClick={() => scrollToSection(careerProfileRef)}
-                className="text-gray-700 hover:text-blue-500 transition-colors"
-              >
-                Career profile
-              </button>
-            </li> */}
           </ul>
         </div>
 
         {/* Main Content Area */}
         <div className="flex-1">
-          {/* Profile Summary */}
-          {/* <div ref={profileSummaryRef} id="profile-summary" className="mt-8 scroll-mt-8">
-              <div className="flex justify-between items-center mb-4">
-                <h3 className="text-lg font-semibold">Profile Summary</h3>
-              </div>
-              
-              <div className="flex flex-col items-center justify-center py-8 border border-dashed border-gray-300 rounded-lg">
-                <p className="text-gray-500 mb-4">No profile summary added yet</p>
-              </div>
-            </div> */}
-
           {/* Resume Section */}
           <div
             ref={resumeRef}
@@ -516,45 +444,44 @@ const Profile = () => {
             </div>
 
             <div className="mb-6">
-      <div className="flex justify-between mb-1">
-        <span className="text-gray-700">
-          {user.profile.resumeOriginalName}
-        </span>
-        <div className="flex gap-2">
-          <a
-            href={user.profile.resume}
-            download="resume.pdf"
-            title="Download Resume"
-          >
-            <Download
-              size={20}
-              className="text-blue-500 cursor-pointer hover:text-blue-600"
-            />
-          </a>
-          
-          <Trash2
-            size={20}
-            className="text-red-500 cursor-pointer hover:text-red-600"
-            onClick={handleDelete}
-          />
-        </div>
-      </div>
-      
-      <div className="border border-dashed border-gray-300 rounded-lg p-8 mt-4 flex flex-col items-center justify-center">
-        <a
-          href={user.profile.resume}
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <label
-            className="bg-blue-100 text-blue-600 px-4 py-2 rounded-full text-sm font-medium cursor-pointer hover:bg-blue-200"
-          >
-            {user.profile?.resume===""?"You Need to add your resume":"View Resume"}
-          </label>
-        </a>
-      </div>
-    </div>
+              <div className="flex justify-between mb-1">
+                <span className="text-gray-700">
+                  {user.profile.resumeOriginalName}
+                </span>
+                <div className="flex gap-2">
+                  <a
+                    href={user.profile.resume}
+                    download="resume.pdf"
+                    title="Download Resume"
+                  >
+                    <Download
+                      size={20}
+                      className="text-blue-500 cursor-pointer hover:text-blue-600"
+                    />
+                  </a>
 
+                  <Trash2
+                    size={20}
+                    className="text-red-500 cursor-pointer hover:text-red-600"
+                    onClick={handleDelete}
+                  />
+                </div>
+              </div>
+
+              <div className="border border-dashed border-gray-300 rounded-lg p-8 mt-4 flex flex-col items-center justify-center">
+                <a
+                  href={user.profile.resume}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  <label
+                    className="bg-blue-100 text-blue-600 px-4 py-2 rounded-full text-sm font-medium cursor-pointer hover:bg-blue-200"
+                  >
+                    {user.profile?.resume === "" ? "You Need to add your resume" : "View Resume"}
+                  </label>
+                </a>
+              </div>
+            </div>
 
             {/* Resume Headline */}
             <div
@@ -563,7 +490,7 @@ const Profile = () => {
               className="mt-6 scroll-mt-8"
             >
               <div className="flex justify-between items-center mb-2">
-                <h3 className="text-lg font-semibold">Resume headline</h3>
+                <h3 className="text-lg font-semibold">Resume Headline</h3>
                 <button className="text-gray-500">
                   {/* Add edit functionality if needed */}
                 </button>
@@ -584,25 +511,25 @@ const Profile = () => {
               className="mt-6 scroll-mt-8"
             >
               <div className="flex justify-between items-center mb-2">
-                <h3 className="text-lg font-semibold">Key skills</h3>
+                <h3 className="text-lg font-semibold">Key Skills</h3>
                 <button className="text-gray-500">
                   {/* Add edit functionality if needed */}
                 </button>
               </div>
               <div className="flex flex-wrap gap-2">
-  {user.profile.skills.length > 0 ? (
-    user.profile.skills.map((skill, index) => (
-      <span
-        key={index}
-        className="bg-gray-100 px-3 py-1 rounded-full text-gray-700 text-sm"
-      >
-        {skill.trim()}
-      </span>
-    ))
-  ) : (
-    <span className="text-gray-500">No skills added yet</span>
-  )}
-</div>
+                {user.profile.skills.length > 0 ? (
+                  user.profile.skills.map((skill, index) => (
+                    <span
+                      key={index}
+                      className="bg-gray-100 px-3 py-1 rounded-full text-gray-700 text-sm"
+                    >
+                      {skill.trim()}
+                    </span>
+                  ))
+                ) : (
+                  <span className="text-gray-500">No skills added yet</span>
+                )}
+              </div>
             </div>
 
             {/* Employment */}
@@ -727,22 +654,10 @@ const Profile = () => {
               )}
             </div>
 
-            {/* IT Skills */}
-            {/* <div ref={itSkillsRef} id="it-skills" className="mt-8 scroll-mt-8">
-              <div className="flex justify-between items-center mb-4">
-                <h3 className="text-lg font-semibold">IT Skills</h3>
-              </div>
-              
-              <div className="flex flex-col items-center justify-center py-8 border border-dashed border-gray-300 rounded-lg">
-                <p className="text-gray-500 mb-4">No IT skills added yet</p>
-              </div>
-            </div> */}
-
             {/* Projects */}
             <div ref={projectsRef} id="projects" className="mt-8 scroll-mt-8">
               <div className="flex justify-between items-center mb-4">
                 <h3 className="text-lg font-semibold">Projects</h3>
-                {/* <button className="text-blue-500 text-sm">Add project</button> */}
               </div>
 
               {user.profile.projects && user.profile.projects.length > 0 ? (
@@ -784,28 +699,6 @@ const Profile = () => {
                 </div>
               )}
             </div>
-
-            {/* Accomplishments */}
-            {/* <div ref={accomplishmentsRef} id="accomplishments" className="mt-8 scroll-mt-8">
-              <div className="flex justify-between items-center mb-4">
-                <h3 className="text-lg font-semibold">Accomplishments</h3>
-              </div>
-              
-              <div className="flex flex-col items-center justify-center py-8 border border-dashed border-gray-300 rounded-lg">
-                <p className="text-gray-500 mb-4">No accomplishments added yet</p>
-              </div>
-            </div> */}
-
-            {/* Career Profile */}
-            {/* <div ref={careerProfileRef} id="career-profile" className="mt-8 scroll-mt-8">
-              <div className="flex justify-between items-center mb-4">
-                <h3 className="text-lg font-semibold">Career Profile</h3>
-              </div>
-              
-              <div className="flex flex-col items-center justify-center py-8 border border-dashed border-gray-300 rounded-lg">
-                <p className="text-gray-500 mb-4">No career profile added yet</p>
-              </div>
-            </div> */}
 
             {/* Certificates */}
             <div className="mt-8">
@@ -970,7 +863,7 @@ const Profile = () => {
         setOpen={setOpen}
         croppedImage={croppedImage}
       />
-      <Footer/>
+      <Footer />
     </div>
   );
 };

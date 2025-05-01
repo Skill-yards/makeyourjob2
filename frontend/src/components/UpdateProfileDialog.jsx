@@ -71,6 +71,9 @@ const UpdateProfileDialog = ({ open, setOpen, croppedImage }) => {
   const { user } = useSelector((store) => store.auth);
   const dispatch = useDispatch();
 
+  console.log(user,"this is user");
+  
+
   // Initialize form state with user data
   const [input, setInput] = useState({
     firstname: user?.firstname || "",
@@ -135,7 +138,7 @@ const UpdateProfileDialog = ({ open, setOpen, croppedImage }) => {
     setErrors({ ...errors, skills: "" });
   };
 
-  console.log(input,"input",user,"user");
+  //console.log(input,"input",user,"user");
   
 
   // Validate all inputs
@@ -388,14 +391,137 @@ const UpdateProfileDialog = ({ open, setOpen, croppedImage }) => {
     }
   };
 
+  console.log(user,"user check");
+  
+
   // Submit form handler
+  // const submitHandler = async (e) => {
+  //   e.preventDefault();
+  //   console.log('submit handelr call');
+  //   const id= user?._id;
+    
+  //   if (!validateInputs()) {
+  //     toast.error("Please fill all required fields correctly");
+
+  //     // Find the first tab with errors and switch to it
+  //     const errorKeys = Object.keys(errors);
+  //     if (errorKeys.length > 0) {
+  //       const tabsWithErrors = {
+  //         personal: [
+  //           "firstname",
+  //           "lastname",
+  //           "email",
+  //           "phoneNumber",
+  //           "gender",
+  //           "bio",
+  //           "skills",
+  //           "organization",
+  //           "jobRole",
+  //         ],
+  //         employment: ["employment"],
+  //         education: ["education"],
+  //         projects: ["projects"],
+  //         profiles: ["onlineProfiles"],
+  //         certificates: ["certificates"],
+  //       };
+
+  //       for (const [tab, fields] of Object.entries(tabsWithErrors)) {
+  //         if (
+  //           errorKeys.some((errorKey) =>
+  //             fields.some((field) => errorKey.startsWith(field))
+  //           )
+  //         ) {
+  //           setActiveTab(tab);
+  //           break;
+  //         }
+  //       }
+  //     }
+
+  //     return;
+  //   }
+
+  //   const formData = new FormData();
+  //   formData.append("firstname", input.firstname);
+  //   formData.append("lastname", input.lastname);
+  //   formData.append("email", input.email);
+  //   formData.append("phoneNumber", input.phoneNumber);
+  //   formData.append("gender", input.gender);
+  //   formData.append("jobRole", input.jobRole);
+
+  //   // Handle profile photo
+  //   if (croppedImage) {
+  //     if (
+  //       typeof croppedImage === "string" &&
+  //       croppedImage.startsWith("blob:")
+  //     ) {
+  //       try {
+  //         const response = await fetch(croppedImage);
+  //         const blob = await response.blob();
+  //         const profileImageFile = new File([blob], "profile-image.jpg", {
+  //           type: "image/jpeg",
+  //         });
+  //         formData.append("profilePhoto", profileImageFile);
+  //       } catch (error) {
+  //         toast.error("Failed to process profile image");
+  //         return;
+  //       }
+  //     } else if (croppedImage instanceof File) {
+  //       formData.append("profilePhoto", croppedImage);
+  //     }
+  //   }
+
+  //   // Add role-specific data
+  //   if (user?.role === "candidate") {
+  //     formData.append("bio", input.bio);
+  //     formData.append("skills", JSON.stringify(input.skills));
+
+  //     // Add complex fields as JSON
+  //     formData.append("employment", JSON.stringify(input.employment));
+  //     formData.append("education", JSON.stringify(input.education));
+  //     formData.append("projects", JSON.stringify(input.projects));
+  //     formData.append("onlineProfiles", JSON.stringify(input.onlineProfiles));
+  //     formData.append("certificates", JSON.stringify(input.certificates));
+
+  //     // Add resume file if present
+  //     if (input.file) formData.append("file", input.file);
+  //   } else if (user?.role === "recruiter") {
+  //     formData.append("organization", input.organization);
+  //     formData.append("jobRole", input.jobRole);
+  //   }
+
+  //   try {
+  //     setLoading(true);
+  //     const res = await axios.patch(
+  //       `${USER_API_END_POINT}/profile/update`,
+  //       formData,
+  //       {
+  //         headers: { "Content-Type": "multipart/form-data" },
+  //         withCredentials: true,
+  //       }
+  //     );
+
+  //     if (res.data.success) {
+  //       dispatch(setUser(res.data.user));
+  //       toast.success(res.data.message);
+  //       setOpen(false);
+  //     }
+  //   } catch (error) {
+  //     const errorMessage =
+  //       error.response?.data?.message || "Failed to update profile";
+  //     toast.error(errorMessage);
+  //   } finally {
+  //     setLoading(false);
+  //   }
+  // };
+
   const submitHandler = async (e) => {
     e.preventDefault();
-    console.log('submit handelr call');
-    
+    console.log('submit handler call');
+    const userId = user?._id;
+  
     if (!validateInputs()) {
       toast.error("Please fill all required fields correctly");
-
+  
       // Find the first tab with errors and switch to it
       const errorKeys = Object.keys(errors);
       if (errorKeys.length > 0) {
@@ -417,7 +543,7 @@ const UpdateProfileDialog = ({ open, setOpen, croppedImage }) => {
           profiles: ["onlineProfiles"],
           certificates: ["certificates"],
         };
-
+  
         for (const [tab, fields] of Object.entries(tabsWithErrors)) {
           if (
             errorKeys.some((errorKey) =>
@@ -429,10 +555,10 @@ const UpdateProfileDialog = ({ open, setOpen, croppedImage }) => {
           }
         }
       }
-
+  
       return;
     }
-
+  
     const formData = new FormData();
     formData.append("firstname", input.firstname);
     formData.append("lastname", input.lastname);
@@ -440,7 +566,8 @@ const UpdateProfileDialog = ({ open, setOpen, croppedImage }) => {
     formData.append("phoneNumber", input.phoneNumber);
     formData.append("gender", input.gender);
     formData.append("jobRole", input.jobRole);
-
+    formData.append("userId", userId); // Append userId to the form data
+  
     // Handle profile photo
     if (croppedImage) {
       if (
@@ -462,29 +589,29 @@ const UpdateProfileDialog = ({ open, setOpen, croppedImage }) => {
         formData.append("profilePhoto", croppedImage);
       }
     }
-
+  
     // Add role-specific data
     if (user?.role === "candidate") {
       formData.append("bio", input.bio);
       formData.append("skills", JSON.stringify(input.skills));
-
+  
       // Add complex fields as JSON
       formData.append("employment", JSON.stringify(input.employment));
       formData.append("education", JSON.stringify(input.education));
       formData.append("projects", JSON.stringify(input.projects));
       formData.append("onlineProfiles", JSON.stringify(input.onlineProfiles));
       formData.append("certificates", JSON.stringify(input.certificates));
-
+  
       // Add resume file if present
       if (input.file) formData.append("file", input.file);
     } else if (user?.role === "recruiter") {
       formData.append("organization", input.organization);
       formData.append("jobRole", input.jobRole);
     }
-
+  
     try {
       setLoading(true);
-      const res = await axios.post(
+      const res = await axios.patch(
         `${USER_API_END_POINT}/profile/update`,
         formData,
         {
@@ -492,7 +619,7 @@ const UpdateProfileDialog = ({ open, setOpen, croppedImage }) => {
           withCredentials: true,
         }
       );
-
+  
       if (res.data.success) {
         dispatch(setUser(res.data.user));
         toast.success(res.data.message);
@@ -506,6 +633,7 @@ const UpdateProfileDialog = ({ open, setOpen, croppedImage }) => {
       setLoading(false);
     }
   };
+  
 
   // Generate year options from 1970 to current year
   const generateYearOptions = () => {

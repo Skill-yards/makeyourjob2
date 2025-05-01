@@ -431,17 +431,17 @@ export const updateJob = async (req, res) => {
       if (typeof salaryRange === "string" && salaryRange.trim() !== "") {
         const parts = salaryRange.split(/[,|-]/);
         if (parts.length === 2) {
-          const minSalary = Number(parts[0].trim());
-          const maxSalary = Number(parts[1].trim());
+          const min = Number(parts[0].trim());
+          const max = Number(parts[1].trim());
 
-          if (isNaN(minSalary) || isNaN(maxSalary)) {
+          if (isNaN(min) || isNaN(max)) {
             return res.status(400).json({
               message: "Salary range must contain valid numbers.",
               success: false,
             });
           }
 
-          if (minSalary >= maxSalary) {
+          if (min >= max) {
             return res.status(400).json({
               message: "Minimum salary must be less than maximum salary.",
               success: false,
@@ -449,8 +449,8 @@ export const updateJob = async (req, res) => {
           }
 
           fieldsToUpdate.salaryRange = {
-            minSalary,
-            maxSalary,
+            min,
+            max,
             currency: "INR", // Default
             frequency: "yearly", // Default
           };
@@ -466,14 +466,17 @@ export const updateJob = async (req, res) => {
         typeof salaryRange === "object" &&
         Object.keys(salaryRange).length > 0
       ) {
-        const { minSalary, maxSalary, currency, frequency } = salaryRange;
+        const { min, max, currency, frequency } = salaryRange;
+
+        console.log(salaryRange,"checksalary",min,max);
+        
         const updatedSalaryRange = {};
 
-        if (minSalary !== undefined && minSalary !== "") {
-          updatedSalaryRange.minSalary = Number(minSalary);
+        if (min !== undefined && min !== "") {
+          updatedSalaryRange.min = Number(min);
           if (
-            isNaN(updatedSalaryRange.minSalary) ||
-            updatedSalaryRange.minSalary < 0
+            isNaN(updatedSalaryRange.min) ||
+            updatedSalaryRange.min < 0
           ) {
             return res.status(400).json({
               message: "Invalid minimum salary. It must be a positive number.",
@@ -482,11 +485,11 @@ export const updateJob = async (req, res) => {
           }
         }
 
-        if (maxSalary !== undefined && maxSalary !== "") {
-          updatedSalaryRange.maxSalary = Number(maxSalary);
+        if (max !== undefined && max !== "") {
+          updatedSalaryRange.max = Number(max);
           if (
-            isNaN(updatedSalaryRange.maxSalary) ||
-            updatedSalaryRange.maxSalary < 0
+            isNaN(updatedSalaryRange.max) ||
+            updatedSalaryRange.max < 0
           ) {
             return res.status(400).json({
               message: "Invalid maximum salary. It must be a positive number.",
@@ -504,9 +507,9 @@ export const updateJob = async (req, res) => {
         else updatedSalaryRange.frequency = "yearly";
 
         if (
-          updatedSalaryRange.minSalary !== undefined &&
-          updatedSalaryRange.maxSalary !== undefined &&
-          updatedSalaryRange.minSalary >= updatedSalaryRange.maxSalary
+          updatedSalaryRange.min !== undefined &&
+          updatedSalaryRange.max !== undefined &&
+          updatedSalaryRange.min >= updatedSalaryRange.max
         ) {
           return res.status(400).json({
             message: "Minimum salary must be less than maximum salary.",
@@ -533,6 +536,9 @@ export const updateJob = async (req, res) => {
     }
 
     // Update job
+
+    console.log(fieldsToUpdate,"check");
+    
     const updatedJob = await Job.findByIdAndUpdate(
       jobId,
       { $set: fieldsToUpdate },
