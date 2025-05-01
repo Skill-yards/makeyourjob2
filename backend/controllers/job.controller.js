@@ -1,7 +1,7 @@
 import { Job } from "../models/job.model.js";
 import { Company } from "../models/company.model.js";
 import mongoose from "mongoose";
-import {sendJobNotifications} from "../utils/send.email.service.js"
+import { sendJobNotifications } from "../utils/send.email.service.js";
 
 export const postJob = async (req, res) => {
   console.log(req.body, "shariq...");
@@ -44,7 +44,7 @@ export const postJob = async (req, res) => {
       experienceLevel: "Experience level is required",
       companyId: "Company ID is required",
       companyName: "Company name is required",
-      workplacePlane: "Workplace plane is required",
+      // workplacePlane: "Workplace plane is required",
       jobCategory: "Job category is required",
       skills: "At least one skill is required",
       numberOfPositions: "Number of positions is required",
@@ -142,13 +142,13 @@ export const postJob = async (req, res) => {
     }
 
     // Validate workplacePlane
-    const validWorkplacePlanes = ["Office", "Remote", "Hybrid"];
-    if (!validWorkplacePlanes.includes(workplacePlane)) {
-      return res.status(400).json({
-        message: "Workplace plane must be one of: Office, Remote, Hybrid",
-        success: false,
-      });
-    }
+    // const validWorkplacePlanes = ["Office", "Remote", "Hybrid"];
+    // if (!validWorkplacePlanes.includes(workplacePlane)) {
+    //   return res.status(400).json({
+    //     message: "Workplace plane must be one of: Office, Remote, Hybrid",
+    //     success: false,
+    //   });
+    // }
 
     // Create job document
     const job = await Job.create({
@@ -794,42 +794,47 @@ export const getSimilarJobs = async (req, res) => {
   }
 };
 
-
-
-
 //// create search funcations to search this parameter like work mode,location,salary,freshness
 export const searchJobsByCriteria = async (req, res) => {
   try {
-    const { jobType, location ,salary, Freshness, experienceLevel, page = 1, limit = 10 } = req.query;
-    const query = { status: 'Open' };
+    const {
+      jobType,
+      location,
+      salary,
+      Freshness,
+      experienceLevel,
+      page = 1,
+      limit = 10,
+    } = req.query;
+    const query = { status: "Open" };
     if (jobType) {
-      query.jobType = { $regex: `^${jobType}$`, $options: 'i' };
+      query.jobType = { $regex: `^${jobType}$`, $options: "i" };
     }
 
     // Location filter (city, state, country, area)
     if (location) {
       query.$or = [
-        { 'workLocation.city': { $regex: location, $options: 'i' } },
-        { 'workLocation.state': { $regex: location, $options: 'i' } },
-        { 'workLocation.country': { $regex: location, $options: 'i' } },
-        { 'workLocation.area': { $regex: location, $options: 'i' } },
+        { "workLocation.city": { $regex: location, $options: "i" } },
+        { "workLocation.state": { $regex: location, $options: "i" } },
+        { "workLocation.country": { $regex: location, $options: "i" } },
+        { "workLocation.area": { $regex: location, $options: "i" } },
       ];
     }
 
     // Salary range filter
     if (salary) {
-      const cleanedSalary = salary.replace('Lakhs', '').trim();
-      const [min, max] = cleanedSalary.split('-').map(num => parseFloat(num))
-      query['salaryRange.min'] = { $gte: min };
-      query['salaryRange.max'] = { $lte: max };
+      const cleanedSalary = salary.replace("Lakhs", "").trim();
+      const [min, max] = cleanedSalary.split("-").map((num) => parseFloat(num));
+      query["salaryRange.min"] = { $gte: min };
+      query["salaryRange.max"] = { $lte: max };
     }
 
     // Freshness filter (jobs posted within specified days)
     if (Freshness) {
       const days = parseInt(Freshness);
-      console.log(days,"check freshness days....")
+      console.log(days, "check freshness days....");
       if (isNaN(days) || days <= 0) {
-        throw new Error('Freshness must be a positive number of days');
+        throw new Error("Freshness must be a positive number of days");
       }
       const dateThreshold = new Date();
       dateThreshold.setDate(dateThreshold.getDate() - days);
@@ -840,31 +845,35 @@ export const searchJobsByCriteria = async (req, res) => {
     if (experienceLevel) {
       const experienceRegex = /^\d+(\.\d)?$/; // Matches "2" or "2.5"
       const rangeRegex = /^(\d+(\.\d)?)-(\d+(\.\d)?)$/; // Matches "2-5" or "2.5-5.5"
-      
+
       if (experienceRegex.test(experienceLevel)) {
         query.experienceLevel = experienceLevel;
       } else if (rangeRegex.test(experienceLevel)) {
-        const { min, max } = validateRange(experienceLevel, 'experience');
+        const { min, max } = validateRange(experienceLevel, "experience");
         query.experienceLevel = { $gte: min.toString(), $lte: max.toString() };
       } else {
-        throw new Error('Invalid experience level format. Use a number (e.g., 2 or 2.5) or range (e.g., 2-5)');
+        throw new Error(
+          "Invalid experience level format. Use a number (e.g., 2 or 2.5) or range (e.g., 2-5)"
+        );
       }
     }
 
     // Pagination
     const skip = (parseInt(page) - 1) * parseInt(limit);
-    
+
     // Execute query with pagination
     const jobs = await mongoose
-      .model('Job')
+      .model("Job")
       .find(query)
-      .select('jobTitle workLocation jobType workplacePlane salaryRange companyName postedDate skills jobCategory experienceLevel')
-      .populate('company', 'name')
+      .select(
+        "jobTitle workLocation jobType workplacePlane salaryRange companyName postedDate skills jobCategory experienceLevel"
+      )
+      .populate("company", "name")
       .skip(skip)
       // .limit(parseInt(limit))
       .lean();
-    const totalJobs = await mongoose.model('Job').countDocuments(query);
-    Response
+    const totalJobs = await mongoose.model("Job").countDocuments(query);
+    Response;
     res.status(200).json({
       success: true,
       count: jobs.length,
@@ -874,10 +883,52 @@ export const searchJobsByCriteria = async (req, res) => {
       data: jobs,
     });
   } catch (error) {
-    console.error('Error searching jobs:', error);
-    res.status(error.message.includes('Invalid') || error.message.includes('Freshness') ? 400 : 500).json({
+    console.error("Error searching jobs:", error);
+    res
+      .status(
+        error.message.includes("Invalid") || error.message.includes("Freshness")
+          ? 400
+          : 500
+      )
+      .json({
+        success: false,
+        message: error.message,
+      });
+  }
+};
+
+/// admine delete job api
+export const AdminedeleteJob = async (req, res) => {
+  try {
+    const jobId = req.params.id;
+    const userId = req.id;
+    console.log(jobId, userId, "check job id and user id");
+    // Check if the job exists
+    const job = await Job.findById(jobId);
+    if (!job) {
+      return res.status(404).json({
+        message: "Job not found",
+        success: false,
+      });
+    }
+    // Check if the user is authorized to delete the job
+    if (job.created_by.toString() !== userId) {
+      return res.status(403).json({
+        message: "You are not authorized to delete this job",
+        success: false,
+      });
+    }
+    // Delete the job
+    await Job.findByIdAndDelete(jobId);
+    return res.status(200).json({
+      message: "Job deleted successfully",
+      success: true,
+    });
+  } catch (error) {
+    console.error("Error deleting job:", error);
+    return res.status(500).json({
+      message: "Internal server error",
       success: false,
-      message: error.message,
     });
   }
 };

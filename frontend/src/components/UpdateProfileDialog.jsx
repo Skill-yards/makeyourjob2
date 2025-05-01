@@ -124,13 +124,19 @@ const UpdateProfileDialog = ({ open, setOpen, croppedImage }) => {
   const handleSkillsChange = (e) => {
     const skillsText = e.target.value;
     // Split by commas, trim each skill, remove empty strings and strings with only spaces
+
+    console.log(skillsText,"skillsText");
+    
     const skillsArray = skillsText
       .split(",")
       .map((skill) => skill)
-      .filter((skill) => skill.length > 0 && skill !== " "); // Ensure no empty or space-only skills
+     
     setInput({ ...input, skills: skillsArray });
     setErrors({ ...errors, skills: "" });
   };
+
+  console.log(input,"input",user,"user");
+  
 
   // Validate all inputs
   const validateInputs = () => {
@@ -512,6 +518,8 @@ const UpdateProfileDialog = ({ open, setOpen, croppedImage }) => {
   };
 
   const years = generateYearOptions();
+  // console.log(input,"check input");
+  
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
@@ -727,7 +735,7 @@ const UpdateProfileDialog = ({ open, setOpen, croppedImage }) => {
                     Gender *
                   </Label>
                   <Select
-                    value={input.gender}
+                    value={input?.gender}
                     onValueChange={(value) =>
                       handleSelectChange("gender", value)
                     }
@@ -859,7 +867,7 @@ const UpdateProfileDialog = ({ open, setOpen, croppedImage }) => {
                       </p>
                     )}
                   </div>
-                  <div>
+                    {/* <div>
                     <Label
                       htmlFor="jobRole"
                       className="text-sm font-medium text-gray-700"
@@ -880,7 +888,7 @@ const UpdateProfileDialog = ({ open, setOpen, croppedImage }) => {
                         {errors.jobRole}
                       </p>
                     )}
-                  </div>
+                  </div> */}
                 </>
               )}
             </TabsContent>
@@ -2637,3 +2645,4 @@ UpdateProfileDialog.propTypes = {
 };
 
 export default UpdateProfileDialog;
+

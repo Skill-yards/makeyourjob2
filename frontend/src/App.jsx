@@ -31,9 +31,18 @@ const PostJob = lazy(() => import('./components/admin/PostJob'));
 const Applicants = lazy(() => import('./components/admin/Applicants'));
 const SingleApplicants = lazy(() => import('./components/admin/SingleApplicants'));
 
+const HelpCenter=lazy(()=>import('./components/HelpCenter'))
+
 import Layout from "./utils/Layout";
+import CareerAdvice from './components/CarrerAdvise';
 
 const appRouter = createBrowserRouter([
+  {
+    path:"/carreradvise",
+    element:<Layout>
+      <CareerAdvice/>
+    </Layout>
+  },
   {
     path: '/',
     element: <Layout><Home /></Layout>
@@ -87,6 +96,10 @@ const appRouter = createBrowserRouter([
   {
     path: "/profile",
     element: <ProtectedRoute><Layout><Profile /></Layout></ProtectedRoute>
+  },
+  {
+    path: "/help",
+    element: <Layout><HelpCenter/></Layout>
   },
 
 

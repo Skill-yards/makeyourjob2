@@ -6,7 +6,7 @@ import { Label } from './ui/label';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { Badge } from '@/components/ui/badge';
-import { Filter, MapPin, Briefcase, Banknote, Clock, Laptop, Calendar } from 'lucide-react';
+import { Filter, MapPin, Briefcase, Banknote, Clock, Laptop, Calendar, RefreshCw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { cn } from "@/lib/utils";
@@ -68,11 +68,33 @@ const FilterCard = () => {
   const [selectedCount, setSelectedCount] = useState(0);
   const [page, setPage] = useState(1);
   const [isLoading, setIsLoading] = useState(false);
+  const [availableCities, setAvailableCities] = useState([]);
+  const [showAllCities, setShowAllCities] = useState(false);
   const dispatch = useDispatch();
-  const { jobs, total, pages } = useSelector(state => state.jobs || { jobs: [], total: 0, pages: 1, page: 1, isLoading: false });
-  console.log(jobs,'check data ')
+  const { total, pages } = useSelector(state => state.jobs || { jobs: [], total: 0, pages: 1, page: 1, isLoading: false });
 
- 
+  const { jobs, allJobs, searchedQuery } = useSelector((store) => store.job);
+
+  const cityJobCount = allJobs.reduce((acc, job) => {
+    const city = job.workLocation?.city || "Unknown";
+    if (acc[city]) {
+      acc[city]++;
+    } else {
+      acc[city] = 1;
+    }
+    return acc;
+  }, []);
+
+  // Extract unique cities from allJobs
+  useEffect(() => {
+    if (allJobs && allJobs.length > 0) {
+      const cities = [...new Set(allJobs
+        .filter(job => job.workLocation && job.workLocation.city)
+        .map(job => job.workLocation.city)
+      )];
+      setAvailableCities(cities);
+    }
+  }, [allJobs]);
 
   // Convert front-end filter values to API-compatible format
   const formatFilters = () => {
@@ -126,6 +148,23 @@ const FilterCard = () => {
     }
   };
 
+  const fetchAllJobs = async (currentPage = page) => {
+    setIsLoading(true);
+    try {
+      const response = await axios.get(`${JOB_API_END_POINT}/get`, {
+        params: { page: currentPage, limit: 10 }
+      });
+      console.log(response.data,"check data alljobs")
+      dispatch(setJobs({
+        jobs: response.data.data,
+      }));
+    } catch (error) {
+      console.error('Error fetching all jobs:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   // Handle filter changes
   const handleChange = (filterType, value) => {
     setSelectedValues(prev => ({
@@ -141,9 +180,32 @@ const FilterCard = () => {
     setPage(1);
   };
 
+  const clearFiltersHandler = () => {
+    setSelectedValues({});
+    setPage(1);
+    dispatch(clearFilters());
+    fetchAllJobs(1); // Fetch all jobs when filters are cleared
+  };
+
+  // Toggle showing all cities
+  const toggleShowAllCities = () => {
+    setShowAllCities(!showAllCities);
+  };
+
   // Apply filters and fetch jobs
   const applyFilters = () => {
     fetchJobs(1);
+  };
+
+  // Refresh available cities
+  const refreshCities = () => {
+    if (allJobs && allJobs.length > 0) {
+      const cities = [...new Set(allJobs
+        .filter(job => job.workLocation && job.workLocation.city)
+        .map(job => job.workLocation.city)
+      )];
+      setAvailableCities(cities);
+    }
   };
 
   // Pagination handlers
@@ -177,6 +239,8 @@ const FilterCard = () => {
     // Auto-fetch jobs when filters change
     if (count > 0) {
       fetchJobs();
+    } else {
+      fetchAllJobs(1);
     }
   }, [selectedValues]);
 
@@ -194,7 +258,7 @@ const FilterCard = () => {
             )}
           </CardTitle>
           {selectedCount > 0 && (
-            <Button variant="ghost" size="sm" onClick={clearFilters} className="text-xs h-8">
+            <Button variant="ghost" size="sm" onClick={clearFiltersHandler} className="text-xs h-8">
               Clear all
             </Button>
           )}
@@ -211,7 +275,7 @@ const FilterCard = () => {
                   <span>{category.filterType}</span>
                   {selectedValues[category.filterType] && (
                     <Badge variant="outline" className="ml-2 text-xs">
-                      {category.filterType === "Experience" 
+                      {category.filterType === "experienceLevel" 
                         ? `${selectedValues[category.filterType]} ${category.unit}`
                         : selectedValues[category.filterType]}
                     </Badge>
@@ -230,6 +294,51 @@ const FilterCard = () => {
                     <div className="text-sm text-gray-600">
                       Selected: {selectedValues[category.filterType] || 0} {category.unit}
                     </div>
+                  </div>
+                ) : category.filterType === "location" ? (
+                  <div className="space-y-2">
+                    <div className="flex justify-between items-center mb-2">
+                      <Button 
+                        variant="outline" 
+                        size="sm" 
+                        onClick={toggleShowAllCities}
+                        className="text-xs h-8 w-full"
+                      >
+                        {showAllCities ? "Show Default Cities" : "Show Available Cities"}
+                      </Button>
+                      <Button 
+                        variant="ghost" 
+                        size="sm" 
+                        onClick={refreshCities} 
+                        className="text-xs h-8 ml-1"
+                        title="Refresh available cities"
+                      >
+                        <RefreshCw size={14} />
+                      </Button>
+                    </div>
+                    <RadioGroup
+                      value={selectedValues[category.filterType] || ""}
+                      onValueChange={(value) => handleChange(category.filterType, value)}
+                      className="space-y-1"
+                    >
+                      {(showAllCities ? availableCities : category.array).map((item, idx) => (
+                        <div key={idx} className="flex items-center space-x-2 rounded-md p-2 hover:bg-gray-50 transition-colors">
+                          <RadioGroupItem
+                            value={item}
+                            id={`${category.filterType}-${idx}`}
+                          />
+                          <Label
+                            htmlFor={`${category.filterType}-${idx}`}
+                            className="text-sm font-normal cursor-pointer w-full flex justify-between items-center"
+                          >
+                            <span>{item}</span>
+                            <Badge variant="secondary" className="ml-2">
+                              {cityJobCount[item] || 0} {cityJobCount[item] === 1 ? 'job' : 'jobs'}
+                            </Badge>
+                          </Label>
+                        </div>
+                      ))}
+                    </RadioGroup>
                   </div>
                 ) : (
                   <RadioGroup

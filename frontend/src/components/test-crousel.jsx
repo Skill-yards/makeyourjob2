@@ -39,6 +39,9 @@ const FeaturedJobsCarousel = () => {
     }).format(date);
   };
 
+  // console.log(allJobs[0].company,"jobcompany");
+  
+
   // Create carousel items from the allJobs data
   const carouselItems = allJobs.map(job => (
     <div key={job._id} className="h-full w-full p-2 sm:p-3 md:p-4">
@@ -52,10 +55,10 @@ const FeaturedJobsCarousel = () => {
                   src={job.company.logo} 
                   alt={`${job.companyName} logo`} 
                   className="w-full h-full object-cover"
-                  onError={(e) => {
-                    e.target.onerror = null;
-                    e.target.src = "https://via.placeholder.com/40?text=logo";
-                  }}
+                  // onError={(e) => {
+                  //   e.target.onerror = null;
+                  //   e.target.src = "https://via.placeholder.com/40?text=logo";
+                  // }}
                 />
               </div>
             ) : (

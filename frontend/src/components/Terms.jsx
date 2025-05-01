@@ -144,7 +144,7 @@ const TermsAndConditions = () => {
                       href="mailto:reportabuse@makeyourjobs.com"
                       className="text-indigo-600 font-medium hover:text-indigo-800 transition-colors"
                     >
-                      reportabuse@makeyourjobs.com
+                      info@makeyourjobs.com
                     </a>
                   </div>
                   <button className="text-sm bg-indigo-600 hover:bg-indigo-700 text-white px-3 py-1 rounded transition-colors">

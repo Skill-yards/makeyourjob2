@@ -312,7 +312,7 @@ const PostJob = () => {
       { field: 'jobType', message: 'Job type is required' },
       { field: 'experienceLevel', message: 'Experience level is required' },
       { field: 'companyId', message: 'Company is required' },
-      { field: 'workplacePlane', message: 'Workplace plane is required' },
+      // { field: 'workplacePlane', message: 'Workplace plane is required' },
       { field: 'jobCategory', message: 'Job category is required' },
       { field: 'skills', message: 'At least one skill is required' },
       { field: 'numberOfPositions', message: 'Number of positions is required' },

@@ -7,13 +7,17 @@ import Footer from './shared/Footer';
 import { Search, AlertCircle } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import useGetAllJobs from '@/hooks/useGetAllJobs';
+
 
 const Jobs = () => {
-  const { jobs, searchedQuery, isLoading } = useSelector((store) => store.job);
+  useGetAllJobs();
+  const { jobs, allJobs, searchedQuery, isLoading } = useSelector((store) => store.job);
+  const jobList = searchedQuery ? (Array.isArray(jobs) ? jobs : []) : (Array.isArray(allJobs) ? allJobs : []);
 
-  // Ensure jobs is always an array
-  const jobList = Array.isArray(jobs) ? jobs : [];
 
+  // console.log(allJobs,"allJobs");
+  
   // Animation variants
   const containerVariants = {
     hidden: { opacity: 0 },

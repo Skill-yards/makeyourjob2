@@ -12,7 +12,9 @@ import { Button } from '../ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 
 // Lucide icons
-import { Plus, Search, BriefcaseBusiness } from 'lucide-react';
+import { Plus, Search, BriefcaseBusiness, ArrowLeft } from 'lucide-react';
+import Footer from '../shared/Footer';
+import { Arrow } from '@radix-ui/react-popover';
 
 const AdminJobs = () => {
     useGetAllAdminJobs();
@@ -23,11 +25,15 @@ const AdminJobs = () => {
     useEffect(() => {
         dispatch(setSearchJobByText(input));
     }, [input]);
+     
 
     return (
         <div className="min-h-screen bg-gradient-to-br from-indigo-100 via-white to-purple-100 dark:from-indigo-950 dark:via-gray-900 dark:to-purple-950">
             <Navbar />
             <div className="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
+            <span className='p-5 cursor-pointer' onClick={() => navigate(-1)}>
+    <ArrowLeft color='blue' />
+</span>
                 <Card className="border-0 shadow-lg bg-white/80 backdrop-blur-sm dark:bg-gray-900/80">
                     <CardHeader className="pb-0">
                         <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
@@ -60,6 +66,8 @@ const AdminJobs = () => {
                     </CardContent>
                 </Card>
             </div>
+         <Footer/>
+
         </div>
     );
 };

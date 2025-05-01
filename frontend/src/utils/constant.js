@@ -1,6 +1,6 @@
 
-const url="http://makeyourjobs.com"
-// const url="http://localhost:3000"
+// const url="https://makeyourjobs.com"
+const url="http://localhost:3000"
 
 
 
