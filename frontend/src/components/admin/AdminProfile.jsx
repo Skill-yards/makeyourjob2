@@ -1,18 +1,18 @@
-import { useState, useCallback } from 'react';
-import { useSelector } from 'react-redux';
-import Navbar from '../shared/Navbar';
-import { Card, CardContent } from '../ui/card';
-import { Button } from '../ui/button';
-import { Contact, Mail, Pen, Building, Briefcase, X } from 'lucide-react';
-// import { Badge } from '../ui/badge';
-// import Footer from '../shared/Footer';
-import { Avatar, AvatarImage } from '../ui/avatar';
-import CompaniesTable from './CompaniesTable';
-import UpdateProfileDialog from '../UpdateProfileDialog';
-import useGetAllCompanies from '@/hooks/useGetAllCompanies';
-import Cropper from 'react-easy-crop';
-import { Input } from '../ui/input';
-import { getCroppedImg } from '../../utils/cropUtil'; // Adjust path if different
+import { useState, useCallback } from "react";
+import { useSelector } from "react-redux";
+import { useNavigate } from "react-router-dom";
+import Navbar from "../shared/Navbar";
+import { Card, CardContent } from "../ui/card";
+import { Button } from "../ui/button";
+import { Contact, Mail, Pen, Building, Briefcase, X, ArrowLeft } from "lucide-react";
+import { Avatar, AvatarImage } from "../ui/avatar";
+import CompaniesTable from "./CompaniesTable";
+import UpdateProfileDialog from "../UpdateProfileDialog";
+import useGetAllCompanies from "@/hooks/useGetAllCompanies";
+import Cropper from "react-easy-crop";
+import { Input } from "../ui/input";
+import { getCroppedImg } from "../../utils/cropUtil"; // Adjust path if different
+import Footer from "../shared/Footer";
 
 const AdminProfile = () => {
   const [open, setOpen] = useState(false);
@@ -23,9 +23,15 @@ const AdminProfile = () => {
   const [zoom, setZoom] = useState(1);
   const [croppedAreaPixels, setCroppedAreaPixels] = useState(null);
   const [showCropper, setShowCropper] = useState(false);
+  const navigate = useNavigate();
 
   // Fetch companies on mount
   useGetAllCompanies();
+
+  // Go back to previous page
+  const handleGoBack = () => {
+    navigate(-1);
+  };
 
   // Handle image selection
   const handleImageChange = (e) => {
@@ -53,7 +59,7 @@ const AdminProfile = () => {
       setShowCropper(false);
       setOpen(true); // Open UpdateProfileDialog
     } catch (e) {
-      console.error('Error cropping image:', e);
+      console.error("Error cropping image:", e);
     }
   }, [imageSrc, croppedAreaPixels]);
 
@@ -67,20 +73,33 @@ const AdminProfile = () => {
   return (
     <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-white to-purple-50">
       <Navbar />
-      <div className="max-w-5xl mx-auto p-6 space-y-8">
-        <Card className="bg-white shadow-xl rounded-2xl overflow-hidden border border-gray-100 transform hover:scale-[1.02] transition-transform duration-300">
-          <div className="bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-500 h-32 relative">
+      <div className=" mx-auto p-6 space-y-8">
+        {/* Back Button */}
+        <Button
+          onClick={handleGoBack}
+          variant="ghost"
+          className="mb-4 group flex items-center gap-2 text-indigo-700 hover:text-indigo-900 hover:bg-indigo-50 transition-all duration-200"
+        >
+          <ArrowLeft className="h-5 w-5  " />
+          <span className="font-medium">Back</span>
+        </Button>
+        
+        <Card className="bg-white shadow-xl rounded-2xl overflow-hidden border border-gray-100 transform  transition-transform duration-300">
+          <div
+            className="h-32 relative first:bg-no-repeat bg-contain bg-center"
+            style={{ backgroundImage: "url('/logo-removebg-preview.png')" }}
+          >
             <div className="absolute inset-0 bg-black/10"></div>
           </div>
           <CardContent className="relative pt-16 pb-8 px-6">
-            <div className="absolute -top-14 left-6">
+            <div className="absolute -top-14 left-6 md:left-6 sm:left-4">
               <div className="relative group">
-                <Avatar className="h-28 w-28 border-4 border-white shadow-lg ring-2 ring-indigo-300">
+                <Avatar className="h-28 w-28 border-4 border-white shadow-lg ring-2 ring-indigo-300 sm:h-20 sm:w-20">
                   <AvatarImage
                     src={
                       croppedImage ||
                       user?.profile?.profilePhoto ||
-                      'https://www.shutterstock.com/image-vector/circle-line-simple-design-logo-600nw-2174926871.jpg'
+                      "https://www.shutterstock.com/image-vector/circle-line-simple-design-logo-600nw-2174926871.jpg"
                     }
                     alt="profile"
                   />
@@ -89,7 +108,9 @@ const AdminProfile = () => {
                   htmlFor="profilePhoto"
                   className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-50 flex items-center justify-center rounded-full cursor-pointer transition-all duration-200"
                 >
-                  <span className="text-white text-sm opacity-0 group-hover:opacity-100">Change Photo</span>
+                  <span className="text-white text-sm opacity-0 group-hover:opacity-100">
+                    Change Photo
+                  </span>
                 </label>
                 <Input
                   id="profilePhoto"
@@ -100,15 +121,15 @@ const AdminProfile = () => {
                 />
               </div>
             </div>
-            <div className="flex justify-between items-start mt-4">
-              <div className="ml-36">
-                <h1 className="text-3xl font-bold text-gray-900 tracking-tight">
+            <div className="flex flex-col md:flex-row justify-between items-start mt-4 md:items-center">
+              <div className="ml-0 md:ml-36 sm:ml-24 mt-4 md:mt-0">
+                <h1 className="text-2xl md:text-3xl font-bold text-gray-900 tracking-tight">
                   {user?.firstname} {user?.lastname}
                 </h1>
               </div>
               <Button
                 onClick={() => setOpen(true)}
-                className="bg-indigo-600 text-white hover:bg-indigo-700 rounded-full px-5 py-2 shadow-md flex items-center gap-2"
+                className="bg-indigo-600 text-white hover:bg-indigo-700 rounded-full px-4 py-2 mt-4 md:mt-0 shadow-md flex items-center gap-2 text-sm"
               >
                 <Pen className="h-4 w-4" />
                 Edit Profile
@@ -116,20 +137,26 @@ const AdminProfile = () => {
             </div>
             <div className="mt-6 grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="flex items-center gap-3 text-gray-700 bg-gray-50 p-3 rounded-lg shadow-sm">
-                <Mail className="h-5 w-5 text-indigo-500" />
-                <span className="text-sm">{user?.email}</span>
+                <Mail className="h-5 w-5 text-indigo-500 flex-shrink-0" />
+                <span className="text-sm truncate">{user?.email}</span>
               </div>
               <div className="flex items-center gap-3 text-gray-700 bg-gray-50 p-3 rounded-lg shadow-sm">
-                <Contact className="h-5 w-5 text-indigo-500" />
-                <span className="text-sm">{user?.phoneNumber || 'Not provided'}</span>
+                <Contact className="h-5 w-5 text-indigo-500 flex-shrink-0" />
+                <span className="text-sm truncate">
+                  {user?.phoneNumber || "Not provided"}
+                </span>
               </div>
               <div className="flex items-center gap-3 text-gray-700 bg-gray-50 p-3 rounded-lg shadow-sm">
-                <Building className="h-5 w-5 text-indigo-500" />
-                <span className="text-sm">{user?.profile?.organization || 'Not provided'}</span>
+                <Building className="h-5 w-5 text-indigo-500 flex-shrink-0" />
+                <span className="text-sm truncate">
+                  {user?.profile?.organization || "Not provided"}
+                </span>
               </div>
               <div className="flex items-center gap-3 text-gray-700 bg-gray-50 p-3 rounded-lg shadow-sm">
-                <Briefcase className="h-5 w-5 text-indigo-500" />
-                <span className="text-sm">{user?.profile?.jobRole || 'Not provided'}</span>
+                <Briefcase className="h-5 w-5 text-indigo-500 flex-shrink-0" />
+                <span className="text-sm truncate">
+                  {user?.profile?.jobRole || "Not provided"}
+                </span>
               </div>
             </div>
             <div className="mt-8">
@@ -148,8 +175,8 @@ const AdminProfile = () => {
         croppedImage={croppedImage}
       />
       {showCropper && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-xl p-6 w-full max-w-lg relative">
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-xl p-4 md:p-6 w-full max-w-lg relative">
             <button
               onClick={handleCancelCrop}
               className="absolute top-2 right-2 text-gray-500 hover:text-gray-700"
@@ -170,17 +197,17 @@ const AdminProfile = () => {
                 onCropComplete={onCropComplete}
               />
             </div>
-            <div className="mt-4 flex space-x-4">
+            <div className="mt-4 flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-4">
               <Button
                 onClick={handleCrop}
-                className="bg-indigo-600 hover:bg-indigo-700 text-white"
+                className="bg-indigo-600 hover:bg-indigo-700 text-white w-full sm:w-auto"
               >
                 Crop & Save
               </Button>
               <Button
                 onClick={handleCancelCrop}
                 variant="outline"
-                className="border-gray-300 text-gray-700 hover:bg-gray-100"
+                className="border-gray-300 text-gray-700 hover:bg-gray-100 w-full sm:w-auto"
               >
                 Cancel
               </Button>
@@ -188,6 +215,7 @@ const AdminProfile = () => {
           </div>
         </div>
       )}
+       <Footer/>
     </div>
   );
 };

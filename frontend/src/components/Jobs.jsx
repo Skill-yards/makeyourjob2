@@ -15,6 +15,8 @@ const Jobs = () => {
   const { jobs, allJobs, searchedQuery, isLoading } = useSelector((store) => store.job);
   const jobList = searchedQuery ? (Array.isArray(jobs) ? jobs : []) : (Array.isArray(allJobs) ? allJobs : []);
 
+  // console.log(allJobs,"allJobs");
+  
   // Animation variants
   const containerVariants = {
     hidden: { opacity: 0 },

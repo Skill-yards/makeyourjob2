@@ -197,7 +197,6 @@ const Job = ({ job }) => {
           >
             ₹ {salary} LPA
           </Badge>
-
           <Badge
             variant="outline"
             className="bg-blue-50 border-blue-100 text-blue-700"

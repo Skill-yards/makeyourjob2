@@ -6,13 +6,13 @@ import { Label } from './ui/label';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { Badge } from '@/components/ui/badge';
-import { Filter, MapPin, Briefcase, Banknote, Clock, Laptop, Calendar } from 'lucide-react';
+import { Filter, MapPin, Briefcase, Banknote, Clock, Laptop, Calendar, RefreshCw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { cn } from "@/lib/utils";
 import { Slider } from "@/components/ui/slider";
 import axios from 'axios';
-import {JOB_API_END_POINT} from "@/utils/constant"
+import { JOB_API_END_POINT } from "@/utils/constant";
 
 const filterData = [
   {
@@ -21,10 +21,9 @@ const filterData = [
     array: ["Full-time", "Part-time", "Contract", "Temporary", "Internship", "Freelancing"]
   },
   {
-    filterType: "Location",
+    filterType: "location",
     icon: <MapPin size={16} />,
-    array: ["Noida (694)", "New Delhi (15)", "Greater Noida (32)", "Ghaziabad (4)", "Gurugram (25)", "Delhi / NCR (703)", "Pune (19)", "Bengaluru (14)", "Mumbai (6)", "Kanpur (6)"],
-    moreArray: ["Rajkot (6)", "Mumbai (All Areas) (6)", "Chennai (5)", "Supaul (5)", "Patna (5)", "Hyderabad (4)", "Coimbatore (4)", "Prayagraj (4)", "Gwalior (3)", "Jaipur (3)", "Lucknow (1)", "Indore (2)", "Guwahati (1)", "Ahmedabad (1)", "Kozhikode (1)","Agra(3)"]
+    array: ["Delhi NCR", "Bangalore", "Hyderabad", "Pune", "Mumbai"]
   },
   {
     filterType: "Industry",
@@ -32,12 +31,12 @@ const filterData = [
     array: ["Frontend Developer", "Backend Developer", "FullStack Developer"]
   },
   {
-    filterType: "Salary",
+    filterType: "salary",
     icon: <Banknote size={16} />,
     array: ["0-3Lakhs", "3-6Lakhs", "6-10Lakhs", "10-15Lakhs", "15-25Lakhs", "25-50Lakhs", "50-75Lakhs"]
   },
   {
-    filterType: "Experience",
+    filterType: "experienceLevel",
     icon: <Clock size={16} />,
     type: "slider",
     max: 15,
@@ -69,30 +68,72 @@ const FilterCard = () => {
   const [selectedCount, setSelectedCount] = useState(0);
   const [page, setPage] = useState(1);
   const [isLoading, setIsLoading] = useState(false);
-  const [showMoreLocations, setShowMoreLocations] = useState(false);
+  const [availableCities, setAvailableCities] = useState([]);
+  const [showAllCities, setShowAllCities] = useState(false);
   const dispatch = useDispatch();
   const { total, pages } = useSelector(state => state.jobs || { jobs: [], total: 0, pages: 1, page: 1, isLoading: false });
 
+  const { jobs, allJobs, searchedQuery } = useSelector((store) => store.job);
+
+  // Normalize and count jobs per city
+  const cityJobCount = allJobs.reduce((acc, job) => {
+    const city = job.workLocation?.city ? job.workLocation.city.toLowerCase().trim() : "unknown";
+    acc[city] = (acc[city] || 0) + 1;
+    return acc;
+  }, {});
+
+
+  // Capitalize city names for display
+  const displayCityName = (city) => {
+    if (city === "unknown") return "Unknown";
+    return city.split(' ')
+      .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+      .join(' ');
+  };
+
+  // Extract unique cities from allJobs
+  useEffect(() => {
+    if (allJobs && allJobs.length > 0) {
+      const cities = [...new Set(allJobs
+        .filter(job => job.workLocation && job.workLocation.city)
+        .map(job => job.workLocation.city.toLowerCase().trim())
+      )];
+      setAvailableCities(cities);
+    }
+  }, [allJobs]);
+
+  // Convert front-end filter values to API-compatible format
   const formatFilters = () => {
     const formatted = { ...selectedValues };
+
     if (formatted.Salary) {
       const range = formatted.Salary.replace('Lakhs', '').split('-').map(Number);
       formatted.Salary = `${range[0]}-${range[1]}`;
     }
+
     if (formatted.Freshness) {
       formatted.Freshness = formatted.Freshness.replace('days', '');
     }
+
     if (formatted.Industry) {
       formatted.industry = formatted.Industry;
       delete formatted.Industry;
     }
+
     if (formatted['Work Type']) {
       formatted.jobType = formatted['Work Type'];
       delete formatted['Work Type'];
     }
+
+    // Ensure location filter uses normalized city name
+    if (formatted.location) {
+      formatted.location = formatted.location.toLowerCase().trim();
+    }
+
     return formatted;
   };
 
+  // Fetch jobs from API
   const fetchJobs = async (currentPage = page) => {
     setIsLoading(true);
     try {
@@ -114,7 +155,7 @@ const FilterCard = () => {
   };
 
   const fetchAllJobs = async (currentPage = page) => {
-    dispatch(setLoading());
+    setIsLoading(true);
     try {
       const response = await axios.get(`${JOB_API_END_POINT}/get`, {
         params: { page: currentPage, limit: 10 }
@@ -124,9 +165,12 @@ const FilterCard = () => {
       }));
     } catch (error) {
       console.error('Error fetching all jobs:', error);
+    } finally {
+      setIsLoading(false);
     }
   };
 
+  // Handle filter changes
   const handleChange = (filterType, value) => {
     setSelectedValues(prev => ({
       ...prev,
@@ -135,22 +179,35 @@ const FilterCard = () => {
     setPage(1);
   };
 
-  const clearFilters = () => {
-    setSelectedValues({});
-    setPage(1);
-  };
-
+  // Clear filters
   const clearFiltersHandler = () => {
     setSelectedValues({});
     setPage(1);
-    dispatch(clearFilters());
     fetchAllJobs(1);
   };
 
+  // Toggle showing all cities
+  const toggleShowAllCities = () => {
+    setShowAllCities(!showAllCities);
+  };
+
+  // Apply filters and fetch jobs
   const applyFilters = () => {
     fetchJobs(1);
   };
 
+  // Refresh available cities
+  const refreshCities = () => {
+    if (allJobs && allJobs.length > 0) {
+      const cities = [...new Set(allJobs
+        .filter(job => job.workLocation && job.workLocation.city)
+        .map(job => job.workLocation.city.toLowerCase().trim())
+      )];
+      setAvailableCities(cities);
+    }
+  };
+
+  // Pagination handlers
   const handleNextPage = () => {
     if (page < pages) {
       setPage(page + 1);
@@ -165,10 +222,7 @@ const FilterCard = () => {
     }
   };
 
-  const toggleShowMoreLocations = () => {
-    setShowMoreLocations(!showMoreLocations);
-  };
-
+  // Update Redux query string and fetch jobs on filter change
   useEffect(() => {
     const count = Object.values(selectedValues).filter(Boolean).length;
     setSelectedCount(count);
@@ -176,7 +230,7 @@ const FilterCard = () => {
     const queryString = Object.entries(selectedValues)
       .filter(([_, value]) => value)
       .map(([key, value]) => 
-        key === "Experience" ? `${value} ${filterData.find(f => f.filterType === key).unit}` : value
+        key === "experienceLevel" ? `${value} ${filterData.find(f => f.filterType === key).unit}` : value
       )
       .join(', ');
     dispatch(setSearchedQuery(queryString));
@@ -219,7 +273,7 @@ const FilterCard = () => {
                   <span>{category.filterType}</span>
                   {selectedValues[category.filterType] && (
                     <Badge variant="outline" className="ml-2 text-xs">
-                      {category.filterType === "Experience" 
+                      {category.filterType === "experienceLevel" 
                         ? `${selectedValues[category.filterType]} ${category.unit}`
                         : selectedValues[category.filterType]}
                     </Badge>
@@ -238,6 +292,51 @@ const FilterCard = () => {
                     <div className="text-sm text-gray-600">
                       Selected: {selectedValues[category.filterType] || 0} {category.unit}
                     </div>
+                  </div>
+                ) : category.filterType === "location" ? (
+                  <div className="space-y-2">
+                    <div className="flex justify-between items-center mb-2">
+                      <Button 
+                        variant="outline" 
+                        size="sm" 
+                        onClick={toggleShowAllCities}
+                        className="text-xs h-8 w-full"
+                      >
+                        {showAllCities ? "Show Default Cities" : "Show Available Cities"}
+                      </Button>
+                      <Button 
+                        variant="ghost" 
+                        size="sm" 
+                        onClick={refreshCities} 
+                        className="text-xs h-8 ml-1"
+                        title="Refresh available cities"
+                      >
+                        <RefreshCw size={14} />
+                      </Button>
+                    </div>
+                    <RadioGroup
+                      value={selectedValues[category.filterType] || ""}
+                      onValueChange={(value) => handleChange(category.filterType, value)}
+                      className="space-y-1"
+                    >
+                      {(showAllCities ? availableCities : category.array).map((item, idx) => (
+                        <div key={idx} className="flex items-center space-x-2 rounded-md p-2 hover:bg-gray-50 transition-colors">
+                          <RadioGroupItem
+                            value={displayCityName(item)}
+                            id={`${category.filterType}-${idx}`}
+                          />
+                          <Label
+                            htmlFor={`${category.filterType}-${idx}`}
+                            className="text-sm font-normal cursor-pointer w-full flex justify-between items-center"
+                          >
+                            <span>{displayCityName(item)}</span>
+                            <Badge variant="secondary" className="ml-2">
+                              {cityJobCount[item.toLowerCase().trim()] || 0} {cityJobCount[item.toLowerCase().trim()] === 1 ? 'job' : 'jobs'}
+                            </Badge>
+                          </Label>
+                        </div>
+                      ))}
+                    </RadioGroup>
                   </div>
                 ) : (
                   <RadioGroup
@@ -259,39 +358,6 @@ const FilterCard = () => {
                         </Label>
                       </div>
                     ))}
-                    {category.filterType === "Location" && (
-                      <div className="p-2">
-                        <Button variant="link" size="sm" onClick={toggleShowMoreLocations} className="p-0 h-auto text-blue-600">
-                          View More
-                        </Button>
-                        {showMoreLocations && (
-                          <Card className="mt-2 p-2 bg-white shadow-md">
-                            <CardContent className="p-0">
-                              <RadioGroup
-                                value={selectedValues[category.filterType] || ""}
-                                onValueChange={(value) => handleChange(category.filterType, value)}
-                                className="space-y-1"
-                              >
-                                {category.moreArray.map((item, idx) => (
-                                  <div key={idx + category.array.length} className="flex items-center space-x-2 rounded-md p-2 hover:bg-gray-50 transition-colors">
-                                    <RadioGroupItem
-                                      value={item}
-                                      id={`${category.filterType}-${idx + category.array.length}`}
-                                    />
-                                    <Label
-                                      htmlFor={`${category.filterType}-${idx + category.array.length}`}
-                                      className="text-sm font-normal cursor-pointer w-full"
-                                    >
-                                      {item}
-                                    </Label>
-                                  </div>
-                                ))}
-                              </RadioGroup>
-                            </CardContent>
-                          </Card>
-                        )}
-                      </div>
-                    )}
                   </RadioGroup>
                 )}
               </AccordionContent>

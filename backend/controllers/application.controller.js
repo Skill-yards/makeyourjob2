@@ -53,7 +53,7 @@ export const applyJob = async (req, res) => {
             success:true
         })
     } catch (error) {
-        console.log(error);
+        
     }
 };
 
@@ -81,7 +81,7 @@ export const getAppliedJobs = async (req,res) => {
             success:true
         })
     } catch (error) {
-        console.log(error);
+        
     }
 }
 // admin dekhega kitna user ne apply kiya hai
@@ -106,14 +106,14 @@ export const getApplicants = async (req,res) => {
             succees:true
         });
     } catch (error) {
-        console.log(error);
+        
     }
 }
 
 export const getApplication = async (req, res) => {
     try {
       const { applicantId } = req.params;
-      console.log(applicantId, "applicantId");
+      
       const application = await Application.findById(applicantId).populate('applicant');
       if (!application) {
         return res.status(404).json({
@@ -165,6 +165,6 @@ export const updateStatus = async (req,res) => {
         });
 
     } catch (error) {
-        console.log(error);
+        
     }
 }

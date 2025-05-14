@@ -16,6 +16,7 @@ import {
 import storage from "redux-persist/lib/storage";
 import companySlice from "./companySlice";
 import applicationSlice from "./applicationSlice";
+import adminSlice from "./adminSlice"
 
 const persistConfig = {
   key: "root",
@@ -30,6 +31,7 @@ const rootReducer = combineReducers({
   company: companySlice,
   application: applicationSlice,
   jobBrowse: jobBrowseSlice,
+  admin: adminSlice, 
 });
 
 const persistedReducer = persistReducer(persistConfig, rootReducer);
@@ -43,5 +45,6 @@ const store = configureStore({
       },
     }),
 });
+console.log(store,"jhssd")
 
 export default store;

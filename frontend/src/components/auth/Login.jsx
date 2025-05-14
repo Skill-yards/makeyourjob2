@@ -196,6 +196,8 @@ const Login = () => {
       );
 
       if (res.data.success) {
+        // console.log(res.data.user,"check");
+        
         dispatch(setUser(res.data.user));
         navigate(input.role === "recruiter" ? "/admin/profile" : "/profile");
         toast.success(res.data.message);

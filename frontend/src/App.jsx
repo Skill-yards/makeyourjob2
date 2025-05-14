@@ -16,7 +16,7 @@ const TermsAndConditions = lazy(() => import('./components/Terms'));
 const AdminSingleWithApply = lazy(() => import('./components/admin/AdminSingleJobWithApply'));
 const CompanyJobApplicants = lazy(() => import('./components/admin/CompanyJobApplicants'));
 const JobSetup = lazy(() => import('./components/admin/JobSetup'));
-const AdminProfile = lazy(() => import('./components/admin/AdminProfile'));
+const AdminDeshboard = lazy(() => import('./components/admin/AdminDeshboard'));
 
 
 // Admin Lazy-loaded Components
@@ -28,12 +28,26 @@ const PostJob = lazy(() => import('./components/admin/PostJob'));
 const Applicants = lazy(() => import('./components/admin/Applicants'));
 const SingleApplicants = lazy(() => import('./components/admin/SingleApplicants'));
 const HelpCenter=lazy(()=>import('./components/HelpCenter'))
-const CareerAdvice =lazy(()=>import('./components/CareerAdvice'))
-//
+const AdminProfile=lazy(()=>import('./components/admin/AdminProfile'))
+const CompanyDetails = lazy(() => import('./components/admin/CompanyDetails'));
+import ProtecteAdminRoute  from "./components/admin/ProtectRouteAdmin"
+
+
+//// admin Route for the Register
+const AdminRegister =lazy(()=>import('./components/auth/Admin.Register'))
+const AdminLogin =lazy(()=>import('./components/auth/Admin.Login'))
+
+import CareerAdvice from './components/CarrerAdvise';
+
 
 import Layout from "./utils/Layout";
 
 const appRouter = createBrowserRouter([
+  
+  {
+    path: '/carreradvise',
+    element: <Layout><CareerAdvice/></Layout>
+  },
   {
     path: '/',
     element: <Layout><Home /></Layout>
@@ -67,10 +81,6 @@ const appRouter = createBrowserRouter([
     element: <Layout><HelpCenter/></Layout>
   },
   {
-    path: "/careeradvice",
-    element: <Layout><CareerAdvice/></Layout>
-  },
-  {
     path: "/privacy",
     element: <Layout><PrivacyPolicy/></Layout>
   },
@@ -99,14 +109,42 @@ const appRouter = createBrowserRouter([
 
 
   // admin ke liye yha se start hoga
-  {
-    path:"/admin/companies",
-    element: <ProtectedRoute><Companies/></ProtectedRoute>
+
+{
+    path: '/admin/register',
+    element: <Layout><AdminRegister /></Layout>
   },
+  {
+    path: '/admin-login',
+    element: <Layout><AdminLogin /></Layout>
+  },
+  {
+    path: '/admin/dashboard',
+    element: < ProtecteAdminRoute><Layout><AdminDeshboard /></Layout></ ProtecteAdminRoute>
+  },
+
+
+  //// dont change anything
+
+  {
+    path:"/admin/login",
+    element: <ProtectedRoute><AdminProfile/></ProtectedRoute>
+  },
+
+
   {
     path:"/admin/profile",
     element: <ProtectedRoute><AdminProfile/></ProtectedRoute>
   },
+  {
+    path: '/admin/companies/:id/details',
+    element: <ProtectedRoute><Layout><CompanyDetails/></Layout></ProtectedRoute> // New route for CompanyDetails
+  },
+  {
+    path:"/admin/companies",
+    element: <ProtectedRoute><Companies/></ProtectedRoute>
+  },
+ 
   {
     path:"/admin/companies/create",
     element: <ProtectedRoute><CompanyCreate/></ProtectedRoute> 

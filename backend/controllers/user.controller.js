@@ -10,8 +10,6 @@ import sanitizeHtml from "sanitize-html";
 import dotenv from "dotenv";
 dotenv.config();
 
-console.log(process.env.AWS_S3_BUCKET_NAME, " s3 back name");
-
 const generateOTP = () => {
   return Math.floor(100000 + Math.random() * 900000).toString(); // 6-digit OTP
 };
@@ -303,7 +301,21 @@ export const login = asyncHandler(async (req, res) => {
     phoneNumber: user.phoneNumber,
     role: user.role,
     profile: user.profile,
+    gender: user.gender || "",
   };
+
+  res
+    .status(200)
+    .cookie("token", token, {
+      maxAge: 24 * 60 * 60 * 1000,
+      httpOnly: true,
+      sameSite: "strict",
+    })
+    .json({
+      success: true,
+      message: `Welcome back ${user.firstname}`,
+      user: userResponse,
+    });
 
   res
     .status(200)
@@ -342,11 +354,11 @@ export const updateProfile = asyncHandler(async (req, res) => {
     onlineProfiles,
     certificates,
   } = req.body;
-
   const userId = req.id;
   const profilePhoto = req.files?.profilePhoto?.[0];
   const resumeFile = req.files?.file?.[0];
-  console.log(req.body,"hello...")
+  console.log(req.file,"check")
+  console.log(resumeFile,"check file come or not")
 
   // Find user
   const user = await User.findById(userId);
@@ -451,8 +463,8 @@ export const updateProfile = asyncHandler(async (req, res) => {
         }
         return []; // Default to empty array if input is invalid
       } catch (error) {
-        console.error(`${fieldName} parsing error:`, error);
-        throw new Error(`Invalid ${fieldName} format`);
+        console.error(`${fieldName} parsing error:, error);
+        throw new Error(Invalid ${fieldName} format`);
       }
     };
 
@@ -527,10 +539,11 @@ export const updateProfile = asyncHandler(async (req, res) => {
   });
 });
 
-// Login with OTP
+
+
+
 export const loginWithOtp = asyncHandler(async (req, res) => {
   const { email, role } = req.body;
-
   if (!email || !role) {
     res.status(400);
     throw new Error("Email and role are required");
@@ -611,6 +624,10 @@ export const resetPassword = asyncHandler(async (req, res) => {
     .json({ success: true, message: "Password reset successfully" });
 });
 
+
+
+
+
 export const subscribeGuestFromJobAlerts = async (req, res) => {
   try {
     const { email } = req.body;
@@ -631,33 +648,71 @@ export const subscribeGuestFromJobAlerts = async (req, res) => {
   }
 };
 
-//// create a funcation for the delete resumes
 export const deleteResume = async (req, res) => {
   try {
-    const { userId } = req.id;
-    if (!userId) {
+    const { id } = req.params;
+    if (!id) {
       return res.status(401).json({
         success: false,
         message: "Unauthorized: No user ID provided",
       });
     }
-    const user = await User.findById(userId).lean();
+
+    const user = await User.findById(id).lean();
     if (!user) {
       return res.status(404).json({
         success: false,
         message: "User not found",
       });
     }
-    if (!user.resume) {
+
+    // Check if resume exists in the profile object
+    if (!user.profile || !user.profile.resume) {
       return res.status(404).json({
         success: false,
         message: "No resume found for this user",
       });
     }
+
+    // Store the S3 URL before removing it
+    const resumeUrl = user.profile.resume;
+
+    // Extract the key from the S3 URL
+    // The URL format should be: https://BUCKET_NAME.s3.amazonaws.com/KEY
+    const s3UrlParts = resumeUrl.split(".s3.amazonaws.com/");
+    if (s3UrlParts.length !== 2) {
+      console.error("Invalid S3 URL format:", resumeUrl);
+      return res.status(500).json({
+        success: false,
+        message: "Invalid resume URL format",
+      });
+    }
+
+    const bucketName = s3UrlParts[0].replace("https://", "");
+    const fileKey = s3UrlParts[1];
+
+    // Delete file from S3
+    try {
+      const deleteParams = {
+        Bucket: process.env.AWS_S3_BUCKET_NAME,
+        Key: fileKey,
+      };
+
+      // Import the DeleteObjectCommand if not already imported at the top of your file
+      // You should have these imports at the top of your file:
+      // import { S3Client, PutObjectCommand, DeleteObjectCommand } from "@aws-sdk/client-s3";
+
+      await s3Client.send(new DeleteObjectCommand(deleteParams));
+    } catch (s3Error) {
+      console.error("S3 deletion error:", s3Error);
+      // Continue with DB deletion even if S3 deletion fails
+    }
+
+    // Update the database to remove resume references
     const updateResult = await User.findOneAndUpdate(
-      { _id: userId },
+      { _id: id },
       {
-        $unset: { resume: 1 },
+        $unset: { "profile.resume": 1, "profile.resumeOriginalName": 1 },
         $set: { updatedAt: new Date() },
       },
       {
@@ -665,15 +720,17 @@ export const deleteResume = async (req, res) => {
         select: "_id email", // Return minimal data
       }
     );
+
     if (!updateResult) {
       return res.status(500).json({
         success: false,
-        message: "Failed to delete resume",
+        message: "Failed to delete resume reference from database",
       });
     }
+
     return res.status(200).json({
       success: true,
-      message: "Resume deleted successfully",
+      message: "Resume deleted successfully from S3 and database",
       data: {
         userId: updateResult._id,
       },
@@ -692,3 +749,6 @@ export const deleteResume = async (req, res) => {
     });
   }
 };
+
+
+

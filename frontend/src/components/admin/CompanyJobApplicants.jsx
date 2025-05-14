@@ -22,6 +22,8 @@ import {
 } from 'lucide-react';
 import { Skeleton } from '../ui/skeleton';
 import { Avatar, AvatarImage, AvatarFallback } from '../ui/avatar';
+import Navbar from '../shared/Navbar';
+import Footer from '../shared/Footer';
 
 const CompanyJobApplicants = () => {
   const { singleCompany } = useSelector((store) => store.company);
@@ -88,6 +90,8 @@ const CompanyJobApplicants = () => {
   }
 
   return (
+  <div>
+    <Navbar/>
     <div className="max-w-7xl mx-auto my-10 px-4 sm:px-6 lg:px-8">
       <Card className="shadow-xl border-none overflow-hidden bg-gradient-to-b from-white to-slate-50">
         <CardHeader className="pb-4 border-b">
@@ -319,6 +323,9 @@ const CompanyJobApplicants = () => {
         </CardContent>
       </Card>
     </div>
+
+    <Footer/>
+  </div>
   );
 };
 

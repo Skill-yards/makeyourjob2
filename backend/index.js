@@ -11,6 +11,8 @@ import jobRoute from "./routes/job.route.js";
 import applicationRoute from "./routes/application.route.js";
 import contactRoute from "./routes/contact.route.js"
 
+
+
 dotenv.config();
 
 // Resolve __dirname in ES module
@@ -79,7 +81,7 @@ app.use(errorHandler);
 const PORT = process.env.PORT || 3000;
 connectDB().then(() => {
     app.listen(PORT, () => {
-        console.log(`🚀 Server running at port ${PORT}`);
+    console.log('port run',PORT)
     });
 }).catch(err => {
     console.error("❌ Database connection failed:", err);

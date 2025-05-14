@@ -89,9 +89,6 @@ const UpdateProfileDialog = ({ open, setOpen, croppedImage }) => {
     onlineProfiles: user?.profile?.onlineProfiles || [],
     certificates: user?.profile?.certificates || [],
   });
-  // console.log(input.profile.jobRole,"check data jobRole c")
-
-  // Handle initial skill parsing
   useEffect(() => {
     if (user?.profile?.skills && Array.isArray(user.profile.skills)) {
       setInput((prev) => ({
@@ -114,31 +111,28 @@ const UpdateProfileDialog = ({ open, setOpen, croppedImage }) => {
   };
 
   // File change handler
-  const fileChangeHandler = (e) => {
-    const file = e.target.files?.[0];
-    setInput({ ...input, file });
-    setErrors({ ...errors, file: "" });
-  };
+  // const fileChangeHandler = (e) => {
+  //   const file = e.target.files?.[0];
+  //   setInput({ ...input, file });
+  //   setErrors({ ...errors, file: "" });
+  // };
 
   // Skills change handler with improved validation
   const handleSkillsChange = (e) => {
     const skillsText = e.target.value;
-    // Split by commas, trim each skill, remove empty strings
+    // Split by commas, trim each skill, remove empty strings and strings with only spaces
+
+    console.log(skillsText,"skillsText");
+    
     const skillsArray = skillsText
       .split(",")
-      .map((skill) => skill.trim()) // Trim leading/trailing spaces
-      .filter((skill) => skill.length > 0); // Remove empty strings
+      .map((skill) => skill)
+     
     setInput({ ...input, skills: skillsArray });
     setErrors({ ...errors, skills: "" });
-    // const skillsText = e.target.value;
-    // // Split by commas, trim each skill, remove empty strings and strings with only spaces
-    // const skillsArray = skillsText
-    //   .split(",")
-    //   .map((skill) => skill)
-    //   .filter((skill) => skill.length > 0 && skill !== " "); // Ensure no empty or space-only skills
-    // setInput({ ...input, skills: skillsArray });
-    // setErrors({ ...errors, skills: "" });
   };
+
+  
 
   // Validate all inputs
   const validateInputs = () => {
@@ -393,8 +387,6 @@ const UpdateProfileDialog = ({ open, setOpen, croppedImage }) => {
   // Submit form handler
   const submitHandler = async (e) => {
     e.preventDefault();
-    console.log("submit handelr call");
-
     if (!validateInputs()) {
       toast.error("Please fill all required fields correctly");
 
@@ -488,7 +480,7 @@ const UpdateProfileDialog = ({ open, setOpen, croppedImage }) => {
 
     try {
       setLoading(true);
-      const res = await axios.post(
+      const res = await axios.patch(
         `${USER_API_END_POINT}/profile/update`,
         formData,
         {
@@ -522,6 +514,8 @@ const UpdateProfileDialog = ({ open, setOpen, croppedImage }) => {
   };
 
   const years = generateYearOptions();
+  // console.log(input,"check input");
+  
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
@@ -737,7 +731,7 @@ const UpdateProfileDialog = ({ open, setOpen, croppedImage }) => {
                     Gender *
                   </Label>
                   <Select
-                    value={input.gender}
+                    value={input?.gender}
                     onValueChange={(value) =>
                       handleSelectChange("gender", value)
                     }
@@ -824,40 +818,6 @@ const UpdateProfileDialog = ({ open, setOpen, croppedImage }) => {
                   </div>
                   {/* <div className="mt-4">
                     <Label
-                      htmlFor="skills"
-                      className="text-sm font-medium text-gray-700"
-                    >
-                      Skills * (comma-separated)
-                    </Label>
-                    <Textarea
-                      id="skills"
-                      name="skills"
-                      value={input.skills}
-                      onChange={handleSkillsChange}
-                      placeholder="e.g., HTML, CSS, JavaScript, React"
-                      className={`mt-1 ${
-                        errors.skills ? "border-red-500" : ""
-                      }`}
-                    />
-                    {errors.skills && (
-                      <p className="text-sm text-red-600 mt-1">
-                        {errors.skills}
-                      </p>
-                    )}
-                    <div className="flex flex-wrap gap-2 mt-2">
-                      {input.skills.map((skill, index) => (
-                        <Badge
-                          key={index}
-                          variant="secondary"
-                          className="px-2 py-1"
-                        >
-                          {skill}
-                        </Badge>
-                      ))}
-                    </div>
-                  </div> */}
-                  <div className="mt-4">
-                    <Label
                       htmlFor="file"
                       className="text-sm font-medium text-gray-700"
                     >
@@ -877,7 +837,7 @@ const UpdateProfileDialog = ({ open, setOpen, croppedImage }) => {
                         {user.profile.resumeOriginalName || "Resume uploaded"}
                       </p>
                     )}
-                  </div>
+                  </div> */}
                 </>
               ) : (
                 <>
@@ -903,7 +863,7 @@ const UpdateProfileDialog = ({ open, setOpen, croppedImage }) => {
                       </p>
                     )}
                   </div>
-                  <div>
+                    {/* <div>
                     <Label
                       htmlFor="jobRole"
                       className="text-sm font-medium text-gray-700"
@@ -924,7 +884,7 @@ const UpdateProfileDialog = ({ open, setOpen, croppedImage }) => {
                         {errors.jobRole}
                       </p>
                     )}
-                  </div>
+                  </div> */}
                 </>
               )}
             </TabsContent>
@@ -2681,3 +2641,4 @@ UpdateProfileDialog.propTypes = {
 };
 
 export default UpdateProfileDialog;
+

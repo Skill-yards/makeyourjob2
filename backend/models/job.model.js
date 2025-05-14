@@ -52,8 +52,7 @@ const jobSchema = new mongoose.Schema({
   workplacePlane: {
     type: String,
     required: [true, "Workplace type is required"],
-    enum: ["Remote", "On-site", "Hybrid"],
-    default: "On-site",
+   
   },
   jobCategory: {
     type: String,

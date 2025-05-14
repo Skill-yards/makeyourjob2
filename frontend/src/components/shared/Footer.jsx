@@ -32,13 +32,13 @@ const Footer = () => {
       const response = await axios.post('http://localhost:3000/api/v1/user/subscribe', {
         email: emailInput,
       });
-      setMessage('Successfully subscribed to the newsletter!');
+      setMessage('Successfully subscribed to new job updates!');
       setEmailInput(''); 
       console.log(response.data)
     } catch (error) {
       const errorMessage =
-        error.response?.data?.message ||
-        'Failed to subscribe. Please try again later.';
+        
+        'You need to login first, for job Update'||error.response?.data?.message ;
       setMessage(errorMessage);
     } finally {
       setIsSubmitting(false);
@@ -133,26 +133,26 @@ const Footer = () => {
                   Browse Jobs
                 </Link>
               </li>
-              <li>
+              {/* <li>
                 <a href="#" className="text-sm text-slate-300 hover:text-white transition-colors">
                   Create Resume
                 </a>
-              </li>
-              <li>
+              </li> */}
+              {/* <li>
                 <a href="#" className="text-sm text-slate-300 hover:text-white transition-colors">
                   Job Alerts
                 </a>
-              </li>
+              </li> */}
               <li>
-                <a href="/careeradvice" className="text-sm text-slate-300 hover:text-white transition-colors">
+                <Link to="/carreradvise" className="text-sm text-slate-300 hover:text-white transition-colors">
                   Career Advice
-                </a>
+                </Link>
               </li>
             </ul>
           </div>
 
           {/* For Employers */}
-          <div>
+          {/* <div>
             <h3 className="text-lg font-semibold mb-4 pb-2 border-b border-slate-700/50">
               For Employers
             </h3>
@@ -163,7 +163,7 @@ const Footer = () => {
                 </a>
               </li>
             </ul>
-          </div>
+          </div> */}
 
           {/* Resources */}
           <div>

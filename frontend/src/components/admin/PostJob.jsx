@@ -133,13 +133,20 @@ const PostJob = () => {
 
   const navigate = useNavigate();
   const { companies } = useSelector((store) => store.company);
+e
 
   useEffect(() => {
+    // if(companies?.status)
+    if(companies[0].status === "rejected" || companies[0].status === "pending"){
+      navigate('/admin/profile')
+      // console.log("check")
+    }
+    console.log(companies[0].status, "company status")
     setInput({
       ...input,
       benefits: benefitBadges.join(', ')
     });
-  }, [benefitBadges]);
+  }, [benefitBadges, companies?.status, navigate]);
 
   useEffect(() => {
     if (input.benefits && !benefitBadges.length) {
@@ -311,7 +318,7 @@ const PostJob = () => {
       { field: 'jobType', message: 'Job type is required' },
       { field: 'experienceLevel', message: 'Experience level is required' },
       { field: 'companyId', message: 'Company is required' },
-      { field: 'workplacePlane', message: 'Workplace plane is required' },
+      // { field: 'workplacePlane', message: 'Workplace plane is required' },
       { field: 'jobCategory', message: 'Job category is required' },
       { field: 'skills', message: 'At least one skill is required' },
       { field: 'numberOfPositions', message: 'Number of positions is required' },
